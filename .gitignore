@@ -1,1 +1,51 @@
 *.pdf
+
+# Local environment and generated artifacts
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+results/
+
+# Local explanatory notes and images
+/background/
+
+# macOS metadata
+.DS_Store
+._*
+
+# Python bytecode and tooling caches
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.hypothesis/
+
+# Python virtual environments and local configuration
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Python packaging and build output
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# Test, coverage, and profiling output
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.prof
+*.lprof

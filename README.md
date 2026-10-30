@@ -31,6 +31,37 @@ repository's submodule reference to the chosen commit. Dependencies are not
 installed by the submodule commands; see `external/gym4real/docs/dam.md` for
 the upstream DamEnv setup instructions.
 
+## Phase 1: run and explore
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (on macOS: `brew install uv`), initialize the submodule, then run from the project root:
+
+```bash
+uv sync --locked
+uv run lake-como-audit
+uv run python -m unittest discover -s tests -v
+uv run lake-como-rollout --benchmark 100
+```
+
+`uv sync` creates `.venv`, uses Python 3.12, and installs both workspace
+packages in editable mode, including the notebook tools in the default `dev`
+group. `uv.lock` records the resolved dependencies; `--locked` prevents an
+unexpected lockfile update. No environment activation is needed for `uv run`.
+
+Normal imports such as `from lake_como.baselines import rollout` work in scripts
+and notebooks regardless of the current working directory. Select this project's
+`.venv` as the notebook kernel. The simulator fork includes a packaging-only
+change to its `pyproject.toml`; review it separately from the parent changes.
+The submodule Git commit pins simulator source; `uv.lock` pins Python packages.
+
+To add a dependency, use `uv add <package>` (or `uv add --dev <package>` for
+notebook/development tools). Review both `pyproject.toml` and `uv.lock` afterward.
+The workspace layout follows [uv's workspace documentation](https://docs.astral.sh/uv/concepts/projects/workspaces/).
+
+Start with [the executed walkthrough](notebooks/01_environment_and_data.ipynb)
+and [Phase 1 findings](reports/PHASE1_FINDINGS.md) for the data audit, initial
+results, timing scope, and known simulator issues. Select `.venv` as the notebook
+kernel in your editor. Generated trajectories and plots go to ignored `results/`.
+
 ## Team Members: 
 
 - Nadine Mohamed

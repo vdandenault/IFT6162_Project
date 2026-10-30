@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lake-como-control"
+version = "0.1.0"
+description = "Lake Como reservoir control experiments for IFT6162"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "gym4real==0.1.0",
+    "gymnasium==1.1.1",
+    "numpy==2.2.4",
+    "pandas==2.2.3",
+    "PyYAML==6.0.2",
+    "pygame==2.6.1",
+    "matplotlib==3.10.1",
+]
+
+[dependency-groups]
+dev = ["nbformat==5.10.4", "nbclient==0.10.2", "ipykernel==6.29.5"]
+
+[project.scripts]
+lake-como-audit = "lake_como.audit:main"
+lake-como-rollout = "lake_como.baselines:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+gym4real = { workspace = true }
+
+[tool.uv.workspace]
+members = ["external/gym4real"]
