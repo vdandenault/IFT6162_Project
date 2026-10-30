@@ -49,3 +49,6 @@ coverage.xml
 htmlcov/
 *.prof
 *.lprof
+
+# Local reports and generated audit output
+/reports/
