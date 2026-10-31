@@ -57,6 +57,31 @@ To add a dependency, use `uv add <package>` (or `uv add --dev <package>` for
 notebook/development tools). Review both `pyproject.toml` and `uv.lock` afterward.
 The workspace layout follows [uv's workspace documentation](https://docs.astral.sh/uv/concepts/projects/workspaces/).
 
+The default evaluation protocol is chronological, with leap years included:
+
+- Training: 1946–1987 (42 years).
+- Validation: 1988–1997 (10 years).
+- Testing: 1998–2010 (13 years).
+
+Year membership is recorded in `configs/splits.json`. Use validation to select
+settings and reserve testing for the final comparison. Example commands:
+
+```bash
+uv run lake-como-rollout --split train --years 1984
+uv run lake-como-rollout --split validation --years 1990
+uv run lake-como-rollout --no-include-leap-years
+# Separate reference protocol with the authors' original mixed-year membership:
+uv run lake-como-rollout --protocol upstream --split train --years 1985
+```
+
+Leap-year profiles retain upstream 365-step behavior; their final sample is
+unused. This is an accepted temporary approximation, not full calendar support.
+The Python API exposes `protocol` and `include_leap_years` too. A project wrapper
+corrects the returned final level without changing physics, rewards, or resets.
+Annual episodes still start at 0.35 m; continuous year-to-year storage is not yet
+implemented. `make_env(..., correct_terminal_level=False)` exposes the unmodified
+observation for source reproduction checks.
+
 Start with [the executed walkthrough](notebooks/01_environment_and_data.ipynb)
 and [Phase 1 findings](reports/PHASE1_FINDINGS.md) for the data audit, initial
 results, timing scope, and known simulator issues. Select `.venv` as the notebook

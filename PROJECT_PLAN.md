@@ -59,6 +59,12 @@ The environment follows the Gymnasium interface: `reset()` starts an episode and
 
 The local main paper (Sections C.1, D.1, E.1) describes Lake Como, northern Italy, daily water demand, inflow, and level records for 1946–2010: 65 annual profiles, split into 52 training and 13 test years.
 
+**Current project default:** include leap years. Keep the original CSV profiles and the upstream 365-step episode, accepting for now that a leap year's final sample is unused and seasonal/MEF alignment is approximate. `--no-include-leap-years` (or `include_leap_years=False`) remains available for sensitivity checks.
+
+The implemented chronological manifest in `configs/splits.json` assigns training to 1946–1987 (42 years), validation to 1988–1997 (10 years), and testing to 1998–2010 (13 years). This reassembles the original upstream files by year; it does not change the source data.
+
+A project wrapper now returns the actual final level in the terminal observation, preserving the simulator physics, reward, and time-limit signal. Returning the correct state is a bug fix, not a training distortion. Annual resets still initialize level to 0.35 m: continuous cross-year storage and terminal-value/bootstrapping choices remain separate work. MPC does not automatically repair either an incorrect observation or a reset.
+
 The immediate downloadable source is the [upstream data directory](https://github.com/Daveonwave/gym4ReaL/tree/774d5ceb1c218e09e5c6458ead7d4b0b10e2d8ac/gym4real/data/dam):
 
 | Files | Role |
@@ -91,9 +97,8 @@ Measure elapsed time for 100 annual baseline rollouts and a 10,000-step learner 
 
 ## Evaluation design
 
-1. **Reproduction track:** retain upstream train/test membership and reward settings. Label results as reproduction of that split. Create a validation subset from training years only for tuning.
-
-2. **Generalization track:** proposed chronological split: train 1946–1987 (42 years), validate 1988–1997 (10), test 1998–2010 (13). Reassemble signals by year only after alignment checks. This is our protocol, not the published one.
+1. **Main chronological track (implemented membership):** train on 1946–1987 (42 years), select settings on validation years 1988–1997 (10), and reserve 1998–2010 (13) for final testing. Leap years are included by default. A pretrained PPO trained using upstream membership has seen some chronological test years; retrain it on the chronological training years for the main comparison.
+2. **Separate reproduction track:** `protocol='upstream'` / `--protocol upstream` retains the authors' original mixed-year membership and reward settings. Do not confuse this with the main chronological evaluation. `correct_terminal_level=False` is available for exact original observation behavior; the fix itself does not alter physical trajectories or reward.
 3. Fit scalers, forecasters, discretization choices, and policy hyperparameters using training/validation only. Lock choices before final test evaluation. Do not select reward weights by looking at test performance.
 4. Compare every controller on identical forcing years and initial conditions. Within an episode, carry storage forward from the controller's own previous actions. Never replay historical levels as the next state of a new controller.
 5. Report annual deficit volume (convert daily mean rates using 86,400 seconds), flood days, low-water days, maximum level, clipping frequency/magnitude, surplus-release volume, terminal storage, and weighted return. Inspect within-day extremes if claiming hourly safety; daily endpoint metrics alone miss them.
@@ -137,7 +142,7 @@ We will therefore describe our work as an **adaptation of the scenario MPC metho
 4. Make information availability explicit. Retain default observations for the PPO reproduction. For the main comparison, require matched decision-time history/forecast inputs across controllers. Any unmatched-information run must be a separately labeled experiment and cannot support the main algorithm comparison. Fit forecasters and scenarios using training data and only observations already available at decision time. Never initialize a forecaster from held-out future data.
 5. Give deterministic and scenario MPC the same forecast generator and horizon when testing whether uncertainty scenarios help. Distinguish the planning scenario count from the number of evaluation years.
 6. Log simulator transition counts, FQI batch size and fitting iterations, PPO training steps, MPC forecast/optimization time, and total compute. Start from the published PPO budget but do not call methods sample- or compute-matched without measuring their actual usage.
-7. Choose discounting, terminal storage/value treatment, and truncation handling explicitly. Use a separate reproduction configuration when these differ from Gym4ReaL PPO. Resolve the known terminal-observation issue before bootstrapped learning.
+7. Choose discounting, terminal storage/value treatment, and truncation handling explicitly. Use a separate reproduction configuration when these differ from Gym4ReaL PPO. The terminal level observation is corrected; still specify the annual reset/bootstrapping treatment before learning.
 8. Do not transfer the paper's probabilistic scenario guarantees automatically: our scenario generator, objective, constraints, and solver may differ. Any guarantee needs its assumptions checked independently.
 
 Required comparison: deterministic MPC versus PPO, retaining the simple rules. Add FQI as the preferred third method only after validating the core; scenario MPC or SDP can instead be chosen if they better address the research question. Keep an exact Prophet setup and hydropower optional.
@@ -167,7 +172,8 @@ Implementation and measured findings: [Phase 1 findings](reports/PHASE1_FINDINGS
 ### Phase 2: benchmark reproduction and evaluation setup (week 2)
 
 - [ ] Begin the focused literature review and extract the deterministic MPC baseline specification.
-- [ ] Implement fixed train/validation/test manifests and a shared evaluation runner.
+- [x] Implement fixed chronological train/validation/test membership (42/10/13 years) and protocol selection in the rollout runner.
+- [ ] Extend the runner to evaluate every year of a selected split and aggregate paired controller metrics.
 - [ ] Reproduce Random, Mean, Max, and EAD baselines from upstream notebooks.
 - [ ] Run the published PPO configuration as a reference: 200k steps, gamma 0.995, learning rate 8e-6, [16,16] policy network, rollout length 2048; verify remaining skrl settings against source before claiming reproduction.
 - [ ] Save reward components, physical metrics, configs, seeds, and upstream version alongside each run. Report both the full five-term return and the three-term Gym4ReaL objective score.
@@ -179,7 +185,7 @@ Implementation and measured findings: [Phase 1 findings](reports/PHASE1_FINDINGS
 - [ ] Complete the focused literature comparison sheet and verify the engineering controller's assumptions; distinguish literature proposals from documented operator practice.
 - [ ] Build a simple training-only forecast (seasonal climatology, then persistence/history). Validate forecast quality and specify identical decision-time inputs for the main MPC/PPO comparison.
 - [ ] **Required:** implement deterministic MPC, adapting the reservoir engineering literature to daily DamEnv. Document planning model, solver, horizon, terminal treatment, constraints, and any reward surrogate. Validate the controller before claiming learning improvements.
-- [ ] **Required:** train/evaluate PPO with the matched information setting, separate from the original Gym4ReaL reproduction. Resolve terminal observations and truncation/bootstrapping before training.
+- [ ] **Required:** train/evaluate PPO with the matched information setting, separate from the original Gym4ReaL reproduction. Use the corrected terminal observation and choose the annual reset/truncation/bootstrapping treatment before training.
 - [ ] **Required:** compare full annual closed-loop trajectories on held-out years with paired physical metrics, reward components, terminal storage, training budgets, and decision runtime. Investigate where each controller succeeds or fails.
 - [ ] Run a focused ablation such as MPC horizon or matched forecast availability, chosen on validation data, before adding more algorithms.
 - [ ] **Preferred optional third method:** pilot tree-based FQI using the linked primary references. Specify training-only batch collection, coverage, regressor, action grid, Bellman/terminal targets, and stopping criteria. Implement instead of FVI, not alongside it.

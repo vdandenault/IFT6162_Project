@@ -10,8 +10,8 @@ from lake_como.environment import make_env, settings
 from lake_como.paths import RESULTS
 
 
-def rollout(policy, year, split='train', seed=123):
-    env = make_env(split, year)
+def rollout(policy, year, split='train', seed=123, *, include_leap_years=True, protocol='chronological'):
+    env = make_env(split, year, include_leap_years=include_leap_years, protocol=protocol)
     sim = env.unwrapped
     env.action_space.seed(seed)
     obs, info = env.reset(seed=seed)
@@ -64,30 +64,44 @@ def rollout(policy, year, split='train', seed=123):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--split', choices=['train', 'test'], default='train')
-    parser.add_argument('--years', type=int, nargs='+', help='Default: first training year in file order')
+    parser.add_argument('--split', choices=['train', 'validation', 'test'], default='train')
+    parser.add_argument('--years', type=int, nargs='+', help='Default: first eligible year of the selected split')
     parser.add_argument('--policies', nargs='+', choices=['constant', 'random', 'ead', 'mean', 'max'], default=['constant', 'random', 'ead'])
     parser.add_argument('--seed', type=int, default=123)
     parser.add_argument('--benchmark', type=int, default=0, help='Extra annual constant-policy rollouts for timing')
+    parser.add_argument('--protocol', choices=['chronological', 'upstream'], default='chronological')
+    parser.add_argument('--include-leap-years', action=argparse.BooleanOptionalAction, default=True,
+                        help='Include leap years (default); --no-include-leap-years excludes them. Episodes remain 365 steps.')
     args = parser.parse_args()
-    years = args.years or [next(iter(settings(args.split)['inflow']))]
+    try:
+        available = settings(args.split, include_leap_years=args.include_leap_years,
+                             protocol=args.protocol)['inflow']
+    except ValueError as error:
+        parser.error(str(error))
+    years = args.years or [next(iter(available))]
+    for year in years:
+        if year not in available:
+            parser.error(f'{year} is unavailable in {args.protocol}/{args.split}; check split membership and leap-year option')
     frames, summaries = [], []
     for year in years:
         for policy in args.policies:
-            frame, summary = rollout(policy, year, args.split, args.seed)
+            frame, summary = rollout(policy, year, args.split, args.seed, include_leap_years=args.include_leap_years, protocol=args.protocol)
             frames.append(frame); summaries.append(summary)
     out = RESULTS
     out.mkdir(parents=True, exist_ok=True)
     pd.concat(frames).to_csv(out / 'trajectories.csv', index=False)
     pd.DataFrame(summaries).to_csv(out / 'summary.csv', index=False)
-    metadata = {'arguments': vars(args), 'years': years, 'platform': platform.platform(),
+    metadata = {'arguments': vars(args), 'years': years, 'eligible_years': list(available),
+                'calendar_policy': 'upstream 365 steps; leap years included' if args.include_leap_years else 'non-leap years only',
+                'terminal_observation': 'corrected final level; annual reset still restores initial state',
+                'platform': platform.platform(),
                 'python': platform.python_version(),
                 'versions': {p: version(p) for p in ('numpy', 'gymnasium', 'pandas', 'PyYAML', 'pygame')},
                 'settings': 'Pinned upstream world/lake YAMLs; see reports/data_audit.json for source hashes',
                 'metrics': 'Daily endpoint flood/low-water only; deficit is unweighted physical volume.',
                 'timing_scope': 'reset/construction excluded; includes policy, stepping, and row logging'}
     if args.benchmark:
-        times = [rollout('constant', years[0], args.split, args.seed)[1]['seconds'] for _ in range(args.benchmark)]
+        times = [rollout('constant', years[0], args.split, args.seed, include_leap_years=args.include_leap_years, protocol=args.protocol)[1]['seconds'] for _ in range(args.benchmark)]
         metadata['benchmark'] = {'episodes': len(times), 'median_seconds': float(np.median(times)),
                                  'total_seconds': sum(times)}
     (out / 'run.json').write_text(json.dumps(metadata, indent=2) + '\n')
