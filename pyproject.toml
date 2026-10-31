@@ -19,10 +19,17 @@ dependencies = [
 
 [dependency-groups]
 dev = ["nbformat==5.10.4", "nbclient==0.10.2", "ipykernel==6.29.5"]
+reproduction = [
+    "skrl==1.4.3",
+    "torch==2.6.0",
+]
 
 [project.scripts]
 lake-como-audit = "lake_como.audit:main"
 lake-como-rollout = "lake_como.baselines:main"
+lake-como-reproduce = "lake_como.reproduce:main"
+lake-como-train-reference = "lake_como.train_reference:main"
+lake-como-seed-study = "lake_como.seed_study:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

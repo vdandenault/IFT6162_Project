@@ -174,11 +174,15 @@ Implementation and measured findings: [Phase 1 findings](reports/PHASE1_FINDINGS
 - [ ] Begin the focused literature review and extract the deterministic MPC baseline specification.
 - [x] Implement fixed chronological train/validation/test membership (42/10/13 years) and protocol selection in the rollout runner.
 - [ ] Extend the runner to evaluate every year of a selected split and aggregate paired controller metrics.
-- [ ] Reproduce Random, Mean, Max, and EAD baselines from upstream notebooks.
-- [ ] Run the published PPO configuration as a reference: 200k steps, gamma 0.995, learning rate 8e-6, [16,16] policy network, rollout length 2048; verify remaining skrl settings against source before claiming reproduction.
-- [ ] Save reward components, physical metrics, configs, seeds, and upstream version alongside each run. Report both the full five-term return and the three-term Gym4ReaL objective score.
+- [x] Reproduce Random, Mean, Max, and EAD on all 13 original test years. Save the three-term objective separately from full reward.
+- [x] Evaluate the supplied PPO checkpoint and run the original 200k-step training function locally (seed 123, CPU). Evaluate the predetermined final checkpoint on the original test split; document hardware/precision differences and single-seed limitations.
+- [x] Save reward components, physical metrics, configs, seed, input/source/checkpoint hashes, versions, and timings for reproduction runs. Report full five-term return and three-term objective separately.
 - [ ] Produce a baseline table and paired annual plots; review scope before adding objectives.
 
+
+Benchmark reproduction checkpoint: [executed comparison notebook](notebooks/02_benchmark_reproduction.ipynb). The four rules, supplied PPO, and one fresh 200k-step PPO run have been evaluated on the authors' 13 test years. The supplied policies reproduce Figure 1's qualitative ordering and score scale; exact numerical agreement is not established because the figure supplies no machine-readable reference values. Both PPO models have seen some of our chronological test years and must not be used as held-out models for that protocol. Detailed local results are in ignored `results/reproduction/` and `reports/BENCHMARK_REPRODUCTION.md`.
+
+Five-seed follow-up completed for learner seeds 123–127, holding the environment year-sampling seed fixed at 123. Mean objective across the five policy means is -18,654.42 (sample SD 3,633.42), compared with Max at -20,492.94. Three seeds are better than Max, one effectively tied, and one worse. Keep this variability in the interpretation; do not use the favorable seed-123 result alone. All checkpoints were final-step selections. Results are in the executed comparison notebook and ignored `results/reproduction/seeds/`.
 
 ### Phase 3: core engineering-versus-learning comparison (weeks 3–4)
 

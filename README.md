@@ -87,6 +87,54 @@ and [Phase 1 findings](reports/PHASE1_FINDINGS.md) for the data audit, initial
 results, timing scope, and known simulator issues. Select `.venv` as the notebook
 kernel in your editor. Generated trajectories and plots go to ignored `results/`.
 
+## Reproduce the Gym4ReaL DamEnv benchmark
+
+Evaluate Random, Mean, Max, EAD, and the supplied PPO checkpoint on the authors'
+original 13 test years (separate from our chronological protocol):
+
+```bash
+uv run --group reproduction lake-como-reproduce
+```
+
+See [the executed benchmark comparison](notebooks/02_benchmark_reproduction.ipynb).
+The optional `reproduction` group installs PyTorch and skrl. Outputs go to
+ignored `results/reproduction/`: a Figure 1-style plot, daily trajectories,
+per-year and aggregate metrics, and source/checkpoint hashes. The plotted score
+includes weighted deficit, flood, and low-water penalties; the full five-term
+reward is saved separately. PPO evaluation uses the saved observation scaler
+and deterministic mean actions on CPU in FP32.
+
+To retrain the authors' fixed 200,000-step configuration with seed 123:
+
+```bash
+uv run --group reproduction lake-como-train-reference
+```
+
+Training uses the original upstream function and observations, including its
+annual reset/terminal behavior. Checkpoints and training metadata stay under
+`results/reproduction/training/`. Evaluate the final checkpoint by supplying
+`--checkpoint <path>` and a separate `--output` directory to
+`lake-como-reproduce`. A single CPU retraining run is not a claim of bitwise
+reproduction of the authors' training or evidence of robustness across seeds.
+
+## Check PPO variation across training seeds
+
+```bash
+uv run --group reproduction lake-como-seed-study --workers 2
+```
+
+This reuses the completed seed-123 reference run and trains seeds 124–127,
+using 200,000 steps and one CPU thread each. Two runs execute concurrently by
+default. Completed checkpoints can be reused on reruns. The learner seed varies;
+the environment's year-sampling seed remains 123, and all evaluations use the
+same original 13 years. No best-seed or best-test-checkpoint selection is used.
+
+Per-seed checkpoints, logs, year-level metrics, paired baseline comparisons,
+and `seed_study.png` are saved under ignored `results/reproduction/seeds/`.
+`aggregate_across_seeds.csv` reports mean, sample standard deviation, minimum,
+and maximum across the **five seed means**, each averaged over the same 13 years.
+This separates training-seed variation from variation across hydrological years.
+
 ## Team Members: 
 
 - Nadine Mohamed
