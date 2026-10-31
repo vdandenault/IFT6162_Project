@@ -47,24 +47,39 @@ class CheckpointPolicy:
             return mean.reshape(-1).cpu().numpy()
 
 
-def evaluate(policy_name, seed=123, checkpoint=CHECKPOINT):
-    # Original observations and membership; no project terminal-level correction.
-    env = make_env('test', protocol='upstream', correct_terminal_level=False)
+def evaluate(policy_name, seed=123, checkpoint=CHECKPOINT, *, split='test',
+             protocol='upstream', correct_terminal_level=False,
+             sequential_years=False, measure_decisions=False, controller_factory=None):
+    env = make_env(split, protocol=protocol, correct_terminal_level=correct_terminal_level)
+    expected = list(settings(split, protocol=protocol)['inflow'])
     sim = env.unwrapped
+    if sequential_years:
+        sim.random_init = False  # Evaluation visits each profile once, including the training split.
     env.action_space.seed(seed)
-    weights = sim.reward_coeff
     if policy_name == 'ppo':
         env = gym.wrappers.RescaleAction(env, min_action=-1.0, max_action=1.0)
         controller = CheckpointPolicy(env.observation_space, env.action_space, checkpoint)
+    if controller_factory is not None:
+        if policy_name == 'ppo':
+            raise ValueError('Custom controllers must use a distinct policy name')
+        controller = controller_factory(env)  # callable(observation, previous_info), physical m³/s
     records = []
     started = time.perf_counter()
-    for episode in range(13):
+    for episode in range(len(expected)):
         obs, info = env.reset(options={'rewind_profiles': episode == 0})
         year = sim.curr_year_data
+        if measure_decisions and policy_name == 'ppo':
+            controller(obs)  # Warm up CPU inference outside measured decisions; scaler remains frozen.
         for day in range(365):
             storage_before = info['storage']
-            if policy_name == 'random':
+            level_before = info['level']
+            decision_start = time.perf_counter_ns() if measure_decisions else 0
+            if controller_factory is not None:
+                action = controller(obs, info)
+            elif policy_name == 'random':
                 action = env.action_space.sample()
+            elif policy_name == 'constant':
+                action = np.array([100.0], dtype=np.float32)
             elif policy_name == 'mean':
                 action = (env.action_space.high + env.action_space.low) / 2
             elif policy_name == 'max':
@@ -75,6 +90,7 @@ def evaluate(policy_name, seed=123, checkpoint=CHECKPOINT):
                 action = controller(obs)
             else:
                 raise ValueError(f'Unknown policy: {policy_name}')
+            decision_ns = time.perf_counter_ns() - decision_start if measure_decisions else None
             obs, reward, terminated, truncated, info = env.step(action)
             weighted = info['weighted_reward']
             if not np.isclose(reward, sum(weighted.values())):
@@ -92,6 +108,8 @@ def evaluate(policy_name, seed=123, checkpoint=CHECKPOINT):
                 'storage_m3': info['storage'],
                 'balance_error_m3': info['storage'] - storage_before - 86400 * (sim.inflow[day] - info['release']),
                 **{f'weighted_{k}': v for k, v in weighted.items()},
+                **({'decision_ns': decision_ns, 'storage_before_m3': storage_before,
+                    'level_before_m': level_before} if measure_decisions else {}),
             })
             if terminated or truncated:
                 if day != 364 or terminated or not truncated:
@@ -99,9 +117,8 @@ def evaluate(policy_name, seed=123, checkpoint=CHECKPOINT):
                 break
     env.close()
     frame = pd.DataFrame(records)
-    expected = list(settings('test', protocol='upstream')['inflow'])
-    if frame.year.drop_duplicates().tolist() != expected or len(frame) != 13 * 365:
-        raise RuntimeError('Incorrect test membership or episode count')
+    if frame.year.drop_duplicates().tolist() != expected or len(frame) != len(expected) * 365:
+        raise RuntimeError('Incorrect split membership or episode count')
     if not np.isfinite(frame.select_dtypes('number')).all().all():
         raise RuntimeError('Nonfinite result')
     return frame, time.perf_counter() - started

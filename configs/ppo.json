@@ -1,0 +1,39 @@
+{
+  "description": "Current PPO baseline selected on validation; historical experiments remain separate.",
+  "training": {
+    "steps": 1000000,
+    "rollouts": 2048,
+    "learning_epochs": 10,
+    "mini_batches": 32,
+    "discount_factor": 0.995,
+    "gae_lambda": 0.95,
+    "learning_rate": 8e-06,
+    "net_arch": [
+      16,
+      16
+    ],
+    "initial_log_std": -0.5,
+    "entropy_loss_scale": 0.0,
+    "mixed_precision": true,
+    "environment_seed": 123,
+    "threads": 1,
+    "protocol": "chronological",
+    "correct_terminal_level": true,
+    "time_limit_bootstrap": false,
+    "checkpoint_selection": "final training step"
+  },
+  "scheduler": {
+    "scheduler": "KLAdaptiveRL",
+    "min_lr": 1e-06,
+    "max_lr": 0.0001
+  },
+  "learner_seeds": [
+    123,
+    124,
+    125,
+    126,
+    127
+  ],
+  "checkpoint_template": "results/stabilization/duration_1m_v1/seed_{seed}/step_1000000.pt",
+  "selection_plan": "experiments/ppo_studies.json#duration_1m"
+}

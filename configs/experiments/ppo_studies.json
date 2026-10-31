@@ -1,0 +1,913 @@
+{
+  "learning_rate": {
+    "common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.0,
+      "mixed_precision": true,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "variants": {
+      "original_scheduler": {
+        "scheduler": "KLAdaptiveRL",
+        "min_lr": 1e-06,
+        "max_lr": 0.01
+      },
+      "capped_scheduler": {
+        "scheduler": "KLAdaptiveRL",
+        "min_lr": 1e-06,
+        "max_lr": 0.0001
+      },
+      "fixed_lr": {
+        "scheduler": null
+      }
+    },
+    "seeds": [
+      123,
+      124,
+      125,
+      126,
+      127
+    ],
+    "selection_rule": "Candidate must have validation mean full return >= control, sample SD <= control, and worst-seed full return >= control. Among qualifying candidates choose highest mean; if none qualifies, retain control and report no stabilization demonstrated. All metrics are seed means over the same 10 validation years.",
+    "train_years": [
+      1946,
+      1947,
+      1948,
+      1949,
+      1950,
+      1951,
+      1952,
+      1953,
+      1954,
+      1955,
+      1956,
+      1957,
+      1958,
+      1959,
+      1960,
+      1961,
+      1962,
+      1963,
+      1964,
+      1965,
+      1966,
+      1967,
+      1968,
+      1969,
+      1970,
+      1971,
+      1972,
+      1973,
+      1974,
+      1975,
+      1976,
+      1977,
+      1978,
+      1979,
+      1980,
+      1981,
+      1982,
+      1983,
+      1984,
+      1985,
+      1986,
+      1987
+    ],
+    "validation_years": [
+      1988,
+      1989,
+      1990,
+      1991,
+      1992,
+      1993,
+      1994,
+      1995,
+      1996,
+      1997
+    ],
+    "test_evaluated": false,
+    "notes": [
+      "Baseline reproduction snapshot is unchanged.",
+      "All arms use chronological membership and the corrected terminal level, unlike original-membership reproduction.",
+      "Annual reset and time-limit bootstrapping remain fixed across arms; continuous years are not implemented.",
+      "Only scheduler changes; mixed precision and entropy remain unchanged."
+    ]
+  },
+  "precision": {
+    "control_common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.0,
+      "mixed_precision": true,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "candidate_common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.0,
+      "mixed_precision": false,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "scheduler": {
+      "scheduler": "KLAdaptiveRL",
+      "min_lr": 1e-06,
+      "max_lr": 0.0001
+    },
+    "seeds": [
+      123,
+      124,
+      125,
+      126,
+      127
+    ],
+    "controls": [
+      {
+        "seed": 123,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_123",
+        "checkpoint_sha256": "8db2f61e41441abc94f2bc38dd7dce33428c394e550262ced3bdf4e9f1b440ba"
+      },
+      {
+        "seed": 124,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_124",
+        "checkpoint_sha256": "09b89606a4726eec35018e588ceeccba5fa7384955acb0b3b78041e3c9c0277f"
+      },
+      {
+        "seed": 125,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_125",
+        "checkpoint_sha256": "6f5d208fcdfb804e381072d8b8bd54e5679285651bb9e244e392b310b12347e5"
+      },
+      {
+        "seed": 126,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_126",
+        "checkpoint_sha256": "9aa4f05b167b6e15522aa7f7e0e2023f4d077cf66ec5199660ae0949e7cf44f6"
+      },
+      {
+        "seed": 127,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_127",
+        "checkpoint_sha256": "e6556d8a8a401c586a25b47dd05ffe4cd265fd11c5f6daa41ec8fed220a972eb"
+      }
+    ],
+    "rule": "Select FP32 only if its five-seed mean full validation return is non-worse, sample SD is non-larger, and weakest seed is non-worse than capped mixed precision; otherwise retain capped mixed precision. No test evaluation or best-seed selection.",
+    "test_evaluated": false,
+    "train_years": [
+      1946,
+      1947,
+      1948,
+      1949,
+      1950,
+      1951,
+      1952,
+      1953,
+      1954,
+      1955,
+      1956,
+      1957,
+      1958,
+      1959,
+      1960,
+      1961,
+      1962,
+      1963,
+      1964,
+      1965,
+      1966,
+      1967,
+      1968,
+      1969,
+      1970,
+      1971,
+      1972,
+      1973,
+      1974,
+      1975,
+      1976,
+      1977,
+      1978,
+      1979,
+      1980,
+      1981,
+      1982,
+      1983,
+      1984,
+      1985,
+      1986,
+      1987
+    ],
+    "validation_years": [
+      1988,
+      1989,
+      1990,
+      1991,
+      1992,
+      1993,
+      1994,
+      1995,
+      1996,
+      1997
+    ],
+    "evaluation": "Both arms: frozen normalization and deterministic mean actions on CPU FP32",
+    "control_precision": "CPU autocast enabled (PyTorch default bfloat16)",
+    "candidate_precision": "CPU autocast disabled; neural-network parameters/operations float32",
+    "inference": "Mixed precision changes training only; inference is the same for both arms"
+  },
+  "entropy": {
+    "control_common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.0,
+      "mixed_precision": true,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "candidate_common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.01,
+      "mixed_precision": true,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "scheduler": {
+      "scheduler": "KLAdaptiveRL",
+      "min_lr": 1e-06,
+      "max_lr": 0.0001
+    },
+    "seeds": [
+      123,
+      124,
+      125,
+      126,
+      127
+    ],
+    "controls": [
+      {
+        "seed": 123,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_123",
+        "checkpoint_sha256": "8db2f61e41441abc94f2bc38dd7dce33428c394e550262ced3bdf4e9f1b440ba"
+      },
+      {
+        "seed": 124,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_124",
+        "checkpoint_sha256": "09b89606a4726eec35018e588ceeccba5fa7384955acb0b3b78041e3c9c0277f"
+      },
+      {
+        "seed": 125,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_125",
+        "checkpoint_sha256": "6f5d208fcdfb804e381072d8b8bd54e5679285651bb9e244e392b310b12347e5"
+      },
+      {
+        "seed": 126,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_126",
+        "checkpoint_sha256": "9aa4f05b167b6e15522aa7f7e0e2023f4d077cf66ec5199660ae0949e7cf44f6"
+      },
+      {
+        "seed": 127,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_127",
+        "checkpoint_sha256": "e6556d8a8a401c586a25b47dd05ffe4cd265fd11c5f6daa41ec8fed220a972eb"
+      }
+    ],
+    "rule": "Select entropy bonus 0.01 only if its five-seed mean full validation return is non-worse, sample SD is non-larger, and weakest seed is non-worse than capped zero-entropy controls; otherwise retain zero entropy. No test evaluation or best-seed selection.",
+    "test_evaluated": false,
+    "train_years": [
+      1946,
+      1947,
+      1948,
+      1949,
+      1950,
+      1951,
+      1952,
+      1953,
+      1954,
+      1955,
+      1956,
+      1957,
+      1958,
+      1959,
+      1960,
+      1961,
+      1962,
+      1963,
+      1964,
+      1965,
+      1966,
+      1967,
+      1968,
+      1969,
+      1970,
+      1971,
+      1972,
+      1973,
+      1974,
+      1975,
+      1976,
+      1977,
+      1978,
+      1979,
+      1980,
+      1981,
+      1982,
+      1983,
+      1984,
+      1985,
+      1986,
+      1987
+    ],
+    "validation_years": [
+      1988,
+      1989,
+      1990,
+      1991,
+      1992,
+      1993,
+      1994,
+      1995,
+      1996,
+      1997
+    ],
+    "entropy": "Actor loss adds -0.01 \u00d7 Gaussian policy entropy; environment reward is unchanged",
+    "evaluation": "Both arms: saved frozen normalizer and deterministic mean actions on CPU FP32",
+    "note": "Only one coefficient is tested. No post-hoc search or test-set selection."
+  },
+  "duration_400k": {
+    "common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.0,
+      "mixed_precision": true,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "scheduler": {
+      "scheduler": "KLAdaptiveRL",
+      "min_lr": 1e-06,
+      "max_lr": 0.0001
+    },
+    "seeds": [
+      123,
+      124,
+      125,
+      126,
+      127
+    ],
+    "budgets": [
+      200000,
+      400000
+    ],
+    "controls": [
+      {
+        "seed": 123,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_123",
+        "checkpoint_sha256": "8db2f61e41441abc94f2bc38dd7dce33428c394e550262ced3bdf4e9f1b440ba"
+      },
+      {
+        "seed": 124,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_124",
+        "checkpoint_sha256": "09b89606a4726eec35018e588ceeccba5fa7384955acb0b3b78041e3c9c0277f"
+      },
+      {
+        "seed": 125,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_125",
+        "checkpoint_sha256": "6f5d208fcdfb804e381072d8b8bd54e5679285651bb9e244e392b310b12347e5"
+      },
+      {
+        "seed": 126,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_126",
+        "checkpoint_sha256": "9aa4f05b167b6e15522aa7f7e0e2023f4d077cf66ec5199660ae0949e7cf44f6"
+      },
+      {
+        "seed": 127,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_127",
+        "checkpoint_sha256": "e6556d8a8a401c586a25b47dd05ffe4cd265fd11c5f6daa41ec8fed220a972eb"
+      }
+    ],
+    "rule": "Select 400k only if its five-seed mean full validation return is non-worse, sample SD is non-larger, and weakest seed is non-worse than its paired 200k prefixes; otherwise retain 200k. Report added compute. No best intermediate checkpoint or test selection.",
+    "test_evaluated": false,
+    "continuous_training": true,
+    "train_years": [
+      1946,
+      1947,
+      1948,
+      1949,
+      1950,
+      1951,
+      1952,
+      1953,
+      1954,
+      1955,
+      1956,
+      1957,
+      1958,
+      1959,
+      1960,
+      1961,
+      1962,
+      1963,
+      1964,
+      1965,
+      1966,
+      1967,
+      1968,
+      1969,
+      1970,
+      1971,
+      1972,
+      1973,
+      1974,
+      1975,
+      1976,
+      1977,
+      1978,
+      1979,
+      1980,
+      1981,
+      1982,
+      1983,
+      1984,
+      1985,
+      1986,
+      1987
+    ],
+    "validation_years": [
+      1988,
+      1989,
+      1990,
+      1991,
+      1992,
+      1993,
+      1994,
+      1995,
+      1996,
+      1997
+    ],
+    "selection": "Compare fixed 200k and 400k endpoints, no best intermediate checkpoint",
+    "prefix_verification": "Exact equality of all saved checkpoint components including optimizer/scalers; validation scores also checked",
+    "evaluation_timing": "After 400k training ends; no evaluation-induced RNG changes mid-run"
+  },
+  "duration_600k": {
+    "common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.0,
+      "mixed_precision": true,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "scheduler": {
+      "scheduler": "KLAdaptiveRL",
+      "min_lr": 1e-06,
+      "max_lr": 0.0001
+    },
+    "seeds": [
+      123,
+      124,
+      125,
+      126,
+      127
+    ],
+    "budgets": [
+      200000,
+      400000,
+      600000
+    ],
+    "controls": [
+      {
+        "seed": 123,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_123",
+        "checkpoint_sha256": "8db2f61e41441abc94f2bc38dd7dce33428c394e550262ced3bdf4e9f1b440ba"
+      },
+      {
+        "seed": 124,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_124",
+        "checkpoint_sha256": "09b89606a4726eec35018e588ceeccba5fa7384955acb0b3b78041e3c9c0277f"
+      },
+      {
+        "seed": 125,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_125",
+        "checkpoint_sha256": "6f5d208fcdfb804e381072d8b8bd54e5679285651bb9e244e392b310b12347e5"
+      },
+      {
+        "seed": 126,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_126",
+        "checkpoint_sha256": "9aa4f05b167b6e15522aa7f7e0e2023f4d077cf66ec5199660ae0949e7cf44f6"
+      },
+      {
+        "seed": 127,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_127",
+        "checkpoint_sha256": "e6556d8a8a401c586a25b47dd05ffe4cd265fd11c5f6daa41ec8fed220a972eb"
+      }
+    ],
+    "rule": "600k qualifies versus 400k only if five-seed mean full validation return, sample SD, and weakest seed are all non-worse. This comparison does not retroactively change the earlier 200k-versus-400k decision. No test selection.",
+    "test_evaluated": false,
+    "continuous_training": true,
+    "train_years": [
+      1946,
+      1947,
+      1948,
+      1949,
+      1950,
+      1951,
+      1952,
+      1953,
+      1954,
+      1955,
+      1956,
+      1957,
+      1958,
+      1959,
+      1960,
+      1961,
+      1962,
+      1963,
+      1964,
+      1965,
+      1966,
+      1967,
+      1968,
+      1969,
+      1970,
+      1971,
+      1972,
+      1973,
+      1974,
+      1975,
+      1976,
+      1977,
+      1978,
+      1979,
+      1980,
+      1981,
+      1982,
+      1983,
+      1984,
+      1985,
+      1986,
+      1987
+    ],
+    "validation_years": [
+      1988,
+      1989,
+      1990,
+      1991,
+      1992,
+      1993,
+      1994,
+      1995,
+      1996,
+      1997
+    ],
+    "selection": "Fixed 400k-versus-600k comparison; 200k retained for context",
+    "prefix_verification": "Exact equality of all saved checkpoint components including optimizer/scalers; validation scores also checked",
+    "evaluation_timing": "After 600k training ends; no evaluation-induced RNG changes mid-run",
+    "controls_400k": [
+      {
+        "seed": 123,
+        "checkpoint_sha256": {
+          "200000": "6b8293e69aa7c4d1e0f8556fa76966657e576c71ee608c2cb2204f3be062fcad",
+          "400000": "5e9623fa9a7f70017478cb756480e01ee8664e6cfbf610220f4adf40a59861e2"
+        }
+      },
+      {
+        "seed": 124,
+        "checkpoint_sha256": {
+          "200000": "2f7c638684f15f5319243b15440eca300cd37d73310e920061ef52132fcccb77",
+          "400000": "a3ab7c591c5632495e3a7420fbe8310ddfabae41cb07df7b7ba831651c62e5b6"
+        }
+      },
+      {
+        "seed": 125,
+        "checkpoint_sha256": {
+          "200000": "b69d7dff107dc45ef9d88a8be739d680047d3d6fbb729cdb6aadfab9795556b5",
+          "400000": "87b87b9c55429d4939de20b627ffa90a7a62d50c5207fa8c474a41bcfcd4572a"
+        }
+      },
+      {
+        "seed": 126,
+        "checkpoint_sha256": {
+          "200000": "8d4ea31a0b33034de52891bf794b22b07c429f7ea7e68be27d20ca1611995852",
+          "400000": "d3d75a624e55475a778a9d790575354cd66cd876663d2ba862aff19302609bdd"
+        }
+      },
+      {
+        "seed": 127,
+        "checkpoint_sha256": {
+          "200000": "abaca5b89c8389f54774870b132066ca66089bc8c3036547838247fd17c606e6",
+          "400000": "238754b4d4ebf5266648cd768b8f053c8b254a996019d6e9ba65f9284e4599df"
+        }
+      }
+    ]
+  },
+  "duration_1m": {
+    "common": {
+      "steps": 200000,
+      "rollouts": 2048,
+      "learning_epochs": 10,
+      "mini_batches": 32,
+      "discount_factor": 0.995,
+      "gae_lambda": 0.95,
+      "learning_rate": 8e-06,
+      "net_arch": [
+        16,
+        16
+      ],
+      "initial_log_std": -0.5,
+      "entropy_loss_scale": 0.0,
+      "mixed_precision": true,
+      "environment_seed": 123,
+      "threads": 1,
+      "protocol": "chronological",
+      "correct_terminal_level": true,
+      "time_limit_bootstrap": false,
+      "checkpoint_selection": "final training step"
+    },
+    "scheduler": {
+      "scheduler": "KLAdaptiveRL",
+      "min_lr": 1e-06,
+      "max_lr": 0.0001
+    },
+    "seeds": [
+      123,
+      124,
+      125,
+      126,
+      127
+    ],
+    "budgets": [
+      200000,
+      400000,
+      600000,
+      800000,
+      1000000
+    ],
+    "controls": [
+      {
+        "seed": 123,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_123",
+        "checkpoint_sha256": "8db2f61e41441abc94f2bc38dd7dce33428c394e550262ced3bdf4e9f1b440ba"
+      },
+      {
+        "seed": 124,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_124",
+        "checkpoint_sha256": "09b89606a4726eec35018e588ceeccba5fa7384955acb0b3b78041e3c9c0277f"
+      },
+      {
+        "seed": 125,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_125",
+        "checkpoint_sha256": "6f5d208fcdfb804e381072d8b8bd54e5679285651bb9e244e392b310b12347e5"
+      },
+      {
+        "seed": 126,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_126",
+        "checkpoint_sha256": "9aa4f05b167b6e15522aa7f7e0e2023f4d077cf66ec5199660ae0949e7cf44f6"
+      },
+      {
+        "seed": 127,
+        "path": "results/stabilization/lr_v1/capped_scheduler/seed_127",
+        "checkpoint_sha256": "e6556d8a8a401c586a25b47dd05ffe4cd265fd11c5f6daa41ec8fed220a972eb"
+      }
+    ],
+    "rule": "Compare fixed 800k and 1M endpoints independently against 600k. Each qualifies only if five-seed mean full validation return, sample SD, and weakest seed are all non-worse. Among qualifying endpoints choose higher mean return, breaking ties toward fewer steps; otherwise retain 600k. Stop at 1M. No test selection.",
+    "test_evaluated": false,
+    "continuous_training": true,
+    "train_years": [
+      1946,
+      1947,
+      1948,
+      1949,
+      1950,
+      1951,
+      1952,
+      1953,
+      1954,
+      1955,
+      1956,
+      1957,
+      1958,
+      1959,
+      1960,
+      1961,
+      1962,
+      1963,
+      1964,
+      1965,
+      1966,
+      1967,
+      1968,
+      1969,
+      1970,
+      1971,
+      1972,
+      1973,
+      1974,
+      1975,
+      1976,
+      1977,
+      1978,
+      1979,
+      1980,
+      1981,
+      1982,
+      1983,
+      1984,
+      1985,
+      1986,
+      1987
+    ],
+    "validation_years": [
+      1988,
+      1989,
+      1990,
+      1991,
+      1992,
+      1993,
+      1994,
+      1995,
+      1996,
+      1997
+    ],
+    "selection": "Fixed 800k and 1M versus 600k; earlier budgets for context",
+    "prefix_verification": "Exact equality of all saved checkpoint components including optimizer/scalers; validation scores also checked",
+    "evaluation_timing": "After 1M training ends; no evaluation-induced RNG changes mid-run",
+    "stop_steps": 1000000,
+    "controls_400k": [
+      {
+        "seed": 123,
+        "checkpoint_sha256": {
+          "200000": "6b8293e69aa7c4d1e0f8556fa76966657e576c71ee608c2cb2204f3be062fcad",
+          "400000": "5e9623fa9a7f70017478cb756480e01ee8664e6cfbf610220f4adf40a59861e2"
+        }
+      },
+      {
+        "seed": 124,
+        "checkpoint_sha256": {
+          "200000": "2f7c638684f15f5319243b15440eca300cd37d73310e920061ef52132fcccb77",
+          "400000": "a3ab7c591c5632495e3a7420fbe8310ddfabae41cb07df7b7ba831651c62e5b6"
+        }
+      },
+      {
+        "seed": 125,
+        "checkpoint_sha256": {
+          "200000": "b69d7dff107dc45ef9d88a8be739d680047d3d6fbb729cdb6aadfab9795556b5",
+          "400000": "87b87b9c55429d4939de20b627ffa90a7a62d50c5207fa8c474a41bcfcd4572a"
+        }
+      },
+      {
+        "seed": 126,
+        "checkpoint_sha256": {
+          "200000": "8d4ea31a0b33034de52891bf794b22b07c429f7ea7e68be27d20ca1611995852",
+          "400000": "d3d75a624e55475a778a9d790575354cd66cd876663d2ba862aff19302609bdd"
+        }
+      },
+      {
+        "seed": 127,
+        "checkpoint_sha256": {
+          "200000": "abaca5b89c8389f54774870b132066ca66089bc8c3036547838247fd17c606e6",
+          "400000": "238754b4d4ebf5266648cd768b8f053c8b254a996019d6e9ba65f9284e4599df"
+        }
+      }
+    ],
+    "controls_600k": [
+      {
+        "seed": 123,
+        "checkpoint_sha256": {
+          "200000": "6b8293e69aa7c4d1e0f8556fa76966657e576c71ee608c2cb2204f3be062fcad",
+          "400000": "5e9623fa9a7f70017478cb756480e01ee8664e6cfbf610220f4adf40a59861e2",
+          "600000": "362299bacf71435f6a4a92b3e7286d6108d89ccfcc9895dec49f4adf2423e8e1"
+        }
+      },
+      {
+        "seed": 124,
+        "checkpoint_sha256": {
+          "200000": "2f7c638684f15f5319243b15440eca300cd37d73310e920061ef52132fcccb77",
+          "400000": "a3ab7c591c5632495e3a7420fbe8310ddfabae41cb07df7b7ba831651c62e5b6",
+          "600000": "9b55ce5c16f152f9420812d9abb79c159f87569213f4d7ca30de131bee464584"
+        }
+      },
+      {
+        "seed": 125,
+        "checkpoint_sha256": {
+          "200000": "b69d7dff107dc45ef9d88a8be739d680047d3d6fbb729cdb6aadfab9795556b5",
+          "400000": "87b87b9c55429d4939de20b627ffa90a7a62d50c5207fa8c474a41bcfcd4572a",
+          "600000": "6760a1f71b33a88b55b129edf26e25edec4e7031f37a4d4cd736d268abd3d988"
+        }
+      },
+      {
+        "seed": 126,
+        "checkpoint_sha256": {
+          "200000": "8d4ea31a0b33034de52891bf794b22b07c429f7ea7e68be27d20ca1611995852",
+          "400000": "d3d75a624e55475a778a9d790575354cd66cd876663d2ba862aff19302609bdd",
+          "600000": "82899a32e40470d401d85f002c19762e36a511d6d138eaba63d449f84ba5d2ec"
+        }
+      },
+      {
+        "seed": 127,
+        "checkpoint_sha256": {
+          "200000": "abaca5b89c8389f54774870b132066ca66089bc8c3036547838247fd17c606e6",
+          "400000": "238754b4d4ebf5266648cd768b8f053c8b254a996019d6e9ba65f9284e4599df",
+          "600000": "c89e16cb2e0b94ce673bb944e4c3c1c9ab12a4082ffc49cc6b84ed2132d79861"
+        }
+      }
+    ]
+  }
+}

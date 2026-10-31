@@ -1,141 +1,89 @@
-# IFT6162 Project
+# Lake Como reservoir control
 
-Course projects for IFT6162 from 
-[pierrelucbacon.com/rlbook/interactive/projects.html](https://pierrelucbacon.com/rlbook/interactive/projects.html).
+IFT6162 project: compare a literature-based MPC controller with PPO for daily
+Lake Como releases using Gym4ReaL's DamEnv. Demand, flood, and low-water control
+are the core scope; hydropower is optional.
 
-## Lake Como reservoir control
+## Start here
 
-See [the project plan](PROJECT_PLAN.md) for the simulation model, data sources,
-evaluation protocol, and implementation milestones.
+- [Project plan](PROJECT_PLAN.md): model, scope, current status, and remaining work.
+- [PPO findings](docs/PPO.md): selected settings and consolidated experimental evidence.
+- [Evaluation](docs/EVALUATION.md): run the comparison and interpret metrics.
+- [Literature review](docs/LITERATURE_REVIEW.md): references and MPC/FQI decisions.
 
-## Simulator source
+For a visual introduction, run [the environment walkthrough](scripts/analysis/environment_and_data.py).
+For current results, run [the controller comparison](scripts/analysis/controller_comparison.py).
+The historical analysis scripts retain detailed experimental evidence; they are optional
+reading, linked from the PPO findings.
 
-Our [Gym4ReaL fork](https://github.com/vdandenault/gym4ReaL) is included as a
-pinned Git submodule at `external/gym4real/`.
+## Setup
 
-Clone this project with its simulator:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and clone
+with the pinned simulator fork:
 
 ```bash
 git clone --recurse-submodules https://github.com/vdandenault/IFT6162_Project.git
+cd IFT6162_Project
+uv sync --locked --group reproduction
 ```
 
-For an existing checkout:
+For an existing checkout, run `git submodule update --init --recursive` first.
+uv creates `.venv` using Python 3.12 and installs the project and Gym4ReaL workspace
+in editable mode. Scripts import the installed packages directly; no `sys.path` edits or shell
+activation are needed. `uv.lock` pins dependencies. Use `uv add` for changes
+and review both the project file and lockfile.
+
+## Common commands
 
 ```bash
-git submodule update --init --recursive
+uv run --group reproduction lake-como-audit
+uv run --group reproduction lake-como-rollout --split validation --years 1990
+uv run --group reproduction lake-como-compare
+uv run --group reproduction python -m unittest discover -s tests -v
 ```
 
-Keep experiment code in this repository and simulator changes in the fork.
-After reviewing and committing simulator changes in the fork, update this
-repository's submodule reference to the chosen commit. Dependencies are not
-installed by the submodule commands; see `external/gym4real/docs/dam.md` for
-the upstream DamEnv setup instructions.
+The comparison defaults to Random, Mean, Max, EAD, and all five selected 1M PPO
+checkpoints on 1988–1997 validation years. It loads local checkpoints; it performs
+no training or test evaluation. [Evaluation options](docs/EVALUATION.md) cover
+controller subsets, other splits, and explicit checkpoint paths. Existing nonempty
+comparison output directories are rejected; choose a new `--output` for another run.
+PPO reproduction/training commands are listed together in [PPO findings](docs/PPO.md#reproduce-or-inspect-details).
 
-## Phase 1: run and explore
-
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (on macOS: `brew install uv`), initialize the submodule, then run from the project root:
+## Readable analysis scripts
 
 ```bash
-uv sync --locked
-uv run lake-como-audit
-uv run python -m unittest discover -s tests -v
-uv run lake-como-rollout --benchmark 100
+uv run --group reproduction python scripts/analysis/environment_and_data.py
+uv run --group reproduction python scripts/analysis/controller_comparison.py
 ```
 
-`uv sync` creates `.venv`, uses Python 3.12, and installs both workspace
-packages in editable mode, including the notebook tools in the default `dev`
-group. `uv.lock` records the resolved dependencies; `--locked` prevents an
-unexpected lockfile update. No environment activation is needed for `uv run`.
+The walkthrough runs short training-year diagnostics and saves PNGs under
+`results/analysis/environment_and_data/`. The other analysis scripts read saved
+experiment results, print tables/checks, and print paths to existing PNG plots.
+They do not launch training or new policy evaluations. If results are missing,
+run the corresponding experiment command listed in [PPO findings](docs/PPO.md).
+Scripts retain the explanations as comments and run top-to-bottom through `main()`.
+Generated outputs stay ignored; original notebook files were archived locally in
+`reports/archive/notebooks_before_scripts/`.
 
-Normal imports such as `from lake_como.baselines import rollout` work in scripts
-and notebooks regardless of the current working directory. Select this project's
-`.venv` as the notebook kernel. The simulator fork includes a packaging-only
-change to its `pyproject.toml`; review it separately from the parent changes.
-The submodule Git commit pins simulator source; `uv.lock` pins Python packages.
+## Configuration and local artifacts
 
-To add a dependency, use `uv add <package>` (or `uv add --dev <package>` for
-notebook/development tools). Review both `pyproject.toml` and `uv.lock` afterward.
-The workspace layout follows [uv's workspace documentation](https://docs.astral.sh/uv/concepts/projects/workspaces/).
+- `configs/splits.json`: train 1946–1987, validation 1988–1997, test 1998–2010.
+- `configs/ppo.json`: current selected PPO settings and default checkpoint locations.
+- `configs/experiments/ppo_studies.json`: exact historical experiment plans, grouped by study.
 
-The default evaluation protocol is chronological, with leap years included:
+Use validation for design decisions; reserve test years for the final comparison.
+Leap years currently retain 365-step episodes, annual storage resets to level
+0.35 m, and terminal level observations are corrected. See the plan for limitations.
+`lake-como-rollout --no-include-leap-years` supports sensitivity checks;
+`--protocol upstream` selects the separate original benchmark membership.
 
-- Training: 1946–1987 (42 years).
-- Validation: 1988–1997 (10 years).
-- Testing: 1998–2010 (13 years).
+Generated `results/`, `reports/`, `background/`, and local PDF papers are ignored.
+Only PNG graphics are needed. Our [Gym4ReaL fork](https://github.com/vdandenault/gym4ReaL)
+is pinned at `external/gym4real/`; keep simulator changes in that fork and project
+experiments here. Its existing packaging change is separate from simulator physics.
+Review and commit fork changes separately before updating the parent submodule pin.
 
-Year membership is recorded in `configs/splits.json`. Use validation to select
-settings and reserve testing for the final comparison. Example commands:
-
-```bash
-uv run lake-como-rollout --split train --years 1984
-uv run lake-como-rollout --split validation --years 1990
-uv run lake-como-rollout --no-include-leap-years
-# Separate reference protocol with the authors' original mixed-year membership:
-uv run lake-como-rollout --protocol upstream --split train --years 1985
-```
-
-Leap-year profiles retain upstream 365-step behavior; their final sample is
-unused. This is an accepted temporary approximation, not full calendar support.
-The Python API exposes `protocol` and `include_leap_years` too. A project wrapper
-corrects the returned final level without changing physics, rewards, or resets.
-Annual episodes still start at 0.35 m; continuous year-to-year storage is not yet
-implemented. `make_env(..., correct_terminal_level=False)` exposes the unmodified
-observation for source reproduction checks.
-
-Start with [the executed walkthrough](notebooks/01_environment_and_data.ipynb)
-and [Phase 1 findings](reports/PHASE1_FINDINGS.md) for the data audit, initial
-results, timing scope, and known simulator issues. Select `.venv` as the notebook
-kernel in your editor. Generated trajectories and plots go to ignored `results/`.
-
-## Reproduce the Gym4ReaL DamEnv benchmark
-
-Evaluate Random, Mean, Max, EAD, and the supplied PPO checkpoint on the authors'
-original 13 test years (separate from our chronological protocol):
-
-```bash
-uv run --group reproduction lake-como-reproduce
-```
-
-See [the executed benchmark comparison](notebooks/02_benchmark_reproduction.ipynb).
-The optional `reproduction` group installs PyTorch and skrl. Outputs go to
-ignored `results/reproduction/`: a Figure 1-style plot, daily trajectories,
-per-year and aggregate metrics, and source/checkpoint hashes. The plotted score
-includes weighted deficit, flood, and low-water penalties; the full five-term
-reward is saved separately. PPO evaluation uses the saved observation scaler
-and deterministic mean actions on CPU in FP32.
-
-To retrain the authors' fixed 200,000-step configuration with seed 123:
-
-```bash
-uv run --group reproduction lake-como-train-reference
-```
-
-Training uses the original upstream function and observations, including its
-annual reset/terminal behavior. Checkpoints and training metadata stay under
-`results/reproduction/training/`. Evaluate the final checkpoint by supplying
-`--checkpoint <path>` and a separate `--output` directory to
-`lake-como-reproduce`. A single CPU retraining run is not a claim of bitwise
-reproduction of the authors' training or evidence of robustness across seeds.
-
-## Check PPO variation across training seeds
-
-```bash
-uv run --group reproduction lake-como-seed-study --workers 2
-```
-
-This reuses the completed seed-123 reference run and trains seeds 124–127,
-using 200,000 steps and one CPU thread each. Two runs execute concurrently by
-default. Completed checkpoints can be reused on reruns. The learner seed varies;
-the environment's year-sampling seed remains 123, and all evaluations use the
-same original 13 years. No best-seed or best-test-checkpoint selection is used.
-
-Per-seed checkpoints, logs, year-level metrics, paired baseline comparisons,
-and `seed_study.png` are saved under ignored `results/reproduction/seeds/`.
-`aggregate_across_seeds.csv` reports mean, sample standard deviation, minimum,
-and maximum across the **five seed means**, each averaged over the same 13 years.
-This separates training-seed variation from variation across hydrological years.
-
-## Team Members: 
+## Team
 
 - Nadine Mohamed
 - Daniel Martineau
