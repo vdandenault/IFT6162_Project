@@ -5,18 +5,20 @@
 Can a learned daily release policy improve the trade-off between downstream water
 supply and flood/low-water risk on held-out Lake Como years?
 
-The required comparison is **literature-based deterministic MPC versus PPO** in
+The core comparison is **literature-based MPC versus learning-based control** in
 DamEnv, with matched decision-time information, physical constraints, and evaluation
-metrics. PPO and the shared evaluator are ready. A deterministic MPC prototype is implemented;
-**the next task is diagnosing and validating it as an engineering benchmark**.
-Simple rules are sanity checks. Actual operator use of the proposed MPC remains
-unverified, so describe it as a literature-based engineering controller.
+metrics. PPO/MPC references are frozen, the common filter experiment is complete,
+and a first FQI pilot is implemented. See [current results](RESULTS.md). The
+chronological test split remains reserved while experimental choices are settled.
+Actual operator use of the proposed MPC remains unverified.
 
-Keep the core to two substantial controllers. FQI is the preferred optional third
-method after the core works; scenario MPC and stochastic DP are alternatives,
-not additional mandatory implementations. Hydropower requires a justified turbine,
-head, efficiency, and possibly price model. Do not interpret surplus release or
-stored water as measured electricity generation.
+PPO and FQI are already model-free RL methods. A new **hands-on SAC learning phase**
+will develop an online, replay-based continuous actor–critic in PyTorch, rather
+than merely adding another library call. Its purpose is understanding and a
+controlled comparison, with no assumption that it will beat PPO. Existing frozen
+references remain intact; FQI refinement and SDP are not prerequisites for learning
+SAC. Hydropower still requires justified turbine, head, efficiency, and price
+assumptions; stored water or surplus discharge is not measured generation.
 
 ## The simulated control problem
 
@@ -138,7 +140,38 @@ reference; these are new experiments, not retroactive benchmark changes.
 - [ ] Audit FQI conditional state/action coverage, target/fit behavior, and discretization before selecting a larger dataset or backup budget. Preserve pilot results and the frozen PPO/MPC controls; no test evaluation until FQI is settled.
 - [ ] Use stochastic DP only as an optional reduced-state, coarse-grid reference or FQI sanity check. Fit inflow transition probabilities from training years, account for season, and check grid refinement. Do not make both SDP and FQI prerequisites: PPO plus a credible MPC already covers the main comparison, and extra methods must answer a concrete question.
 
-### Phase 5 — final analysis and presentation
+### Phase 5 — hands-on online RL: implement and understand SAC
+
+**Learning goal:** understand and implement replay, bootstrapped value learning,
+policy gradients, exploration, and target networks on a real control problem.
+PPO already learns directly from interaction; FQI already learns from a fixed
+batch. SAC adds an online, off-policy continuous actor–critic: collect experience,
+reuse it in replay, learn Q-functions, and learn a stochastic actor. “Model-free”
+means the plain agent does not call reservoir physics to plan actions or form its updates;
+the simulator still supplies physical transitions during data collection.
+
+**Primary experiment:** compare mean full validation reward at a predeclared
+interaction budget against the frozen references. Secondary outcomes are learning
+curves, seed variability, water-supply/severity trade-offs, and compute. A useful
+learning phase does not depend on achieving a new best score.
+
+- [ ] Read and annotate a small primary-source set: Wang et al. (2020), already in `/papers`, for a reservoir MDP and negative SAC result; Tabas & Samadi (2024), *Fill-and-Spill*, for continuous-action reservoir SAC/TD3; and Haarnoja et al. for SAC's actual update equations. Extract observations/timing, action units, reward, training data, episode boundaries, hyperparameters, comparators, and limitations. The initial screening and links are in [the focused review](docs/LITERATURE_REVIEW.md#hands-on-online-rl-phase-sac).
+- [ ] Write the reservoir MDP and each SAC update in our own words before coding: what is observed, what is hidden, what enters replay, what the actor/critics predict, what is detached, and why target networks are needed. Connect SAC's bootstrapped target to FQI and its actor update to PPO. Derive the modern twin-Q/automatic-temperature variant explicitly; do not mix incompatible equations from different SAC versions.
+- [ ] Implement a small transparent PyTorch agent: replay buffer, bounded stochastic actor, two Q-critics, target critics, and an explicit training loop. A trusted implementation may be a test reference, but keep the learning exercise's updates visible in our code. Reuse the environment adapter and evaluator; do not rewrite DamEnv or change its reward for an apparent win.
+- [ ] Add components incrementally: (1) transition storage/sampling and terminal masks, (2) critic Bellman regression and target updates, (3) reparameterized actor gradients, (4) entropy temperature. Check target detachment, gradient flow, bounded actions, tanh log-probability correction, and consistency of normalized action units/entropy targets. Explain each component and one failure it prevents.
+- [ ] Verify on a small known-value control task and short training-only DamEnv runs before expensive experiments. Confirm reset/terminal handling, no future-inflow leakage, finite targets/gradients, and checkpoint round trips. Debug correctness before changing reward weights, adding memory, or running a broad hyperparameter sweep.
+- [ ] Predeclare the first reservoir study: same five-feature past-inflow observation, original reward, action limits, chronological splits, annual resets, and no bootstrap across episode ends. Fit normalization using training data only. Record any reward scaling and its interaction with the entropy temperature; evaluate with original reward units. Keep the finite-scenario safety filter outside initial training and evaluate both frozen plain/shared-filter tracks afterward.
+- [ ] Choose and log warmup, replay size, minibatch size, update-to-data ratio, target-update rate, network capacity, evaluation policy, checkpoints, and a bounded interaction budget before validation. Match PPO's five learner seeds for the full study. Count warmup interactions and report gradient updates and runtime as well as environment steps: equal interaction budgets are not equal computation, and FQI's shared-data pilot is a separate budget/design.
+- [ ] Run one bounded SAC study and explain behavior: mean/weakest-seed reward, learning curves, action distribution, entropy/temperature, twin-Q disagreement, and wet/dry supply/severity outcomes. These diagnostics are not calibrated uncertainty or safety guarantees. Do not silently select the best seed or best validation checkpoint, and do not change the frozen PPO/MPC/FQI results.
+- [ ] Produce a short walkthrough and PNGs in ignored `background/`, showing replay → critic target → actor update → release. End with what was learned, implementation checks, empirical limits, and whether SAC merits the final comparison. A losing SAC result can still be a strong learning outcome.
+
+Start with **one SAC implementation**, not a SAC/TD3/DDPG/recurrent-agent sweep.
+TD3 is a literature-supported alternative if the method review changes the choice,
+not an automatic extra controller. Memory, multi-year episodes, synthetic inflows,
+and learned dynamics are later extensions because each changes another part of
+the problem. No SAC implementation or training is launched by this planning phase.
+
+### Phase 6 — final analysis and presentation
 
 - [ ] Evaluate the frozen controllers on held-out test years and report paired trade-offs, seed variability, and limitations.
 - [ ] Add reward-weight or hydropower extensions only if time and defensible parameters support them.

@@ -4,11 +4,16 @@ Working notes, not a completed systematic review. The purpose is to select a def
 
 ## Current recommendation
 
-Required: literature-based deterministic MPC versus PPO, with identical decision-time information, daily release constraints, and evaluation metrics. Use EAD and the other simple rules as sanity checks.
+The frozen comparison now includes past-inflow PPO and persistence/retention MPC,
+with plain and common-filtered tracks. A first tree-based FQI pilot is implemented;
+its coverage and finite-backup limitations remain open. These references stay fixed.
 
-Preferred third method: tree-based FQI, if resources permit. Optional alternatives: scenario MPC to study forecast uncertainty, or stochastic DP to study discretized long-horizon planning. Do not implement every method before establishing the core comparison.
-
-Two substantial controllers can answer the project question; three provide a useful additional comparison. This is a scope recommendation, not an algorithm-count requirement from the course. A horizon sweep, scenario-count sweep, or forecast-input ablation is an experiment within a method, not a new independent algorithm.
+For the user's learning goal, add one focused **online model-free actor–critic
+phase**, with SAC the working choice. Implementing its update loop explicitly
+teaches different mechanics from calling the PPO library or fitting the batch FQI
+forest. This is a learning-driven extension, not an algorithm-count requirement or
+a prediction that SAC will outperform current PPO. SDP and additional algorithms
+remain optional. See [the new phase](../PROJECT_PLAN.md#phase-5--hands-on-online-rl-implement-and-understand-sac).
 
 ## Starting references
 
@@ -123,3 +128,70 @@ features, and past-inflow timing. Annual truncation masks the next-value term,
 matching PPO's disabled time-limit bootstrap. Training data coverage, grid
 resolution, regression error, and finite backup count remain limitations of the
 first pilot. See [the FQI protocol and results](EVALUATION.md#first-tree-based-fqi-pilot).
+
+
+## Hands-on online RL phase: SAC
+
+PPO and FQI already are RL. The proposed distinction is **hands-on implementation
+of online off-policy continuous control**, not a more “pure” form of RL. SAC is a
+useful teaching bridge: FQI supplies the idea of bootstrapped Q-targets, PPO supplies
+the idea of a learned stochastic actor, and SAC adds online replay and an
+entropy-regularized actor–critic objective. This is our pedagogical recommendation,
+not an inference that published reservoir scores transfer to DamEnv.
+
+### Reservoir application already in our papers: Wang et al. (2020)
+
+[Efficient Reservoir Management through Deep Reinforcement Learning](https://arxiv.org/html/2012.03822v1),
+Xinrun Wang et al., workshop paper / arXiv preprint. Local copy:
+[PDF](<../papers/Efficient Reservoir Management through Deep Reinforcement Learning.pdf>).
+Methods and results were checked in the local full text and arXiv HTML.
+
+The Bansagar study uses reservoir level and recent rainfall history, release
+choices, and irrigation/hydropower/flood objectives. It compares DDPG, TD3 and SAC
+under alternative inflow simulators. Crucially, its results section reports that
+SAC training was unsuccessful in most tested simulators; TD3/DDPG were stronger
+there. Read it for MDP design, observation history, inflow-model assumptions,
+and a useful negative result—not evidence that SAC is the reservoir winner.
+Its rainfall inputs, objectives and simulator differ from our five-feature DamEnv
+setup; its operator comparison does not transfer to Lake Como.
+
+### Closely related continuous-control application: Tabas & Samadi (2024)
+
+[Fill-and-Spill: Deep Reinforcement Learning Policy Gradient Methods for Reservoir Operation Decision and Control](https://arxiv.org/abs/2403.04195),
+Sadegh Sadeghi Tabas and Vidya Samadi, arXiv preprint (v1).
+**Initial screening is from the abstract; full-method extraction remains a task.**
+
+It studies DDPG, TD3, and two SAC versions for Folsom Reservoir, with water-supply,
+hydropower, environmental-flow and flood-control functions. Its abstract reports
+promising TD3/SAC performance. This establishes a relevant application to read,
+not a verified transferable ranking. Before implementation, extract exact action
+representation, observations and forecast timing, reward scaling, treatment of
+constraints, episode length, training budgets, seed reporting, and evaluation split.
+These details must be checked rather than copied from the abstract or assumed to
+match DamEnv. Do not claim a numerical reproduction of its results.
+
+### Algorithm sources: Haarnoja et al. (2018; revised 2019)
+
+[Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://proceedings.mlr.press/v80/haarnoja18b.html)
+is the ICML 2018 algorithm reference. It describes off-policy actor–critic learning
+with an entropy-regularized objective. The later
+[Soft Actor-Critic Algorithms and Applications](https://arxiv.org/abs/1812.05905)
+introduces modifications including automatic temperature adjustment. Read the
+full update equations before choosing the implementation variant; the original
+and later formulations should not be mixed without justification.
+
+For our learning track, derive and implement replay-based twin-Q learning,
+target-network updates, a reparameterized bounded actor, and temperature learning.
+Explain what changes relative to ordinary reward maximization during training,
+while retaining the original environment reward at evaluation. A small working
+implementation and component checks come before a large reservoir run.
+
+### Decision and scope
+
+**Working choice: SAC, implemented transparently in PyTorch.** It fits the scalar
+continuous release action and teaches online replay, critic bootstrapping, policy
+gradients and exploration. Domain evidence is mixed, which is a reason to test
+carefully, not to promise improvement. Keep the frozen five-feature information,
+original reward/dynamics, validation protocol, and both safety-filter tracks.
+TD3 remains a possible alternative after full-paper review; implementing every
+method is not part of this phase. No new training or baseline changes occur here.
