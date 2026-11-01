@@ -49,6 +49,53 @@ controller subsets, other splits, and explicit checkpoint paths. Existing nonemp
 comparison output directories are rejected; choose a new `--output` for another run.
 PPO reproduction/training commands are listed together in [PPO findings](docs/PPO.md#reproduce-or-inspect-details).
 
+## Start the MPC prototype
+
+```bash
+uv run --group reproduction lake-como-mpc
+```
+
+This runs the first validation year with the seven-day deterministic controller in
+`configs/mpc.json`, saving an annual rollout PNG and solver diagnostics. Use a new
+`--output` if the default run already exists. [Controller design](docs/LITERATURE_REVIEW.md#implemented-deterministic-mpc-prototype)
+and [evaluation](docs/EVALUATION.md#mpc-prototype) explain the forecast, surrogate
+objective, limitations, and full validation command. The prototype runs correctly
+but performs poorly; it needs investigation before serving as the engineering benchmark.
+Run `uv run --group reproduction python scripts/analysis/diagnose_mpc.py` for
+[the boundary and optimizer audit](docs/EVALUATION.md#boundary-and-optimizer-diagnosis).
+The separate [perfect-inflow hindsight diagnostic](docs/EVALUATION.md#perfect-inflow-hindsight-diagnostic)
+runs with `uv run --group reproduction python scripts/analysis/perfect_inflow_mpc.py`;
+it intentionally supplies privileged inflow information without changing deployable MPC.
+[The paired objective audit](docs/EVALUATION.md#binary-versus-surrogate-objective-on-common-grids)
+uses `uv run --group reproduction python scripts/analysis/compare_mpc_objectives.py`
+to compare penalty choices on common hindsight grids without new annual rollouts.
+The [closed-loop objective comparison](docs/EVALUATION.md#closed-loop-objective-comparison-with-common-search)
+runs via `uv run --group reproduction python scripts/analysis/closed_loop_mpc_objectives.py`;
+it uses a separate common one-day search, not deployed seven-day MPC. Add
+`--inflow-source seasonal` for the training-only forecast comparison, including
+flood/low-water severity and the saved hindsight reference.
+
+The causal [forecast comparison](docs/EVALUATION.md#causal-past-inflow-forecast-comparison)
+runs with `uv run --group reproduction python scripts/analysis/compare_mpc_forecasts.py`.
+It compares climatology, persistence, and a training-fitted seasonal anomaly forecast
+under identical one-day searches, using only completed-day inflow estimates.
+
+To repeat the [seven-day causal MPC forecast ablation](docs/EVALUATION.md#causal-forecasts-in-seven-day-mpc):
+`uv run --group reproduction python scripts/analysis/compare_causal_mpc.py`.
+This preserves the original MPC costs and solver.
+
+The [solver-failure audit](docs/EVALUATION.md#audit-of-additional-causal-mpc-solver-failures)
+runs with `uv run --group reproduction python scripts/analysis/audit_mpc_solver.py`
+and replays saved decisions without changing the controller.
+
+The paired [iteration-limit retention experiment](docs/EVALUATION.md#cost-checked-retention-of-iteration-limit-iterates)
+runs with `uv run --group reproduction python scripts/analysis/compare_mpc_retention.py`.
+It preserves solver failure flags and keeps the original controller unchanged.
+
+The [matched MPC horizon study](docs/EVALUATION.md#matched-mpc-horizon-experiment)
+runs with `uv run --group reproduction python scripts/analysis/compare_mpc_horizons.py`.
+It compares 1, 3, and 7 days under the same persistence forecast and optimizer.
+
 ## Readable analysis scripts
 
 ```bash
@@ -69,6 +116,7 @@ Generated outputs stay ignored; original notebook files were archived locally in
 
 - `configs/splits.json`: train 1946–1987, validation 1988–1997, test 1998–2010.
 - `configs/ppo.json`: current selected PPO settings and default checkpoint locations.
+- `configs/mpc.json`: initial deterministic MPC horizon, solver, and surrogate settings.
 - `configs/experiments/ppo_studies.json`: exact historical experiment plans, grouped by study.
 
 Use validation for design decisions; reserve test years for the final comparison.

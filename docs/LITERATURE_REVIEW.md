@@ -63,3 +63,45 @@ Build a comparison sheet for the four starting papers; expand to roughly 5–8 d
 - Which parts can be reused in DamEnv and which require a new adaptation.
 
 Finish with an explicit decision: retain MPC/PPO as the core; select FQI, scenario MPC, SDP, or no third method based on relevance and estimated implementation cost. Prefer one controlled ablation and several held-out trajectories over a larger set of weakly verified controllers.
+
+## Implemented deterministic MPC prototype
+
+The first implementation is `src/lake_como/mpc.py`, configured by
+[configs/mpc.json](../configs/mpc.json). Cestari et al. Section 2 explicitly includes
+a deterministic climatology baseline; that is the starting reference. Their hourly
+convex formulation is adapted to daily requests and nonlinear DamEnv hydraulics.
+This is not a reproduction of their scenario-MPC scores or guarantees.
+
+The prototype plans seven daily requests, executes the first, then replans. Its
+inflow and demand forecasts are ordinal-day means over 1946–1987 only. At runtime
+it consumes observed level and seasonal sine/cosine, not live year profiles or
+future inflow/demand; the observed demand average is available but unused. Forecasts
+are deterministic functions of season and training data, not privileged future
+observations. This preserves the default PPO's external information setting.
+
+The planner calls the upstream 24-hour hydraulic integration, including minimum
+flows, release limits, and forced overflow releases. Requests are bounded to
+0–491.61 m³/s; level limits are soft costs, not guaranteed safety constraints.
+Its discounted objective retains forecast deficit, surplus, and clipping terms,
+but replaces binary flood/low-water penalties with squared level violations,
+scaled by 0.05 m. This surrogate changes the planning objective. Evaluation always
+uses unchanged DamEnv physics and both original reward scores.
+
+SciPy SLSQP optimizes normalized requests, starting from the best of a demand
+schedule, all-low/all-high requests, and the shifted previous plan. This is local
+optimization, not a global optimality claim. On failure or a worse-than-initial
+solution, apply the best initial plan and log the fallback. Default discount is
+0.995; there is no terminal penalty/value. Planning shrinks at the annual boundary,
+and storage still resets between years. These are prototype choices, not tuned
+or established operational settings. See the [solver documentation](https://docs.scipy.org/doc/scipy-1.15.3/reference/optimize.minimize-slsqp.html).
+
+Tests cover transitions against DamEnv, one-day optimization against a dense grid,
+anticipation of a forecast flood, training-only forecasts, hidden-input independence,
+solver failure, and annual reset/horizon handling. The initial ten-year validation
+run is complete, with poor performance: full return about -50,274 versus PPO's
+-17,232 and EAD's -33,858. There were 20 iteration-limit failures and 151 fallback
+days over 3,650 decisions; most fallbacks retained a better starting plan despite
+solver success. This is a working prototype, not yet a validated competitive
+engineering baseline. Investigate forecast errors, objective mismatch, horizon
+and terminal treatment, and optimizer sensitivity separately before drawing a
+learning-versus-MPC conclusion. See [evaluation](EVALUATION.md#mpc-prototype).

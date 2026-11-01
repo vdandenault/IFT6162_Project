@@ -150,7 +150,7 @@ def plot_results(annual, family_years, output):
         return
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), layout='constrained')
     for ax, metric, title in zip(axes, ['full_return', 'deficit_million_m3'],
-                                ['PPO minus rule: full return (positive is better)', 'PPO minus rule: unmet demand (negative is better)']):
+                                ['PPO minus reference: full return (positive is better)', 'PPO minus reference: unmet demand (negative is better)']):
         ax.axhline(0, color='black', lw=1)
         for family in names:
             if family == 'ppo' or ppo.empty:
@@ -170,9 +170,10 @@ def plot_results(annual, family_years, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--split', choices=['train', 'validation', 'test'], default='validation')
-    parser.add_argument('--controllers', nargs='+', choices=[*RULES, 'ppo'], default=['random', 'mean', 'max', 'ead', 'ppo'])
+    parser.add_argument('--controllers', nargs='+', choices=[*RULES, 'ppo', 'mpc'], default=['random', 'mean', 'max', 'ead', 'ppo'])
     parser.add_argument('--ppo-checkpoint', action='append', metavar='SEED=PATH', help='Repeat for each PPO checkpoint; defaults to all five selected 1M seeds')
     parser.add_argument('--action-seed', type=int, default=123, help='One seeded random-policy sequence across the whole split')
+    parser.add_argument('--mpc-config', type=Path, default=PROJECT_ROOT/'configs/mpc.json')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if len(set(args.controllers)) != len(args.controllers):
@@ -208,11 +209,24 @@ def main():
         parser.error('Output directory is not empty; choose a new --output to preserve existing results')
     output.mkdir(parents=True, exist_ok=True)
     frames, rows, timings = [], [], []
+    mpc_records = []
     for spec in specs:
         kwargs = dict(checkpoint=spec['checkpoint']) if spec['checkpoint'] is not None else {}
+        mpc = None
+        if spec['family'] == 'mpc':
+            from lake_como.mpc import DeterministicMPC, MPCConfig
+            from dataclasses import asdict
+            mpc = DeterministicMPC.from_training(MPCConfig.load(args.mpc_config))
+            kwargs['controller_factory'] = lambda env: mpc
+            spec['provenance'] = dict(config=asdict(mpc.config), training_years=list(mpc.forecast.training_years),
+                                      forecast='Training-only inflow/demand climatology', config_sha256=digest(args.mpc_config))
         frame, seconds = evaluate(spec['family'], seed=args.action_seed, split=args.split,
                                   protocol='chronological', correct_terminal_level=True,
                                   sequential_years=True, measure_decisions=True, **kwargs)
+        if mpc is not None:
+            from lake_como.mpc import save_diagnostics
+            diagnostics = save_diagnostics(mpc, frame, output)
+            mpc_records.append(diagnostics)
         annual = annual_metrics(frame)
         for table in [frame, annual]:
             table['controller'] = spec['controller']
@@ -240,12 +254,16 @@ def main():
     summary.to_csv(output / 'summary.csv', index=False)
     pd.DataFrame(timings).to_csv(output / 'timings.csv', index=False)
     plot_results(annual, family_years, output)
+    if mpc_records:
+        pd.concat(mpc_records, ignore_index=True).to_csv(output/'mpc_diagnostics.csv', index=False)
     files = [Path(__file__), PROJECT_ROOT / 'src/lake_como/reproduce.py', PROJECT_ROOT / 'src/lake_como/environment.py',
              PROJECT_ROOT / 'configs/splits.json', PROJECT_ROOT / 'configs/ppo.json', PROJECT_ROOT / 'uv.lock',
              PROJECT_ROOT / 'src/lake_como/splits.py', PROJECT_ROOT / 'pyproject.toml',
              UPSTREAM_ROOT / 'gym4real/algorithms/dam/ppo_skrl.py',
              *sorted(DAM_CONFIG.glob('*.yaml')), *sorted(DAM_DATA.rglob('*.csv')),
              *sorted((DAM_CONFIG).glob('*.py'))]
+    if 'mpc' in args.controllers:
+        files.extend([PROJECT_ROOT/'src/lake_como/mpc.py', PROJECT_ROOT/'src/lake_como/run_mpc.py', args.mpc_config.resolve()])
     metadata = dict(protocol='chronological', split=args.split, years=years,
                     test_evaluated=args.split == 'test', action_seed=args.action_seed,
                     controllers=[{k: str(v) if isinstance(v, Path) else v for k, v in spec.items()} for spec in specs],
@@ -258,10 +276,10 @@ def main():
                     timing='CPU decision only, after per-year PPO warmup; excludes env.step, rescaling, initialization, CSV; microsecond overhead/noise is material',
                     paired_direction='candidate minus reference; higher returns / lower physical penalties are better',
                     uncertainty=f'PPO seed SD uses learner-seed annual means; year SD uses {len(years)} yearly seed averages; rules have one action-seed run, no learner-seed SD',
-                    versions={p: version(p) for p in ['gymnasium', 'numpy', 'pandas', 'matplotlib'] + (['torch', 'skrl'] if 'ppo' in args.controllers else [])},
+                    versions={p: version(p) for p in ['gymnasium', 'numpy', 'pandas', 'matplotlib'] + (['torch', 'skrl'] if 'ppo' in args.controllers else []) + (['scipy'] if 'mpc' in args.controllers else [])},
                     python=platform.python_version(), platform=platform.platform(),
                     upstream_commit=subprocess.check_output(['git','-C',str(UPSTREAM_ROOT),'rev-parse','HEAD'], text=True).strip(),
-                    hashes={str(path.relative_to(PROJECT_ROOT)): digest(path) for path in files}, complete=True)
+                    hashes={(str(path.relative_to(PROJECT_ROOT)) if path.is_relative_to(PROJECT_ROOT) else str(path)): digest(path) for path in files}, complete=True)
     (output / 'run.json').write_text(json.dumps(metadata, indent=2) + '\n')
     print(summary[['family', *[f'mean_{m}' for m in METRICS]]].round(2).to_string(index=False))
     print('Saved:', output)

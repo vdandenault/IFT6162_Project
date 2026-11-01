@@ -49,9 +49,9 @@ class CheckpointPolicy:
 
 def evaluate(policy_name, seed=123, checkpoint=CHECKPOINT, *, split='test',
              protocol='upstream', correct_terminal_level=False,
-             sequential_years=False, measure_decisions=False, controller_factory=None):
-    env = make_env(split, protocol=protocol, correct_terminal_level=correct_terminal_level)
-    expected = list(settings(split, protocol=protocol)['inflow'])
+             sequential_years=False, measure_decisions=False, controller_factory=None, year=None):
+    env = make_env(split, year, protocol=protocol, correct_terminal_level=correct_terminal_level)
+    expected = [year] if year is not None else list(settings(split, protocol=protocol)['inflow'])
     sim = env.unwrapped
     if sequential_years:
         sim.random_init = False  # Evaluation visits each profile once, including the training split.

@@ -15,6 +15,7 @@ dependencies = [
     "PyYAML==6.0.2",
     "pygame==2.6.1",
     "matplotlib==3.10.1",
+    "scipy==1.15.3",
 ]
 
 [dependency-groups]
@@ -26,6 +27,7 @@ reproduction = [
 [project.scripts]
 lake-como-audit = "lake_como.audit:main"
 lake-como-rollout = "lake_como.baselines:main"
+lake-como-mpc = "lake_como.run_mpc:main"
 lake-como-compare = "lake_como.compare:main"
 lake-como-reproduce = "lake_como.reproduce:main"
 lake-como-train-reference = "lake_como.train_reference:main"
