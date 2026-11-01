@@ -105,3 +105,21 @@ solver success. This is a working prototype, not yet a validated competitive
 engineering baseline. Investigate forecast errors, objective mismatch, horizon
 and terminal treatment, and optimizer sensitivity separately before drawing a
 learning-versus-MPC conclusion. See [evaluation](EVALUATION.md#mpc-prototype).
+
+## First FQI implementation
+
+The pilot follows the batch fitted-Q formulation of
+[Ernst, Geurts and Wehenkel (2005)](https://jmlr.org/papers/volume6/ernst05a/ernst05a.pdf):
+start with zero Q-values, repeatedly fit a regressor to observed reward plus the
+discounted greedy next-state value, and act greedily on the final fit. We use
+[scikit-learn ExtraTreesRegressor 1.5.2](https://scikit-learn.org/1.5/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html).
+This is an adaptation to the project observations, discrete release grid, and
+annual-reset protocol, not a numerical reproduction of either that paper or
+Cestari et al.'s scenario-MPC results. Cestari et al. is the scenario-MPC source;
+it is not the implementation source for our FQI algorithm.
+
+The implementation keeps the simulator's full reward, five raw observation
+features, and past-inflow timing. Annual truncation masks the next-value term,
+matching PPO's disabled time-limit bootstrap. Training data coverage, grid
+resolution, regression error, and finite backup count remain limitations of the
+first pilot. See [the FQI protocol and results](EVALUATION.md#first-tree-based-fqi-pilot).

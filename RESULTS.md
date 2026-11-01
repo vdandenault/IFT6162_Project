@@ -1,50 +1,58 @@
-# Current results: PPO and MPC
+# Current results: PPO, MPC, and FQI
 
-Best current settings on **1988–1997 validation years**, using Gym4ReaL's Lake Como
-reservoir simulator. Both choose a daily release to balance water demand, flooding,
-and low water. Training/fitting uses 1946–1987; the final 1998–2010 test comparison
-has not been run.
+Development results on **1988–1997 validation years**. Training/fitting uses
+1946–1987; the final 1998–2010 test comparison remains reserved.
 
-- **PPO:** learns a release policy through simulated experience, using lake level,
-  season, and averaged past demand. The selected setting trains for one million
-  daily steps; evaluation freezes the policy and uses its mean action.
-- **MPC:** uses the reservoir physics to optimize seven daily releases, executes
-  only the first, then replans. The best current variant uses yesterday's inflow
-  across the forecast horizon and retains bounded, cost-improving iterates when
-  the optimizer reaches its iteration limit. Failure flags remain recorded.
+- **PPO** learns a daily release policy from simulated experience. The current
+  past-inflow variant observes level, season, averaged demand, and yesterday's
+  reconstructed inflow. Five seeds each train for 1M steps.
+- **MPC** simulates seven days of releases, applies the first, and replans tomorrow.
+  It uses persistence inflow forecasts, seasonal demand, and cost-checked retention
+  of bounded iteration-limit results.
 
-All values below are **annual averages**. Higher reward is better; lower is better
-for the physical penalties.
+**Plain controllers — annual averages**
 
-- **Overall reward:** PPO **−17,232** · MPC **−26,361**
-- **Days outside preferred water levels:**
-  PPO **4.4 flood days** and **5.8 low-water days**;
-  MPC **12.3 flood days** and **10.4 low-water days**.
-- **Unmet water demand:** PPO **514.9 million m³** · MPC **565.6 million m³**
-- **Cumulative level exceedance:**
-  Flood: PPO **2.609 m·days** · MPC **2.750 m·days**.
-  Low water: PPO **0.0411 m·days** · MPC **0.0676 m·days**.
-  This measures how far and how long daily water levels lie outside the thresholds;
-  for example, 0.1 m beyond a threshold for 10 days contributes 1 m·day.
+- **PPO:** reward **−16,505**; **4.3 flood days**, **3.5 low-water days**;
+  unmet demand **525.24 million m³**.
+- **MPC:** reward **−26,361**; **12.3 flood days**, **10.4 low-water days**;
+  unmet demand **565.60 million m³**.
 
-PPO averages five training seeds over ten years; MPC is deterministic over the
-same ten years. PPO's reward SD across seed means is 1,823. Episodes reset annually
-and use 365 daily actions, including the current leap-year approximation.
-Full reward sums DamEnv's demand, flood, low-water, wasted-release, and clipping
-penalties. Exceedance sums daily endpoint distances beyond level thresholds;
-it is not flood damage or volume.
+**With the same flood-scenario filter — annual averages**
 
-**Comparison limits:** both settings were developed on these validation years.
-MPC additionally reconstructs past inflow from exact storage/release telemetry,
-which PPO does not receive. MPC plans with a smooth surrogate but is scored using
-the same environment reward as PPO. Its retention variant is experimental; the
-original MPC remains unchanged. These results do not establish performance against
-actual Lake Como operators or constitute a final matched-information comparison.
+- **PPO:** reward **−16,505**; **4.3 flood days**, **3.5 low-water days**;
+  unmet demand **525.20 million m³**. Only eight interventions across five seeds.
+- **MPC:** reward **−18,486**; **4.5 flood days**, **10.7 low-water days**;
+  unmet demand **556.71 million m³**. It intervenes on 5.7% of decisions.
 
-A matched **1/3/7-day MPC horizon test** retained seven days as the best mean-reward
-setting; shorter horizons were faster and left less demand unmet. See the
-[horizon findings](docs/EVALUATION.md#matched-mpc-horizon-experiment).
+**First FQI pilot — not yet a settled benchmark**
 
-Details: [PPO setup](docs/PPO.md), [MPC retention experiment](docs/EVALUATION.md#cost-checked-retention-of-iteration-limit-iterates).
-Saved metrics: `results/comparison/validation_v1/` and
-`results/mpc/iterate_retention_v1/` (generated outputs are git-ignored).
+Three forest seeds share 30,660 training transitions and a 21-action grid:
+
+- **Plain:** reward **−20,062**; **5.43 flood days**, **2.77 low-water days**;
+  unmet demand **625.90 million m³**.
+- **Shared filter:** reward **−19,219**; **4.70 flood days**, **2.77 low-water days**;
+  unmet demand **620.73 million m³**.
+
+FQI has fewer low-water days but much more unmet demand. Its data budget, action
+grid, and regression-seed design differ from PPO/MPC; this pilot does not establish
+convergence, general method ranking, or comparative sample efficiency.
+
+Higher reward is better; lower physical penalties are better. The filter helps
+MPC's event count much more than severity: flood exceedance falls only **2.4%**,
+while low-water severity worsens slightly. Remaining floods and forecast-range
+breaches mean this is **not a hard safety guarantee**. Keep the two tracks separate.
+
+The original four-feature PPO scored **−17,232**, with seed SD **1,823**; past inflow
+scores **−16,505**, with SD **238**. Three seeds improve and two worsen; most mean
+gain comes from the previously weakest seed, while unmet demand rises about 2%.
+
+These are tuned validation results, not proof of general or operator-level
+superiority. Episodes reset annually and retain the 365-step leap-year approximation.
+PPO figures average five seeds and ten years; MPC is deterministic over ten years.
+PPO/MPC references and both tracks are frozen while FQI remains exploratory; existing
+simulator/default configuration choices remain unchanged.
+
+Details: [PPO observation study](docs/PPO.md#past-inflow-observation-ablation),
+[common filter experiment](docs/EVALUATION.md#common-finite-scenario-safety-filter),
+[FQI pilot](docs/EVALUATION.md#first-tree-based-fqi-pilot),
+[frozen protocol](configs/experiments/control_protocol_v1.json).

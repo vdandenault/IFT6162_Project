@@ -588,3 +588,286 @@ observations for PPO, preserving the four-feature control and all five seeds.
 Ignored `results/mpc/horizon_study_v1/` contains per-year differences versus seven
 days, full daily/annual metrics, timing, failure/retention counts, source hashes,
 and the comparison PNG. No chronological test evaluation or training occurred.
+
+### Reservoir equations and safety definitions
+
+A daily action requests a flow rate `u` (nominally 0–491.61 m³/s). At each of 24
+hourly updates, DamEnv recomputes hydraulic limits from the current storage:
+
+```text
+actual release r_j = min(hydraulic maximum, max(hydraulic minimum, u))
+S_(j+1) = S_j + 3600 × (daily inflow q − actual release r_j)
+h_j = S_j / A + h_min
+```
+
+Here `A = 145,900,000 m²` and `h_min = −0.5 m`. Storage is volume relative to that
+datum, not total lake volume. Evaporation is disabled. For scale, a net inflow of
+100 m³/s over a day adds 8.64 million m³ and raises the modeled level about 5.92 cm.
+The same daily inflow is held through all 24 substeps. Below minimum level discharge
+is zero; above 1.25 m, forced spill enters the discharge rule. **1.25 m is not a
+hard cap on simulated lake level.** Forced actual release can exceed the nominal
+request limit, and the state-dependent switching prevents assuming global
+monotonicity of the discrete daily transition without proof.
+
+Let `r̄` be mean actual daily release, `d` demand, and `m` minimum environmental
+flow. The original daily reward is the negative of:
+
+```text
+1000 × indicator(end level > 1.24 m)
++ 250 × indicator(end level < −0.45 m)
++ w_t × max(d − max(r̄ − m, 0), 0)
++ 0.2 × max(r̄ − d, 0)
++ 0.0005 × (clipped request − r̄)²
+
+w_t = 0.5 × (3 − cos(2π × (t−1) / 365)),  t = 1,…,365
+```
+
+Before deciding day t, the default observation contains level, season sine/cosine,
+and averaged previous demand. Inflow q_t updates the simulator after that decision;
+it is not a default policy input. The demand average updates afterward as
+`e_(t+1) = 0.8 e_t + 0.2 d_t`. The added inflow feature reconstructs q_t from the
+completed transition for decision t+1. Each episode resets level to 0.35 m and
+demand average to zero; storage does not carry across years. Leap years retain
+365 decisions, and terminal level observations are corrected by the project wrapper.
+
+A **daily flood constraint** requires end level ≤1.24 m. An **hourly constraint**
+requires every modeled hourly endpoint, including the starting level, ≤1.24 m.
+Already-flooded starting states cannot satisfy the latter; they need an explicitly
+labeled recovery objective. A safety-first formulation would prioritize flood
+violation minimization and then irrigation within the feasible safe set. Merely
+increasing the flood reward weight is not a hard constraint. Under uncertain inflow,
+the guarantee must specify admissible inflows and state-measurement uncertainty;
+one forecast or historical quantile alone does not supply those assumptions.
+
+### Flood-safety feasibility audit
+
+```bash
+uv run --group reproduction python scripts/analysis/audit_flood_feasibility.py
+```
+
+The audit uses **40,150 saved states**: five four-feature PPO seeds, five past-inflow
+PPO seeds, and persistence MPC, all on the same ten validation years. It changes
+no policy, action, objective, or trajectory. For each state, 201 nominal float32
+requests are simulated under two fixed daily inflow scenarios:
+
+- **Actual inflow, ex post:** privileged information used only to diagnose what
+  could be achieved that day from the saved starting state.
+- **Persistence plus training-error stress:** yesterday's inflow (seasonal fallback
+  on January 1) plus 283.5 m³/s, the upper 99th percentile of training-only one-day
+  prediction errors. This is one stress scenario, not a robust interval guarantee.
+
+Safe sampled actions are witnesses under the stated inflow. Failure to find one
+is not a proof of infeasibility. Separate conservative bounds certify some states:
+no-outflow storage bounds the actual storage above; the corresponding forced-spill
+rating bounds release above (including release greater than nominal requests).
+Subtracting these release upper bounds gives a storage lower bound. If even that
+lower bound ends above 1.24 m, no allowed request can meet the daily threshold.
+The exact maximum-release first-hour transition also certifies some immediate
+hourly violations from initially safe states. Neither certificate relies on a
+monotone full-day transition. Vectorized predictions are checked against scalar
+hourly physics in tests and at observed flood endpoints / near the threshold.
+
+With **known actual inflow**, pooled frozen-state counts are:
+
+- **Four-feature PPO:** 220 observed flood endpoints. **214 certified infeasible**
+  from that day's saved state; six unresolved. No grid-safe alternative found.
+- **Past-inflow PPO:** 215 observed flood endpoints. **208 certified infeasible**;
+  seven unresolved. No grid-safe alternative found.
+- **Persistence MPC:** 123 observed flood endpoints. **79 have a sampled daily-safe
+  alternative**, 43 are certified infeasible, and one is unresolved. For **33 of
+  its 36 new flood crossings** from safe starts, a sampled action also keeps all
+  modeled hourly endpoints safe, including the initial level.
+
+All 14 unresolved flood states were refined to 10,001 requests without finding a
+safe endpoint. They remain unresolved, not certified infeasible. The coarse grid
+also found a daily-safe witness for every saved actual-safe state, avoiding a
+false “no safe sampled action” conclusion there. Counts pool related policy/year
+states; they are not independent storm samples or statistical probabilities.
+
+The stress scenario covers 3,621/3,650 distinct validation-day actual inflows and
+is exceeded on **29 days**. That empirical marginal coverage does not establish
+conditional coverage, bounds for every possible inflow, or a hard flood guarantee.
+Testing the upper scenario alone also does not certify all lower inflows under
+state-dependent switching. A filter using it must disclose conditional/scenario
+scope and log breaches rather than promise unconditional prevention.
+
+**Interpretation:** a same-day corrective action can help some MPC decisions, but
+cannot fix most PPO flood endpoints once those states have been reached. Earlier
+pre-release, storage reserves, better warning, and physical discharge capacity need
+consideration. This does **not** prove floods unavoidable from the annual reset:
+earlier actions might have kept the reservoir out of those states. Nor does it
+identify a deployable action using unknown actual inflow, quantify the irrigation
+cost of interventions, or establish a safe uncertainty model.
+
+Next define a forecast-conditioned safety-first prototype shared by past-inflow
+PPO and MPC: select the closest feasible release under a declared scenario model;
+when no safe release is found, use a labeled minimum-violation fallback. Keep the
+original reward for reporting and evaluate full annual supply/severity/intervention
+trade-offs. Robust guarantees would additionally require a validated uncertainty
+set and reachability bounds; do not label a finite scenario check as such a guarantee.
+
+Ignored outputs: `results/safety/flood_feasibility_v1/` contains the 80,300
+state/scenario rows, annual summaries, certificates, refinement results, stress
+coverage, source/input hashes, and a PNG. No chronological test evaluation, new
+training, default-controller change, or safety-filter deployment occurred.
+
+### Common finite-scenario safety filter
+
+```bash
+uv run --group reproduction python scripts/analysis/compare_safety_filter.py
+```
+
+This is one predeclared experiment, not a margin/grid search. Frozen past-inflow
+PPO (all five seeds) and seven-day persistence MPC each run with/without the same
+external action filter on all ten validation years: **120 annual episodes**.
+PPO normalization and weights remain frozen; MPC cost, horizon, solver, and iterate
+retention remain fixed. Each unfiltered arm must reproduce its saved actions,
+levels, rewards, and historical forcing exactly. Filtered trajectories are new
+closed-loop runs; subsequent observations and MPC warm starts can change.
+
+The common filter uses float32 current observed level, season, and completed-day
+storage/release to reconstruct past inflow. There is no current/future actual
+inflow input. First-day inflow falls back to training climatology. Training-only
+one-step errors supply 1%/99% empirical residual limits, used for five equally
+spaced inflow scenarios plus persistence. These scenarios are not a validated
+uncertainty set, and passing them does not certify intervening or unseen inflows.
+Exact past telemetry, unchanged no-evaporation physics, and the original calendar
+assumptions remain in force.
+
+At each decision the filter tests **401 nominal float32 requests plus the clipped
+base proposal**. An action passes if every modeled hourly endpoint, including the
+initial level, is ≤1.24 m under every scenario (with 1e-7 m numerical clearance).
+Choose the closest passing request to the proposal. If none passes, minimize
+worst scenario peak, then worst endpoint, then proposal change; log that no sampled
+safe action was found. Already-flooded starts are explicitly recorded. No sampled
+safe action is not a global infeasibility certificate. Both model families use the
+same rule and information.
+
+PPO's action scaling is preserved exactly for unfiltered replay. Safety intervention
+counts compare the filtered request with the nominally clipped proposal, so
+pre-existing PPO action saturation alone is not counted as a safety intervention.
+MPC still proposes its own plan; only the applied first action is filtered. There
+is no low-water constraint or irrigation weight adjustment: this experiment puts
+scenario flood limits before closeness to the original policy proposal.
+
+Actual hourly peaks are computed **after** each transition, using realized inflow,
+solely for evaluation and checked against the environment's final level. Original
+reward, daily flood/low-water endpoints, physical shortage volume, exceedance,
+hourly violations, intervention frequency, no-safe-action flags, and scenario-range
+breaches are reported. No default/controller/checkpoint is replaced automatically.
+Ignored outputs live in `results/safety/common_filter_v1/`.
+
+Results (annual means; PPO averages five seeds, MPC is deterministic):
+
+- **PPO, unfiltered → filtered:** reward **−16,505.32 → −16,505.05**; flood days
+  **4.3 → 4.3**; low-water days **3.5 → 3.5**; unmet demand
+  **525.24 → 525.20 million m³**. Only **8/18,250** decisions are interventions.
+- **MPC, unfiltered → filtered:** reward **−26,360.77 → −18,486.16**; flood days
+  **12.3 → 4.5**; low-water days **10.4 → 10.7**; unmet demand
+  **565.60 → 556.71 million m³**. There are **207/3,650** interventions (5.7%).
+
+MPC reward improves in eight years and is unchanged in two. Its flood exceedance
+falls only **2.75032 → 2.68420 m·days** (2.4%), much less than the 63% reduction in
+flood-day counts. Low-water exceedance increases **0.06760 → 0.06899 m·days**;
+unmet demand decreases about 1.6%. About 7,800 of the 7,875-point reward gain comes
+from the flood-event count reduction. These are useful changes but not uniform
+physical improvement or elimination of severe floods. PPO changes are negligible.
+
+No sampled safe request is found on 286 PPO decisions and 72 MPC decisions;
+215 and 45 respectively start above threshold. These flags are scenario/grid
+results, not certified infeasibility. Actual hourly violation days average
+**4.6 → 4.6** for PPO and **15.9 → 4.9** for MPC. The filter still has **5 PPO / 2 MPC**
+actual hourly breaches after a passing scenario check; all seven involve realized
+inflow outside the scenario range. That observed pattern does not prove a guarantee
+inside the range, because only finitely many scenarios were tested. Actual inflow
+is outside the interval on 65 distinct validation dates (325 PPO cases across five
+policies). No unconditional safety claim is supported.
+
+Both existing controllers remain unchanged. Freeze the current past-inflow PPO
+checkpoints and persistence/retention MPC specification for further comparison,
+with **two separate evaluation tracks: plain and common-filtered**. Do not compare
+filtered MPC against plain PPO without labeling the different treatment. The
+four-feature PPO remains an ablation reference. Stop PPO/MPC tuning here; FQI is
+the next method, using the same information, reward, splits, and two evaluation
+tracks. Keep the chronological test split reserved until FQI settings are settled.
+
+Mean CPU decision times in this run were PPO **0.043 → 1.266 ms** and MPC
+**12.979 → 13.160 ms** (plain → filtered). Timer/noise and changed trajectories
+matter; no inference of a solver speedup is warranted. Filter checks add visible
+overhead to PPO even on days where its proposal is retained. Frozen paths,
+checkpoint/source hashes, assumptions, and both evaluation tracks are recorded in
+`configs/experiments/control_protocol_v1.json`. This freezes PPO/MPC references for
+FQI development, not final test results or a claim that all safety assumptions hold.
+
+### First tree-based FQI pilot
+
+Run the pinned dependency overlay, keeping the historical lock unchanged:
+
+```bash
+uv run --group reproduction --with scikit-learn==1.5.2 \
+  --with numpy==2.2.4 --with scipy==1.15.3 \
+  python scripts/analysis/run_fqi_pilot.py
+```
+
+The predeclared specification is `configs/fqi.json`. FQI uses the same five raw
+features as past-inflow PPO, original reward, discount 0.995, and annual reset/
+terminal convention. It fits an action-value function, not reservoir physics.
+For each fixed training tuple, each backup uses:
+
+```text
+Q_0(s,a) = 0
+y = reward / 1000 + 0.995 × (not episode_end) × max_a Q_previous(next_state,a)
+Q_new = Extra-Trees regression fit on [five observation features, normalized action]
+```
+
+Both termination and truncation stop bootstrapping. Rewards are scaled only for
+regression; evaluation reports the unchanged environment reward. Decisions choose
+the highest predicted Q over **21 releases from 0 to 491.61 m³/s**; ties go to the
+lower release. The action grid is about 24.58 m³/s apart, coarser than continuous
+PPO/MPC proposals, and trees require no learned observation normalizer.
+
+Data collection is **two full episodes per training year** (42 years, 30,660 total
+transitions): one uniform discrete-action episode and one 50%-random / 25%-demand /
+25%-level-feedback episode. No PPO/MPC expert actions, validation years, or safety
+filter generate the dataset. All 21 action bins are represented; state/conditional
+action coverage is not established merely by marginal action counts. Dataset seed
+is fixed at 20261101. The three forest seeds (301–303) share that same dataset;
+they assess regression randomization, not independent exploration datasets.
+
+Each seed makes **60 Bellman fits**, with 32 trees, maximum depth 16, minimum leaf
+size 10, and one CPU thread. The final fit is selected before validation; no
+intermediate policy or best seed is chosen. The mean absolute training prediction
+change is still about **0.053–0.055** in scaled Q units at fit 60, so convergence is
+not established. Regression RMSE on the fitted targets is about 0.44–0.45 scaled
+units. Neither statistic is a policy-value error certificate or a validation metric.
+
+Annual validation means:
+
+- **Plain FQI:** reward **−20,062**; **5.43 flood days**, **2.77 low-water days**;
+  unmet demand **625.90 million m³**. Flood / low-water exceedance:
+  **2.76938 / 0.01355 m·days**. SD across three regressor seed means: **643**.
+- **Shared-filter FQI:** reward **−19,219**; **4.70 flood days**, **2.77 low-water days**;
+  unmet demand **620.73 million m³**. Exceedance: **2.70251 / 0.01355 m·days**.
+  Regressor-seed SD: **648**. The same frozen common filter is used, without
+  retraining, so its effect remains a distinct evaluation track.
+
+All **60 annual evaluations** completed. PPO remains better on mean reward in
+both tracks. Plain FQI outperforms plain MPC on reward, while shared-filter MPC
+outperforms shared-filter FQI. FQI has fewer low-water days but substantially more
+unmet demand; no method dominates every physical metric. This first result is
+not evidence that FQI is generally inferior/superior, sample-efficient relative
+to PPO's 1M-step runs, or ready for final testing. Dataset size, behavior coverage,
+21-action discretization, forest capacity, and backup count differ. Three seeds
+sharing one dataset do not represent total algorithm uncertainty.
+
+Ignored `results/fqi/pilot_v1/` contains the fixed dataset, action coverage, final
+models, fit traces, 60 annual trajectories, seed metrics, plain/shared-filter
+comparison against frozen controls, source hashes, and a PNG. The dependency
+overlay pins scikit-learn without modifying `uv.lock` or the reference environment;
+NumPy/SciPy versions are checked against the frozen protocol. Tests verify
+state-action ordering, greedy maximization, terminal masks, causal past-inflow
+construction, and a small MDP where a fitted backup learns to prefer delayed reward.
+
+Next inspect data/state-action coverage and backup behavior before expanding
+training or claiming a mature FQI benchmark. Keep PPO/MPC frozen, SDP optional,
+and the chronological test split unused while FQI remains exploratory.

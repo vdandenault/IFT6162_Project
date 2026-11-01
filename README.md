@@ -96,6 +96,32 @@ The [matched MPC horizon study](docs/EVALUATION.md#matched-mpc-horizon-experimen
 runs with `uv run --group reproduction python scripts/analysis/compare_mpc_horizons.py`.
 It compares 1, 3, and 7 days under the same persistence forecast and optimizer.
 
+The [PPO past-inflow observation study](docs/PPO.md#past-inflow-observation-ablation)
+runs with `uv run --group reproduction python scripts/analysis/compare_ppo_inflow.py`.
+It trains five 1M-step policies and compares against verified four-feature controls.
+
+The [wet/dry decision analysis](docs/PPO.md#what-changes-in-wet-and-dry-years)
+runs with `uv run --group reproduction python scripts/analysis/analyze_ppo_inflow.py`
+on frozen PPO trajectories, with years selected only by total inflow.
+
+The [flood feasibility audit](docs/EVALUATION.md#flood-safety-feasibility-audit)
+runs with `uv run --group reproduction python scripts/analysis/audit_flood_feasibility.py`.
+It checks saved states without changing any controller or claiming a safety guarantee.
+
+The [common safety-filter comparison](docs/EVALUATION.md#common-finite-scenario-safety-filter)
+runs with `uv run --group reproduction python scripts/analysis/compare_safety_filter.py`.
+Frozen reference hashes and the plain/filtered comparison tracks are recorded in
+`configs/experiments/control_protocol_v1.json`; test years remain reserved.
+
+The [first FQI pilot](docs/EVALUATION.md#first-tree-based-fqi-pilot) uses
+`configs/fqi.json` and runs without changing the historical lock:
+
+```bash
+uv run --group reproduction --with scikit-learn==1.5.2 \
+  --with numpy==2.2.4 --with scipy==1.15.3 \
+  python scripts/analysis/run_fqi_pilot.py
+```
+
 ## Readable analysis scripts
 
 ```bash
