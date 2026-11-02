@@ -17,7 +17,9 @@ will develop an online, replay-based continuous actor–critic in PyTorch, rathe
 than merely adding another library call. Its purpose is understanding and a
 controlled comparison, with no assumption that it will beat PPO. Existing frozen
 references remain intact; FQI refinement and SDP are not prerequisites for learning
-SAC. Hydropower still requires justified turbine, head, efficiency, and price
+SAC. A subsequent literature exploration phase connects SAC to residual control,
+history representations, offline-to-online learning, and risk-sensitive objectives.
+Hydropower still requires justified turbine, head, efficiency, and price
 assumptions; stored water or surplus discharge is not measured generation.
 
 ## The simulated control problem
@@ -171,7 +173,87 @@ not an automatic extra controller. Memory, multi-year episodes, synthetic inflow
 and learned dynamics are later extensions because each changes another part of
 the problem. No SAC implementation or training is launched by this planning phase.
 
-### Phase 6 — final analysis and presentation
+#### Environment tooling and related benchmarks
+
+These tools serve different roles from learning algorithms such as PPO, FQI, or SAC:
+
+- **[Gymnasium](https://github.com/Farama-Foundation/Gymnasium)** supplies the standard environment interface (`reset`, `step`, observation/action spaces), wrappers, and reference environments. We already use it through DamEnv and pin version 1.1.1. Keep this interface for SAC and later extensions.
+- **[Gym-Anything](https://github.com/cmu-l3/gym-anything)** builds environments for agents operating real software, with task setup and verification. Our reservoir already has a numerical simulator and measurable outcomes, so no integration is planned. Revisit only if controlling external engineering software becomes an explicit research question.
+- **[ExploitGym](https://github.com/sunblaze-ucb/exploitgym)** evaluates agents developing exploits against real-world software vulnerabilities. It is a separate cybersecurity benchmark, with no current reservoir-control experiment or integration planned.
+
+- [ ] As part of SAC verification, run Gymnasium's environment checker on the intended adapter/wrappers where supported; investigate warnings and retain explicit tests for causality, terminal observations, action units, and physical dynamics. Interface compliance alone does not establish physical correctness. Use a small continuous-action reference task for debugging before DamEnv; reference-task scores are implementation evidence, not the project's engineering result.
+- [ ] Include a short explanation in the SAC walkthrough of **agent versus environment versus evaluator**: the agent chooses a release, DamEnv advances reservoir physics through Gymnasium's interface, and the evaluator measures complete trajectories. Learn from Gym-Anything's explicit setup/verifier separation without introducing a software-use or cybersecurity benchmark into the main comparison.
+
+### Phase 6 — literature exploration: build on the RL foundations
+
+**Learning goal:** understand four research directions from Pierre-Luc Bacon and
+collaborators through focused reading and small reservoir experiments. Start after
+the standalone SAC implementation is verified. Read all four directions, then
+prioritize **MPC with residual RL** for implementation; the remaining experiments
+are optional follow-ups, not four additional controllers required for completion.
+The applications below are proposed adaptations, not results established for DamEnv.
+
+For each reading, write a short explanation of the problem, core equations,
+assumptions, evidence, and what transfers to our reservoir. Before implementing an
+extension, specify one hypothesis, a matched control, an interaction/compute budget,
+and a stopping criterion. Use training years for fitting and debugging, validation
+for development, and keep test years reserved until methods are frozen. Preserve
+the existing references and distinguish changes to information, initialization,
+architecture, and objective. Record results even when an extension does not help.
+
+#### 6A — residual RL: learn a correction to MPC (first priority)
+
+Read [*What Makes Value Learning Efficient in Residual Reinforcement Learning?*](https://arxiv.org/abs/2602.10539)
+and inspect the authors' [DAWN implementation](https://github.com/Guozheng-Ma/DAWN).
+The paper studies refinement of frozen pretrained policies; using our engineering
+MPC as the base controller is a new adaptation.
+
+**Question:** can a learned correction improve MPC under imperfect inflow forecasts?
+
+- [ ] Explain the residual action: `requested_release = bound(MPC_release + bounded_RL_correction)`. Keep MPC fixed and retain DamEnv's hydraulic clipping. Define correction units, range, and the action represented in replay and critic inputs; account for saturation consistently.
+- [ ] Understand the paper's critic cold-start and action-scale issues, base-policy data warmup, and critic normalization before choosing which components to adapt.
+- [ ] Compare frozen MPC, standalone SAC, and MPC with a learned correction using matched decision-time information, reward, resets, and evaluation tracks. Give the residual learner the base proposal explicitly and document this derived feature. Count base-policy warmup interactions and MPC calls in training cost and deployment runtime.
+- [ ] Start with one bounded residual experiment. If useful, isolate warmup or normalization one at a time. Inspect when corrections occur, their sizes, and effects on supply, flood/low-water counts, and severity. A bounded correction is not a safety guarantee; keep plain and shared-filter results separate.
+
+#### 6B — learning from history: represent hidden hydrological conditions
+
+Read [*Bridging State and History Representations: Understanding Self-Predictive RL*](https://arxiv.org/abs/2401.08898).
+
+**Question:** does recent inflow/level history provide useful information beyond
+our current five-feature observation?
+
+- [ ] Explain partial observability and the paper's self-predictive latent objective, including target construction and stop-gradient treatment.
+- [ ] Begin with current-observation SAC versus a fixed window of completed-day observations/actions. Define reset padding and causal normalization. If this motivates further work, compare a recurrent encoder, then its self-predictive auxiliary loss with architecture/history held fixed.
+- [ ] Audit replay sequence sampling, episode boundaries, recurrent state resets, and evaluation timing. Report the extra information and capacity: this changes the observation experiment. Adding an LSTM alone is not a reproduction of the paper, and latent prediction accuracy alone does not establish better control.
+
+#### 6C — offline-to-online RL: reuse experience before interacting
+
+Read [*The Three Regimes of Offline-to-Online Reinforcement Learning*](https://arxiv.org/abs/2510.01460).
+
+**Question:** when does our fixed FQI training dataset help SAC learn online?
+
+- [ ] Explain the stability/plasticity trade-off and how dataset quality and pretrained-policy quality affect the starting point. Treat the paper as a framework to investigate, not a single drop-in algorithm.
+- [ ] First compare SAC from scratch with SAC whose replay buffer is preloaded with the same training-only FQI transitions. Verify reward scaling, action units, terminal masks, and normalization compatibility. Keep new online interactions and update budgets matched; report offline collection cost separately and in total.
+- [ ] Consider explicit neural critic pretraining or actor distillation only as a separate experiment. Our tree-based FQI weights cannot directly initialize SAC networks. Replay preloading alone does not reproduce the paper's full pretraining/fine-tuning setting.
+
+#### 6D — risk-sensitive RL: focus on severe outcomes (advanced option)
+
+Read [*Reward Redistribution for CVaR MDPs using a Bellman Operator on L-infinity*](https://arxiv.org/abs/2602.03778).
+
+**Question:** can explicit tail-risk optimization reduce severe reservoir losses
+at an acceptable cost to average water supply?
+
+- [ ] Explain CVaR, the distinction between trajectory-level and stage-wise risk, and why the paper introduces an augmented state and a different Bellman formulation. This is a substantive algorithm/objective change, not just a larger flood penalty.
+- [ ] Define the loss and tail level before implementation: poor total return and physical flood severity are different targets. Compare expected-return and risk-sensitive controllers under common scenarios, reporting both mean performance and the chosen tail metric.
+- [ ] Assess scenario adequacy first. Ten validation years provide weak evidence for rare-tail estimates; repeated learner seeds do not create independent hydrological years. Any additional scenario generator must be justified and fitted on training data only. CVaR optimization does not imply a hard no-flood guarantee.
+
+**Phase outcome:** a concise reading note for each direction, one prioritized
+implementation with a controlled result, and a clear explanation of what we
+learned. Add intuitive PNG diagrams and walkthroughs to ignored `background/` as
+methods are understood. Broader implementation remains optional; do not delay the
+final comparison to exhaust every paper.
+
+### Phase 7 — final analysis and presentation
 
 - [ ] Evaluate the frozen controllers on held-out test years and report paired trade-offs, seed variability, and limitations.
 - [ ] Add reward-weight or hydropower extensions only if time and defensible parameters support them.
