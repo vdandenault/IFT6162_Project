@@ -8,12 +8,25 @@ The frozen comparison now includes past-inflow PPO and persistence/retention MPC
 with plain and common-filtered tracks. A first tree-based FQI pilot is implemented;
 its coverage and finite-backup limitations remain open. These references stay fixed.
 
-For the user's learning goal, add one focused **online model-free actor–critic
-phase**, with SAC the working choice. Implementing its update loop explicitly
+For the user's learning goal, the focused **online model-free actor–critic
+phase** implemented SAC as the working choice. Implementing its update loop explicitly
 teaches different mechanics from calling the PPO library or fitting the batch FQI
 forest. This is a learning-driven extension, not an algorithm-count requirement or
 a prediction that SAC will outperform current PPO. SDP and additional algorithms
 remain optional. See [the new phase](../PROJECT_PLAN.md#phase-5--hands-on-online-rl-implement-and-understand-sac).
+
+## Residual-control implementation update
+
+The standalone SAC study and bounded critic diagnostics are implemented. A first
+[MPC-residual pilot](RESIDUAL_RL.md) now adapts base-policy data warmup and critic
+LayerNorm from Ma et al., [*What Makes Value Learning Efficient in Residual
+Reinforcement Learning?*](https://arxiv.org/abs/2602.10539), with the
+[authors' code](https://github.com/Guozheng-Ma/DAWN) as a reference. It uses frozen
+engineering MPC, not a pretrained robotics policy. Both residual and matched
+full-action actors observe the same causal MPC proposal. The three-seed short
+validation pilot is promising, but is neither a paper reproduction nor an ablation
+isolating normalization or warmup. Test years and old controller references remain
+reserved/fixed. See the project plan before selecting additional algorithms.
 
 ## Starting references
 

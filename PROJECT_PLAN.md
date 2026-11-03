@@ -8,14 +8,15 @@ supply and flood/low-water risk on held-out Lake Como years?
 The core comparison is **literature-based MPC versus learning-based control** in
 DamEnv, with matched decision-time information, physical constraints, and evaluation
 metrics. PPO/MPC references are frozen, the common filter experiment is complete,
-and a first FQI pilot is implemented. See [current results](RESULTS.md). The
+and FQI/SAC pilots are implemented. A first MPC-residual pilot improves the MPC
+prototype on validation, with a matched proposal-aware full-action control. See [current results](RESULTS.md). The
 chronological test split remains reserved while experimental choices are settled.
 Actual operator use of the proposed MPC remains unverified.
 
-PPO and FQI are already model-free RL methods. A new **hands-on SAC learning phase**
-will develop an online, replay-based continuous actor–critic in PyTorch, rather
-than merely adding another library call. Its purpose is understanding and a
-controlled comparison, with no assumption that it will beat PPO. Existing frozen
+PPO and FQI are already model-free RL methods. The **hands-on SAC learning phase**
+implemented an online, replay-based continuous actor–critic in PyTorch and completed
+bounded diagnostics. Its purpose is understanding and a controlled comparison;
+the original SAC pilot did not beat PPO. Existing frozen
 references remain intact; FQI refinement and SDP are not prerequisites for learning
 SAC. A subsequent literature exploration phase connects SAC to residual control,
 history representations, offline-to-online learning, and risk-sensitive objectives.
@@ -144,6 +145,12 @@ reference; these are new experiments, not retroactive benchmark changes.
 
 ### Phase 5 — hands-on online RL: implement and understand SAC
 
+**Status:** [SAC walkthrough](docs/SAC.md), CPU PyTorch agent, correctness checks,
+20-episode training-only smoke, and a separate Pendulum check are complete. The
+five-seed 200k-step study scores −21,064 plain / −20,871 shared-filter on validation;
+PPO remains the better reference at its larger 1M-step budget. All seeds and both
+tracks are retained. PNGs and local reports remain ignored; test years are reserved.
+
 **Learning goal:** understand and implement replay, bootstrapped value learning,
 policy gradients, exploration, and target networks on a real control problem.
 PPO already learns directly from interaction; FQI already learns from a fixed
@@ -158,20 +165,29 @@ curves, seed variability, water-supply/severity trade-offs, and compute. A usefu
 learning phase does not depend on achieving a new best score.
 
 - [ ] Read and annotate a small primary-source set: Wang et al. (2020), already in `/papers`, for a reservoir MDP and negative SAC result; Tabas & Samadi (2024), *Fill-and-Spill*, for continuous-action reservoir SAC/TD3; and Haarnoja et al. for SAC's actual update equations. Extract observations/timing, action units, reward, training data, episode boundaries, hyperparameters, comparators, and limitations. The initial screening and links are in [the focused review](docs/LITERATURE_REVIEW.md#hands-on-online-rl-phase-sac).
-- [ ] Write the reservoir MDP and each SAC update in our own words before coding: what is observed, what is hidden, what enters replay, what the actor/critics predict, what is detached, and why target networks are needed. Connect SAC's bootstrapped target to FQI and its actor update to PPO. Derive the modern twin-Q/automatic-temperature variant explicitly; do not mix incompatible equations from different SAC versions.
-- [ ] Implement a small transparent PyTorch agent: replay buffer, bounded stochastic actor, two Q-critics, target critics, and an explicit training loop. A trusted implementation may be a test reference, but keep the learning exercise's updates visible in our code. Reuse the environment adapter and evaluator; do not rewrite DamEnv or change its reward for an apparent win.
-- [ ] Add components incrementally: (1) transition storage/sampling and terminal masks, (2) critic Bellman regression and target updates, (3) reparameterized actor gradients, (4) entropy temperature. Check target detachment, gradient flow, bounded actions, tanh log-probability correction, and consistency of normalized action units/entropy targets. Explain each component and one failure it prevents.
-- [ ] Verify on a small known-value control task and short training-only DamEnv runs before expensive experiments. Confirm reset/terminal handling, no future-inflow leakage, finite targets/gradients, and checkpoint round trips. Debug correctness before changing reward weights, adding memory, or running a broad hyperparameter sweep.
-- [ ] Predeclare the first reservoir study: same five-feature past-inflow observation, original reward, action limits, chronological splits, annual resets, and no bootstrap across episode ends. Fit normalization using training data only. Record any reward scaling and its interaction with the entropy temperature; evaluate with original reward units. Keep the finite-scenario safety filter outside initial training and evaluate both frozen plain/shared-filter tracks afterward.
-- [ ] Choose and log warmup, replay size, minibatch size, update-to-data ratio, target-update rate, network capacity, evaluation policy, checkpoints, and a bounded interaction budget before validation. Match PPO's five learner seeds for the full study. Count warmup interactions and report gradient updates and runtime as well as environment steps: equal interaction budgets are not equal computation, and FQI's shared-data pilot is a separate budget/design.
-- [ ] Run one bounded SAC study and explain behavior: mean/weakest-seed reward, learning curves, action distribution, entropy/temperature, twin-Q disagreement, and wet/dry supply/severity outcomes. These diagnostics are not calibrated uncertainty or safety guarantees. Do not silently select the best seed or best validation checkpoint, and do not change the frozen PPO/MPC/FQI results.
-- [ ] Produce a short walkthrough and PNGs in ignored `background/`, showing replay → critic target → actor update → release. End with what was learned, implementation checks, empirical limits, and whether SAC merits the final comparison. A losing SAC result can still be a strong learning outcome.
+- [x] Write the reservoir MDP and each SAC update in our own words before coding: what is observed, what is hidden, what enters replay, what the actor/critics predict, what is detached, and why target networks are needed. Connect SAC's bootstrapped target to FQI and its actor update to PPO. Derive the modern twin-Q/automatic-temperature variant explicitly; do not mix incompatible equations from different SAC versions.
+- [x] Implement a small transparent PyTorch agent: replay buffer, bounded stochastic actor, two Q-critics, target critics, and an explicit training loop. A trusted implementation may be a test reference, but keep the learning exercise's updates visible in our code. Reuse the environment adapter and evaluator; do not rewrite DamEnv or change its reward for an apparent win.
+- [x] Add components incrementally: (1) transition storage/sampling and terminal masks, (2) critic Bellman regression and target updates, (3) reparameterized actor gradients, (4) entropy temperature. Check target detachment, gradient flow, bounded actions, tanh log-probability correction, and consistency of normalized action units/entropy targets. Explain each component and one failure it prevents.
+- [x] Verify on a small known-value control task and short training-only DamEnv runs before expensive experiments. Confirm reset/terminal handling, no future-inflow leakage, finite targets/gradients, and checkpoint round trips. Debug correctness before changing reward weights, adding memory, or running a broad hyperparameter sweep.
+- [x] Predeclare the first reservoir study: same five-feature past-inflow observation, original reward, action limits, chronological splits, annual resets, and no bootstrap across episode ends. Fit normalization using training data only. Record any reward scaling and its interaction with the entropy temperature; evaluate with original reward units. Keep the finite-scenario safety filter outside initial training and evaluate both frozen plain/shared-filter tracks afterward.
+- [x] Choose and log warmup, replay size, minibatch size, update-to-data ratio, target-update rate, network capacity, evaluation policy, checkpoints, and a bounded interaction budget before validation. Match PPO's five learner seeds for the full study. Count warmup interactions and report gradient updates and runtime as well as environment steps: equal interaction budgets are not equal computation, and FQI's shared-data pilot is a separate budget/design.
+- [x] Run one bounded SAC study and explain behavior: mean/weakest-seed reward, learning curves, action distribution, entropy/temperature, twin-Q disagreement, and wet/dry supply/severity outcomes. These diagnostics are not calibrated uncertainty or safety guarantees. Do not silently select the best seed or best validation checkpoint, and do not change the frozen PPO/MPC/FQI results.
+- [x] Produce a short walkthrough and PNGs in ignored `background/`, showing replay → critic target → actor update → release. End with what was learned, implementation checks, empirical limits, and whether SAC merits the final comparison. A losing SAC result can still be a strong learning outcome.
+
+- [x] Diagnose SAC's release timing and critics without tuning: extra unmet demand decomposes into 82.53 million m³ surplus plus 15.34 million m³ terminal storage; 28/60 selected training anchors have a cheaper identical-state request under realized inflow, and min-Q ranks it lower in 20. Conditional branch returns do not establish population calibration. See [diagnosis](docs/SAC.md#release-timing-and-critic-diagnosis).
+- [x] Test frozen-actor critic fitting on paired clipping transitions: 210 fit pairs / 235 separate checking pairs from training years, 1,000 fixed steps per seed/arm. Checking cheaper-request ranking improves 28.5% → 59.1% with ordinary Bellman regression and 53.6% with added pair loss. General value error does not improve; actor and all controller scores remain unchanged. See [critic fitting](docs/SAC.md#frozen-actor-critic-fitting-experiment).
+- [x] Separate focused sampling from extra updates on one fixed pool: at 100 / 1,000 updates, uniform checking-pair ranking is 30.6% / 34.5%, versus focused 43.4% / 51.9% (baseline 28.5%). Focus wins at 1,000 for all five seeds, but broader checking target error worsens in both arms. No actor or reference changes. See [sampling study](docs/SAC.md#sampling-emphasis-versus-update-count).
+- [x] Check broad error against fresh ordinary-state returns and test 10% focus: 420 training-year anchors × eight continuations; conditional return MSE is 43.868 unchanged / 43.860 uniform / 43.905 with 10% focus at 1,000 updates. Cached-target error overstates the apparent deterioration, but 10% focus still fails the declared broad-preservation rule despite improving pair ranking to 41.7%. No actor or original score changes. See [fresh-reference check](docs/SAC.md#fresh-return-checks-and-10-focused-replay).
+- [x] Compare frozen bootstrap versus fresh rollout-return labels on identical fitting states/batches: at 1,000 critic updates, checking return MSE is 44.388 bootstrap / 28.554 rollout (43.868 unchanged), improving all five seeds. Single-action rollout fitting still has poor action differences (36.6% pair ranking versus bootstrap 55.7%) and overfits from 100 to 1,000. No actor or original result changes. See [target comparison](docs/SAC.md#bootstrap-versus-rollout-return-targets).
+- [x] Complete the final bounded iterative-TD diagnostic: frozen actor/alpha, matched data/batches/action noise, target tau 0 versus .005. At 1,000 updates, checking return MSE is 44.145 frozen / 44.493 moving (43.868 unchanged). Target updates alone do not resolve this gap; no convergence or policy improvement is claimed. See [iterative TD](docs/SAC.md#iterative-td-with-the-actor-frozen).
+- [x] Test action-diverse rollout labels with the actor frozen: adding ±50 m³/s alternatives reduces checking gap MAE 0.2482 → 0.1877, but remains worse than unchanged critics (0.0363); directional agreement 44.5% versus 49.3% unchanged. Conditional return MSE still improves, without reliable release comparisons. All five seeds and 100/1,000 budgets retained; no actor or reference changed. See [action-diverse diagnosis](docs/SAC.md#action-diverse-rollout-supervision).
 
 Start with **one SAC implementation**, not a SAC/TD3/DDPG/recurrent-agent sweep.
 TD3 is a literature-supported alternative if the method review changes the choice,
 not an automatic extra controller. Memory, multi-year episodes, synthetic inflows,
 and learned dynamics are later extensions because each changes another part of
-the problem. No SAC implementation or training is launched by this planning phase.
+the problem. The standalone implementation and first bounded study are complete; inspect its
+supply/low-water limitations before increasing the budget or adding extensions.
 
 #### Environment tooling and related benchmarks
 
@@ -181,17 +197,17 @@ These tools serve different roles from learning algorithms such as PPO, FQI, or 
 - **[Gym-Anything](https://github.com/cmu-l3/gym-anything)** builds environments for agents operating real software, with task setup and verification. Our reservoir already has a numerical simulator and measurable outcomes, so no integration is planned. Revisit only if controlling external engineering software becomes an explicit research question.
 - **[ExploitGym](https://github.com/sunblaze-ucb/exploitgym)** evaluates agents developing exploits against real-world software vulnerabilities. It is a separate cybersecurity benchmark, with no current reservoir-control experiment or integration planned.
 
-- [ ] As part of SAC verification, run Gymnasium's environment checker on the intended adapter/wrappers where supported; investigate warnings and retain explicit tests for causality, terminal observations, action units, and physical dynamics. Interface compliance alone does not establish physical correctness. Use a small continuous-action reference task for debugging before DamEnv; reference-task scores are implementation evidence, not the project's engineering result.
-- [ ] Include a short explanation in the SAC walkthrough of **agent versus environment versus evaluator**: the agent chooses a release, DamEnv advances reservoir physics through Gymnasium's interface, and the evaluator measures complete trajectories. Learn from Gym-Anything's explicit setup/verifier separation without introducing a software-use or cybersecurity benchmark into the main comparison.
+- [x] As part of SAC verification, run Gymnasium's environment checker on the intended adapter/wrappers where supported; investigate warnings and retain explicit tests for causality, terminal observations, action units, and physical dynamics. Interface compliance alone does not establish physical correctness. Use a small continuous-action reference task for debugging before DamEnv; reference-task scores are implementation evidence, not the project's engineering result.
+- [x] Include a short explanation in the SAC walkthrough of **agent versus environment versus evaluator**: the agent chooses a release, DamEnv advances reservoir physics through Gymnasium's interface, and the evaluator measures complete trajectories. Learn from Gym-Anything's explicit setup/verifier separation without introducing a software-use or cybersecurity benchmark into the main comparison.
 
 ### Phase 6 — literature exploration: build on the RL foundations
 
 **Learning goal:** understand four research directions from Pierre-Luc Bacon and
-collaborators through focused reading and small reservoir experiments. Start after
-the standalone SAC implementation is verified. Read all four directions, then
-prioritize **MPC with residual RL** for implementation; the remaining experiments
+collaborators through focused reading and small reservoir experiments. The first **MPC with residual RL** pilot is implemented and evaluated. Read the
+relevant paper before each further branch; the remaining experiments
 are optional follow-ups, not four additional controllers required for completion.
-The applications below are proposed adaptations, not results established for DamEnv.
+The remaining branches are proposed adaptations; the first 6A pilot is implemented
+and does not establish general method superiority or final-test performance.
 
 For each reading, write a short explanation of the problem, core equations,
 assumptions, evidence, and what transfers to our reservoir. Before implementing an
@@ -203,6 +219,12 @@ architecture, and objective. Record results even when an extension does not help
 
 #### 6A — residual RL: learn a correction to MPC (first priority)
 
+**Status:** short pilot and duration-only matched extension are complete.
+The 3,650-step residual pilot scores −17,310 plain / −16,924 filtered. At
+36,500 steps it worsens to −21,799 / −21,266 in all three seeds; the full-action
+control improves to −21,353 plain. No reference is replaced. See
+[implementation and results](docs/RESIDUAL_RL.md).
+
 Read [*What Makes Value Learning Efficient in Residual Reinforcement Learning?*](https://arxiv.org/abs/2602.10539)
 and inspect the authors' [DAWN implementation](https://github.com/Guozheng-Ma/DAWN).
 The paper studies refinement of frozen pretrained policies; using our engineering
@@ -210,10 +232,13 @@ MPC as the base controller is a new adaptation.
 
 **Question:** can a learned correction improve MPC under imperfect inflow forecasts?
 
-- [ ] Explain the residual action: `requested_release = bound(MPC_release + bounded_RL_correction)`. Keep MPC fixed and retain DamEnv's hydraulic clipping. Define correction units, range, and the action represented in replay and critic inputs; account for saturation consistently.
-- [ ] Understand the paper's critic cold-start and action-scale issues, base-policy data warmup, and critic normalization before choosing which components to adapt.
-- [ ] Compare frozen MPC, standalone SAC, and MPC with a learned correction using matched decision-time information, reward, resets, and evaluation tracks. Give the residual learner the base proposal explicitly and document this derived feature. Count base-policy warmup interactions and MPC calls in training cost and deployment runtime.
-- [ ] Start with one bounded residual experiment. If useful, isolate warmup or normalization one at a time. Inspect when corrections occur, their sizes, and effects on supply, flood/low-water counts, and severity. A bounded correction is not a safety guarantee; keep plain and shared-filter results separate.
+- [x] Implement and explain `clip(MPC_release + delta, 0, 491.61)`, with delta bounded to ±50 m³/s before the common filter. Replay uses normalized delta, critic inputs use combined nominal request, and nominal saturation is included in actor gradients. Original hydraulic clipping/reward are unchanged.
+- [x] Read DAWN's warmup/scale arguments and algorithm; adapt base-only implicit warmup plus critic LayerNorm, without explicit critic warmup or progressive exploration. Document the reservoir/base-controller/budget differences; this is not a paper reproduction or component ablation.
+- [x] Compare frozen MPC, residual SAC, and a matched proposal-aware full-action SAC control. Both learned arms see the same six inputs, LayerNorm, warmup, and 3-seed/3,650-step budget. Preserve old five-feature SAC/PPO as unmatched contextual references. Count all MPC calls and time; evaluate every validation year with plain/shared-filter tracks.
+- [x] Complete the first bounded residual pilot, with exact zero-correction MPC reproduction and both training smoke gates. Report corrections, seed variability, solver issues, supply/event/severity metrics, and resource cost. Mean correction +6.39 m³/s; both tracks improve the MPC prototype, but full-action control supplies more water at the cost of low-water exposure. Bounds/filter do not imply safety.
+- [x] Extend both matched arms to 36,500 steps/seed, changing duration only. All six short prefixes reproduce exactly; final validation shows residual deterioration in every seed, while full-action improves. Report both, retain the short pilot, and do not promote the longer residual endpoint. Original references and test years remain reserved. Optional warmup/normalization ablations remain separate; their individual effects are not established.
+
+- [x] Diagnose residual duration regression using saved trajectories and both frozen checkpoints on common states: extra low-water penalty explains 88% of reward loss; 32.03 million m³ additional surplus and 15.52 million m³ lower terminal storage reconcile 16.51 million m³ extra shortage. Actor corrections increase on both state sets; critic estimates are not calibrated counterfactual returns. No new training or validation rollouts.
 
 #### 6B — learning from history: represent hidden hydrological conditions
 

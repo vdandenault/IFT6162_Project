@@ -1,0 +1,34 @@
+{
+  "description": "First fixed-budget SAC study; freeze before validation, no checkpoint/seed selection",
+  "agent": {
+    "observation_dim": 5,
+    "action_dim": 1,
+    "hidden_sizes": [64, 64],
+    "gamma": 0.995,
+    "tau": 0.005,
+    "learning_rate": 0.0003,
+    "initial_alpha": 0.2,
+    "target_entropy": -1.0,
+    "reward_scale": 0.001
+  },
+  "learner_seeds": [123, 124, 125, 126, 127],
+  "environment_seed": 123,
+  "steps_per_seed": 200000,
+  "warmup_steps": 5000,
+  "replay_capacity": 200000,
+  "batch_size": 128,
+  "updates_per_step": 1,
+  "torch_threads_per_worker": 1,
+  "normalization": {
+    "seed": 90210,
+    "episodes_per_training_year": 1,
+    "behavior": "50% uniform continuous release, 50% clipped exponential average demand",
+    "scope": "42 training years only; fixed mean/std, std floor 1e-6; no replay preloading",
+    "interactions": 15330
+  },
+  "smoke": {"seed": 901, "steps": 7300, "warmup_steps": 512},
+  "trace_every_steps": 1000,
+  "checkpoint_every_steps": 50000,
+  "evaluation": "Final 200k only, deterministic tanh(mean); all 10 validation years; plain and frozen common-filter tracks; test remains reserved",
+  "budget_note": "200k interactions per SAC seed versus 1M per frozen PPO seed: exploratory comparison, not a matched-budget algorithm ranking. Add 15330 shared normalization interactions, plus separate smoke/checker interactions. Log update counts and runtime. No promotion of intermediate checkpoints."
+}
