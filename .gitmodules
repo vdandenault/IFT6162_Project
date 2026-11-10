@@ -1,0 +1,3 @@
+[submodule "external/loslr_regulation_optimization"]
+	path = external/loslr_regulation_optimization
+	url = https://github.com/nadinemgh/loslr_regulation_optimization.git
