@@ -9,6 +9,7 @@ are the core scope; hydropower is optional.
 - [Project plan](PROJECT_PLAN.md): model, scope, current status, and remaining work.
 - [PPO findings](docs/PPO.md): selected settings and consolidated experimental evidence.
 - [Evaluation](docs/EVALUATION.md): run the comparison and interpret metrics.
+- [Simulator development](docs/SIMULATOR.md): continuous/subdaily research gym, physical checks, scenario uncertainty, routing and explicit training protocols.
 - [Literature review](docs/LITERATURE_REVIEW.md): references and MPC/FQI decisions.
 
 For a visual introduction, run [the environment walkthrough](scripts/analysis/environment_and_data.py).
