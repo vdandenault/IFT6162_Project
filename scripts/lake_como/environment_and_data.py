@@ -1,6 +1,6 @@
 """Environment and data.
 
-Run: uv run --group reproduction python scripts/analysis/environment_and_data.py
+Run: uv run --group reproduction python scripts/lake_como/environment_and_data.py
 Tables print to the terminal; PNG plots stay in ignored results directories.
 """
 import numpy as np

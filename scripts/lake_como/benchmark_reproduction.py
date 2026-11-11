@@ -1,6 +1,6 @@
 """Benchmark reproduction.
 
-Run: uv run --group reproduction python scripts/analysis/benchmark_reproduction.py
+Run: uv run --group reproduction python scripts/lake_como/benchmark_reproduction.py
 Tables print to the terminal; PNG plots stay in ignored results directories.
 """
 

@@ -1,6 +1,6 @@
 """Acquire a bounded, separate modern ARPA measurement audit (no parameter fit).
 
-Run with uv run python scripts/analysis/operational_measurements.py.
+Run with uv run python scripts/lake_como/operational_measurements.py.
 Requires curl; preserves raw responses and provenance in ignored results/.
 """
 import argparse

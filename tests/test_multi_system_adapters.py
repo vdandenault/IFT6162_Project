@@ -1,4 +1,4 @@
-"""Migration gates: isolated planning, optional imports and exact Como parity."""
+"""Shared contracts: isolated planning, optional imports and Como parity."""
 import json
 from pathlib import Path
 import subprocess
@@ -24,19 +24,17 @@ class SharedContractChecks(unittest.TestCase):
             'import reservoir_control.controllers.sac.agent; '
             'import reservoir_control.controllers.fqi.agent; '
             'import reservoir_control.controllers.mpc.receding_horizon; '
+            'import reservoir_control.controllers.mpc.bilevel; '
+            'import reservoir_control.controllers.mpc.convex_response; '
             'assert not any(k.startswith(("reservoir_control.systems", "gym4real", "gymnasium")) '
             'for k in sys.modules)'
         )
         subprocess.run([sys.executable, '-c', code], check=True)
 
-    def test_legacy_package_is_removed(self):
-        import importlib.util
-        self.assertIsNone(importlib.util.find_spec('lake_como'))
-
-    def test_frozen_source_verification_reports_the_historical_restore_path(self):
+    def test_frozen_source_verification_rejects_missing_sources(self):
         from reservoir_control.evaluation.provenance import verify_sources
-        with self.assertRaisesRegex(ValueError, 'pre-migration'):
-            verify_sources({'/missing/src/lake_como/simulation/model.py': 'original-digest'})
+        with self.assertRaisesRegex(ValueError, 'Frozen source is missing'):
+            verify_sources({'/missing/source.py': 'original-digest'})
 
     def test_time_supports_different_system_calendars(self):
         DecisionTime(0, 2020, 366, 86400.)

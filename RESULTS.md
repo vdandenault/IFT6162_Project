@@ -2,12 +2,69 @@
 
 ## Ontario–St. Lawrence
 
-**The Ontario simulation and first MPC comparison have completed.** The current
-pilot matches the causal rule curve in 1995 and 2019. In 2017 it trades a small
-reduction in downstream exceedance severity for greater Ontario severity and
-one additional downstream exceedance period.
+**The coupled Ontario–Ottawa pilot now runs all four approaches:** the rule
+curve, external-flow MPC, nested bilevel MPC and PPO. The earlier uncoupled
+fixed-cap benchmark is retained below with its original score definition.
 
-### Simulation and benchmark checks
+### Coupled research pilot: current overview
+
+Saved run: `results/loslr/coupled_v1_information_matched/`. Each controller covers complete
+1995, 2017 and 2019 annual episodes from matched Ontario and Ottawa starts.
+Five PPO seeds each trained for **4,096 decisions on 1901–1980 only** and were
+then evaluated using their saved final endpoint. There are **24 annual records**
+and **1,152 quarter-month trajectory rows**. Reserved test years were not run.
+
+Mean annual operating cost, **lower is better**:
+
+- **Rule curve: 1.694.** The common Plan 2014 release policy in the responsive-follower simulator.
+- **External-flow MPC: 1.995.** Plans against a neutral-announcement Ottawa forecast.
+- **Bilevel MPC: 1.838.** Recomputes Ottawa's best response for each candidate request schedule.
+- **PPO: 1.690**, averaged across five seeds. Individual seed means span **1.591–1.760**.
+
+Anticipating the follower lowers cost by **7.9% relative to external-flow MPC**
+in these three cases. Both MPC variants still cost more than the rule curve.
+PPO's mean is close to the rule curve; this short pipeline pilot does not establish
+convergence, statistical superiority or generalization. No controller was promoted.
+
+The flood tradeoff remains visible. In **2017**, external/bilevel MPC Ontario
+exceedance totals are **7.284 / 7.120 m·periods**, and downstream totals are
+**0.40 / 0.38 m·periods**. In **2019**, upstream totals improve from **5.074 to
+4.514 m·periods**, while downstream totals increase from **0.45 to 0.54 m·periods**.
+Both MPC variants use forecast-cap recovery on **20 periods in 2017** and
+**17 in 2019**. Forecast feasibility is not a realized safety guarantee.
+
+This study changes the formulation deliberately. It uses the sourced Plan 2014
+**tiered F-limit targets**, squared upstream/downstream exposure, low-water and
+release-change costs, plus annual terminal storage value. PPO reward is exactly
+negative operating cost. These costs cannot be compared numerically with the
+older fixed-cap flood-exposure score. All controllers use the same native Bv7
+execution projection; MPC additionally searches for forecast stage-cap feasibility.
+PPO has no separate hard stage-safety certificate. Physical severities and follower
+service/storage outcomes are retained separately from the scalar objective.
+
+The follower is a strictly convex storage/release QP responding to Ontario's
+announced **requests**, which can differ from Bv7-executed releases. Nested finite
+leader search is a reference bilevel controller, not a global optimum. Independent
+KKT residuals remained below **7.49 × 10⁻⁵**; maximum Ottawa mass-balance error was
+below **7.2 × 10⁻⁷ m³**. All physical follower safety-adjustment counts were zero.
+The training logs contain finite actor/critic gradients and **425 annual task ends**;
+local KKT response derivatives also pass a finite-difference check. The full project
+suite passes **330 tests, with one skip**.
+
+**Physical calibration remains open.** The controlled share of historical SLON,
+6 billion m³ useful capacity, half-full initial storage, outlet bounds and zero-lag
+routing are declared research assumptions. Historical SLON is already regulated;
+this synthetic decomposition is not a reconstruction of natural Ottawa inflows.
+The IJC source establishes the reference IGLD 1985 F-tier convention, but it does
+not validate every historical gauge record or make 75.50 m an absolute Ontario
+operating limit. See the [protocol and evidence](configs/studies/loslr/README.md).
+
+Next validation: capacity/flow-split/routing sensitivity, stronger leader search,
+longer predeclared PPO training and continuous multi-year evaluation. Native
+performance indicators remain available for the original reference; extending
+all seven to coupled trajectories is still open.
+
+### Earlier uncoupled simulation and benchmark checks
 
 - The native Python reference ran **5,808 quarter-month decisions over 1900–2020**,
   following the supplied initialization year. Adapter parity passed and all
@@ -169,8 +226,7 @@ Saved local artifacts include:
 - `results/loslr/native_baseline_v4/` — native reference, adapter parity and indicators.
 - `results/loslr/causal_baseline_v2/` — causal full-record replay and forecast audit.
 - `results/loslr/mpc_v2/` — initial paired MPC pilot.
-- `results/migration/ontario_adapter_split_v1/` — latest replay through the shared
-  search and Ontario planning adapter, matching all physical outcomes of the pilot.
+
 
 The paired `comparison.csv` contains requests, executed releases, levels, forecast
 inputs, every predicted stage margin and fallback status. `summary.json` aggregates
@@ -183,11 +239,6 @@ with **617.91** for mapped PPO trained for 400k decisions per seed. PPO costs
 approximately **19.4% more**, with slightly lower flood exposure and substantially
 more low-water exposure. These are development results over **1988–1997**, using
 training/fitting years **1946–1987**. Final **1998–2010** testing remains reserved.
-
-The two-system package migration preserved a deterministic PPO update exactly,
-loaded existing checkpoints and reproduced Ontario trajectories. The project
-suite passed **319 tests with one skip**. The later MPC adapter split passed
-**24 focused checks**.
 
 <details>
 <summary>Lake Como results, investigations and earlier DamEnv benchmarks</summary>

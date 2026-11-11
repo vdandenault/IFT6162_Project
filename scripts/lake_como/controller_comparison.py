@@ -1,6 +1,6 @@
 """Controller comparison.
 
-Run: uv run --group reproduction python scripts/analysis/controller_comparison.py
+Run: uv run --group reproduction python scripts/lake_como/controller_comparison.py
 Tables print to the terminal; PNG plots stay in ignored results directories.
 """
 import json

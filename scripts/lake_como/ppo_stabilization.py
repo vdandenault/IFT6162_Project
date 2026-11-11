@@ -1,6 +1,6 @@
 """PPO stabilization.
 
-Run: uv run --group reproduction python scripts/analysis/ppo_stabilization.py
+Run: uv run --group reproduction python scripts/lake_como/ppo_stabilization.py
 Tables print to the terminal; PNG plots stay in ignored results directories.
 """
 

@@ -1,6 +1,6 @@
 """PPO learning curves.
 
-Run: uv run --group reproduction python scripts/analysis/ppo_learning_curves.py
+Run: uv run --group reproduction python scripts/lake_como/ppo_learning_curves.py
 Tables print to the terminal; PNG plots stay in ignored results directories.
 """
 import json

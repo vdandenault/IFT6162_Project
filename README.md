@@ -8,9 +8,12 @@ All application code lives under `src/reservoir_control/`. Shared PPO, SAC and
 FQI implementations live in `controllers/`. Each system owns its physics,
 observations, operational policies and study runners under `systems/`.
 Planning and Gymnasium adapters connect those systems to the controllers.
-The MPC search lives in `controllers/mpc/receding_horizon.py`. Ontario's planning
-adapter lives in `systems/loslr/planning.py` and supplies its calendar, release
-rules, candidate actions, stage constraints and objective.
+MPC beam search lives in `controllers/mpc/receding_horizon.py`; finite nested
+leader search and convex response solving live beside it. Ontario planning
+adapters (`systems/loslr/planning.py` and `coupled.py`) supply calendars, release
+rules, candidate actions, constraints and objectives. The Gymnasium adapter
+(`systems/loslr/gym_env.py`) connects the same coupled physics to the shared PPO
+agent. MPC and PPO remain separate controller implementations.
 
 ```text
 reservoir_control/
@@ -30,14 +33,16 @@ use the new package, for example
 
 ## Current status
 
-The package migration is complete. The Ontario native reference and causal
+The Ontario native reference and causal
 rule-curve replays have run, and the first four-quarter-month MPC comparison
 covers 1995, 2017 and 2019. MPC matches the rule curve in two cases and makes a
 small upstream/downstream tradeoff in 2017. Follow-up diagnostics found conflicting
 one-step forecast caps at 32 of 37 fallback states. Removing the tracking penalties
 preserved every tested release, and perfect inflows reduced downstream peaks while
-increasing downstream total exceedance. The Ottawa aggregate balance is
-implemented. Follower optimization, Stackelberg MPC and Ontario PPO are upcoming.
+increasing downstream total exceedance. A new coupled research pilot also completed:
+a convex Ottawa follower, nested Stackelberg MPC and five short Ontario PPO training runs. The coupled study uses
+state-dependent F-limit targets and declared synthetic Ottawa parameters. It is
+separate from the earlier fixed-cap benchmark.
 See [RESULTS.md](RESULTS.md) for measured outcomes and [PROJECT_PLAN.md](PROJECT_PLAN.md)
 for the next implementation phases.
 
@@ -84,26 +89,39 @@ and review both the project file and lockfile.
 
 ## Historical Como studies
 
-Frozen manifests retain the original source paths and hashes. The pre-migration
-source, workspace dependency and environment files are archived locally under
-`results/migration/como_before_multisystem_v1/`. To inspect or reproduce that
-source version, restore it into an empty directory:
+Frozen manifests retain the original source paths and hashes. Historical studies
+require the source revision and environment recorded by their manifests; the
+current source tree is checked strictly against those hashes. Generated results
+and checkpoints remain in their existing directories.
+
+## Coupled Ontario–Ottawa comparison
 
 ```bash
-python scripts/migration/preserve_como.py --restore-to /tmp/lake-como-reference
+uv run --group reproduction python -m reservoir_control.systems.loslr.coupled_study \
+  --output results/loslr/coupled_review
 ```
 
-Generated results and checkpoints remain in their existing directories. Studies
-with absolute manifest paths require the original checkout location or explicit
-path mapping in a copied study. Current source verification reports a historical
-source-tree mismatch when an old manifest references the removed package.
+This runs the rule curve, external-flow MPC, nested bilevel MPC and five PPO seeds
+on 1995, 2017 and 2019. The default PPO budget is 4,096 decisions per seed, a
+pipeline pilot. A different budget requires a fresh output folder, for example
+`--training-decisions 20000`; the actual budget is frozen before training. Use
+`--skip-ppo` for a labelled controller-only diagnostic.
+
+The [study protocol](configs/studies/loslr/README.md) explains sourced F-limit
+thresholds, research objectives, causal information, the announcement-response
+game, splits and parameter assumptions. Plans, source hashes, annual trajectories,
+physical metrics, training curves and final checkpoints are saved under the output
+folder. Historical SLON is split synthetically; this is not operationally calibrated
+Ottawa control. Native Bv7 limits apply to every controller. MPC additionally
+searches for forecast stage-cap feasibility and explicitly reports recovery
+fallbacks. PPO receives the same stage exposure in its cost; its policy does not
+provide an additional hard stage-safety guarantee. No final test years are run.
 
 ## Ontario baseline and architecture figures
 
 The native runner reproduces the pinned upstream Python implementation. The
 causal runner uses past-only inputs for the Python rule curve and Bv7 limits
-and reports differences against the archived GLRRM baseline. See the
-[migration status](docs/MULTI_SYSTEM_PLAN.md#implementation-status).
+and reports differences against the archived GLRRM baseline. See [RESULTS.md](RESULTS.md) for the current benchmark findings.
 
 The upstream checkout is currently local and ignored, pending the licensing audit;
 it is not a registered submodule. It is already present in this workspace. For a
@@ -132,7 +150,7 @@ uv run python -m reservoir_control.systems.loslr.mpc \
   --output results/loslr/mpc_review --years 1995 2017 2019
 uv run python -m reservoir_control.systems.loslr.mpc_diagnostics \
   --output results/loslr/mpc_diagnostics_review
-uv run python scripts/analysis/multisystem_overview.py
+uv run python scripts/visualization/multisystem_overview.py
 ```
 
 The figures are PNGs under ignored `background/images/`: physical coupling,
@@ -177,19 +195,19 @@ and PPO. Shared FQI and SAC implementations are available for optional later wor
 Rebuild the local HTML and both PNGs from saved experiment traces with:
 
 ```bash
-uv run python scripts/analysis/ontario_visualization.py
+uv run python scripts/visualization/ontario_visualization.py
 ```
 
 For freshly generated review runs, pass their paths explicitly:
 
 ```bash
-uv run python scripts/analysis/ontario_visualization.py \
+uv run python scripts/visualization/ontario_visualization.py \
   --comparison results/loslr/mpc_review/comparison.csv \
   --diagnostics results/loslr/mpc_diagnostics_review
 ```
 
 The generated HTML and PNGs live under ignored `background/`. The builder and
-HTML template live under `scripts/analysis/`.
+HTML template live under `scripts/visualization/`.
 
 ## Validation and Como references
 
@@ -233,55 +251,55 @@ This runs the first validation year with the seven-day deterministic controller 
 and [evaluation](docs/EVALUATION.md#mpc-prototype) explain the forecast, surrogate
 objective, limitations, and full validation command. The prototype runs correctly
 but performs poorly; it needs investigation before serving as the engineering benchmark.
-Run `uv run --group reproduction python scripts/analysis/diagnose_mpc.py` for
+Run `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_diagnostics` for
 [the boundary and optimizer audit](docs/EVALUATION.md#boundary-and-optimizer-diagnosis).
 The separate [perfect-inflow hindsight diagnostic](docs/EVALUATION.md#perfect-inflow-hindsight-diagnostic)
-runs with `uv run --group reproduction python scripts/analysis/perfect_inflow_mpc.py`;
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_hindsight`;
 it intentionally supplies privileged inflow information without changing deployable MPC.
 [The paired objective audit](docs/EVALUATION.md#binary-versus-surrogate-objective-on-common-grids)
-uses `uv run --group reproduction python scripts/analysis/compare_mpc_objectives.py`
+uses `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_objective_audit`
 to compare penalty choices on common hindsight grids without new annual rollouts.
 The [closed-loop objective comparison](docs/EVALUATION.md#closed-loop-objective-comparison-with-common-search)
-runs via `uv run --group reproduction python scripts/analysis/closed_loop_mpc_objectives.py`;
+runs via `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_objective_closed_loop`;
 it uses a separate common one-day search, not deployed seven-day MPC. Add
 `--inflow-source seasonal` for the training-only forecast comparison, including
 flood/low-water severity and the saved hindsight reference.
 
 The causal [forecast comparison](docs/EVALUATION.md#causal-past-inflow-forecast-comparison)
-runs with `uv run --group reproduction python scripts/analysis/compare_mpc_forecasts.py`.
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_forecast_study`.
 It compares climatology, persistence, and a training-fitted seasonal anomaly forecast
 under identical one-day searches, using only completed-day inflow estimates.
 
 To repeat the [seven-day causal MPC forecast ablation](docs/EVALUATION.md#causal-forecasts-in-seven-day-mpc):
-`uv run --group reproduction python scripts/analysis/compare_causal_mpc.py`.
+`uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_causal`.
 This preserves the original MPC costs and solver.
 
 The [solver-failure audit](docs/EVALUATION.md#audit-of-additional-causal-mpc-solver-failures)
-runs with `uv run --group reproduction python scripts/analysis/audit_mpc_solver.py`
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_solver_audit`
 and replays saved decisions without changing the controller.
 
 The paired [iteration-limit retention experiment](docs/EVALUATION.md#cost-checked-retention-of-iteration-limit-iterates)
-runs with `uv run --group reproduction python scripts/analysis/compare_mpc_retention.py`.
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_retention_study`.
 It preserves solver failure flags and keeps the original controller unchanged.
 
 The [matched MPC horizon study](docs/EVALUATION.md#matched-mpc-horizon-experiment)
-runs with `uv run --group reproduction python scripts/analysis/compare_mpc_horizons.py`.
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.mpc_horizon_study`.
 It compares 1, 3, and 7 days under the same persistence forecast and optimizer.
 
 The [PPO past-inflow observation study](docs/PPO.md#past-inflow-observation-ablation)
-runs with `uv run --group reproduction python scripts/analysis/compare_ppo_inflow.py`.
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.ppo_inflow_study`.
 It trains five 1M-step policies and compares against verified four-feature controls.
 
 The [wet/dry decision analysis](docs/PPO.md#what-changes-in-wet-and-dry-years)
-runs with `uv run --group reproduction python scripts/analysis/analyze_ppo_inflow.py`
+runs with `uv run --group reproduction python scripts/lake_como/analyze_ppo_inflow.py`
 on frozen PPO trajectories, with years selected only by total inflow.
 
 The [flood feasibility audit](docs/EVALUATION.md#flood-safety-feasibility-audit)
-runs with `uv run --group reproduction python scripts/analysis/audit_flood_feasibility.py`.
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.flood_feasibility`.
 It checks saved states without changing any controller or claiming a safety guarantee.
 
 The [common safety-filter comparison](docs/EVALUATION.md#common-finite-scenario-safety-filter)
-runs with `uv run --group reproduction python scripts/analysis/compare_safety_filter.py`.
+runs with `uv run --group reproduction python -m reservoir_control.systems.lake_como.safety_study`.
 Frozen reference hashes and the plain/filtered comparison tracks are recorded in
 `configs/experiments/control_protocol_v1.json`; test years remain reserved.
 
@@ -291,14 +309,16 @@ The [first FQI pilot](docs/EVALUATION.md#first-tree-based-fqi-pilot) uses
 ```bash
 uv run --group reproduction --with scikit-learn==1.5.2 \
   --with numpy==2.2.4 --with scipy==1.15.3 \
-  python scripts/analysis/run_fqi_pilot.py
+  python -m reservoir_control.systems.lake_como.fqi_study
 ```
 
 ### Como analysis scripts
 
+See [the scripts guide](scripts/README.md) for the remaining utilities and their purpose.
+
 ```bash
-uv run --group reproduction python scripts/analysis/environment_and_data.py
-uv run --group reproduction python scripts/analysis/controller_comparison.py
+uv run --group reproduction python scripts/lake_como/environment_and_data.py
+uv run --group reproduction python scripts/lake_como/controller_comparison.py
 ```
 
 The walkthrough runs short training-year diagnostics and saves PNGs under

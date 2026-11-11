@@ -1,6 +1,6 @@
 """PPO duration.
 
-Run: uv run --group reproduction python scripts/analysis/ppo_duration.py
+Run: uv run --group reproduction python scripts/lake_como/ppo_duration.py
 Tables print to the terminal; PNG plots stay in ignored results directories.
 """
 

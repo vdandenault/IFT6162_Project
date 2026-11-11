@@ -1,6 +1,6 @@
 """Inspect the first fixed MPC prototype; reads saved validation results only.
 
-Run: uv run --group reproduction python scripts/analysis/mpc_validation.py
+Run: uv run --group reproduction python scripts/lake_como/mpc_validation.py
 Generate inputs with lake-como-compare --controllers ead max mpc ppo
 --output results/comparison/mpc_validation_v1.
 """

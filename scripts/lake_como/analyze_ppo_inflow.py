@@ -1,6 +1,6 @@
 """Explain the frozen PPO observation ablation in wet/dry validation years.
 
-Run with uv run --group reproduction python scripts/analysis/analyze_ppo_inflow.py
+Run with uv run --group reproduction python scripts/lake_como/analyze_ppo_inflow.py
 Year selection uses only total external inflow; no reward/violation selection.
 """
 import argparse

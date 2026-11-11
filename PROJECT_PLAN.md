@@ -8,8 +8,6 @@ implementations and simulator investigations.
 
 ## Current status
 
-- [x] Finish the package migration into `src/reservoir_control/`, including imports,
-  console entry points and analysis scripts.
 - [x] Separate reusable MPC search from the Ontario planning adapter. Shared PPO,
   SAC and FQI code also lives under `controllers/`.
 - [x] Reproduce the pinned native Python Ontario simulation over 1900–2020 and
@@ -28,8 +26,12 @@ implementations and simulator investigations.
 - [ ] Validate operational stage limits, model datum and the effective time
   convention needed to couple Ottawa storage to the Ontario model.
 - [x] Complete the fallback, perfect-inflow and objective diagnostics on the three pilot cases.
-- [ ] Implement the responsive Ottawa follower and Stackelberg MPC.
-- [ ] Add the Ontario PPO comparison and a frozen evaluation protocol.
+- [x] Implement a convex responsive Ottawa follower and nested Stackelberg MPC
+  reference in a declared synthetic coupling; validate KKT residuals and response derivatives.
+- [x] Add the Ontario Gymnasium adapter and complete a five-seed, 4,096-decision
+  PPO pipeline pilot with a frozen chronological protocol.
+- [ ] Calibrate the Ottawa decomposition/routing, expand the leader search and
+  validate longer PPO training before a final reserved-year comparison.
 
 The MPC pilot matches the rule curve in 1995 and 2019. In 2017 it changes ten
 releases, with a small downstream severity reduction and an upstream severity
@@ -69,7 +71,31 @@ an identified aggregate boundary, storage parameters and suitable forcing data.
 Historical SLON already contains regulated tributary contributions, so coupling
 must account for those contributions before adding an optimized follower release.
 
-## Next implementation phases
+## Coupled study implementation
+
+The five requested implementation areas now have an executable research pilot:
+threshold/timing audit, explicit common operating cost and fallback priority,
+responsive Ottawa follower, nested bilevel MPC and Ontario PPO. See the
+[protocol and source evidence](configs/studies/loslr/README.md) and
+`configs/studies/loslr/coupled_v1.json`. The run is saved in
+`results/loslr/coupled_v1_information_matched/` with 24 annual controller/seed records.
+
+The F-limit targets are tiered by beginning Ontario level. The 75.50 m Ontario
+cap remains a research choice, not a verified universal operational limit. The
+Ottawa capacity, initial storage, historical-SLON split and zero-lag routing are
+explicit assumptions. Shared Bv7 projection applies to all controllers; MPC
+searches for additional forecast stage-cap feasibility, whereas PPO optimizes the
+same stage-exposure cost without a hard stage-safety certificate. A nested QP
+reference and independently checked KKT residuals replace the need to embed KKT
+conditions in a first leader solver. Local active-set sensitivity matches finite
+differences. The finite leader candidate family is not globally optimal.
+
+Training: 1901–1980; development: 1981–2000 plus 2017/2019. Other 2001–2020 years
+are reserved. Five PPO seeds completed 4,096 decisions each, with final-only
+pilot evaluation, finite gradients and explicit annual terminal storage costs.
+This is a training-pipeline check, not a converged PPO benchmark.
+
+## Remaining validation and extensions
 
 ### 1. Establish the Ontario MPC comparison
 
@@ -87,7 +113,10 @@ The beam search retains 12 schedules and records forecast margins and fallback
 use. Its failure to find a feasible schedule establishes a search outcome.
 Global feasibility remains unresolved.
 
-- [ ] Verify datum and operational thresholds, including seasonal interpretation.
+- [x] Source the Plan 2014 IGLD 1985 F-tier table and distinguish operational
+  weekly releases from the model's quarter-month convention.
+- [ ] Independently verify historical gauge metadata and season-specific research
+  safety thresholds; operational calibration remains open.
 - [x] Diagnose fallback decisions using first-action grids, relaxed cap bounds,
   a 96-wide beam and complete candidate enumeration. Thirty-two of 37 states
   have incompatible one-step forecast cap requirements. No finite candidate
@@ -98,10 +127,12 @@ Global feasibility remains unresolved.
 - [x] Remove release tracking, terminal tracking and both in matched ablations.
   Each arm reproduces all 144 reference releases. Common candidate re-ranking
   also preserves the selected first release at all 37 fallback states.
-- [ ] Review study-cap compatibility, operational release bounds and recovery
-  priority before changing costs or controller defaults.
-- [ ] Establish objective components for Ontario and downstream impacts, including
-  low-water, release stability and supported native performance indicators.
+- [x] Declare tiered downstream targets, shared native Bv7 bounds and explicit
+  least-exceedance recovery priority in the separate coupled study.
+- [x] Define shared upstream/downstream exposure, low-water, release-change and
+  finite-task terminal-storage costs; retain follower service and storage metrics.
+- [ ] Extend native performance-indicator reporting to the coupled trajectories;
+  all seven already run for the native reference.
 - [ ] Extend paired continuous trajectories across ordinary, wet and dry conditions
   once the objective and constraints are declared.
 
@@ -111,53 +142,48 @@ The current pure storage balance requires explicit capacity and release bounds.
 The next implementation needs an independent operating objective and a justified
 mapping from controlled releases and uncontrolled runoff to Lake St. Louis.
 
-- [ ] Identify aggregate storage, natural inflow and outlet/routing parameters,
-  labelling each parameter's source or sensitivity assumption.
-- [ ] Define storage targets, release/service requirements and terminal storage
-  value for the follower.
-- [ ] Implement a convex best-response problem with a documented dependency on
-  Ontario's announced schedule.
-- [ ] Test conservation, feasibility, response timing and sensitivity to capacity
-  and objective weights.
+- [x] Declare aggregate storage, synthetic inflows and outlet/routing assumptions,
+  distinguishing published reservoir capacities from usable aggregate capacity.
+- [ ] Replace the synthetic SLON decomposition with independently supported inputs
+  and test nonzero travel-time assumptions.
+- [x] Define follower storage targets, release/service requirements and terminal storage value.
+- [x] Implement a strictly convex best response to Ontario's announced request schedule.
+- [x] Test conservation, storage feasibility, causal response timing, KKT optimality
+  and local announcement sensitivity.
+- [ ] Run declared capacity, controlled-fraction and objective-weight sensitivities.
 
 ### 3. Implement Stackelberg MPC
 
-- [ ] Define Ontario's commitment and Ottawa's information at each decision.
-- [ ] Validate a nested follower best-response reference on small cases.
-- [ ] Implement a KKT formulation for the convex follower and check its residuals
-  against the nested reference.
-- [ ] Compare external-flow MPC and anticipating MPC in the same responsive
-  follower simulator with matched forcing and initial states.
-- [ ] Report both operators' storage, service and flood outcomes.
+- [x] Define request announcements, advisory future schedules and Ottawa's decision-time information.
+- [x] Implement and run the nested follower best-response reference on three complete annual cases.
+- [x] Check follower primal, stationarity and complementarity residuals, plus
+  active-set KKT sensitivities against independent finite differences.
+- [ ] Investigate a leader optimizer using those derivatives; the current nested
+  finite search remains the reference.
+- [x] Compare external-flow and anticipating MPC in the same responsive simulator with matched forcing and starts.
+- [x] Report both operators' storage, service and flood outcomes in the coupled pilot.
 
 ### 4. Add PPO and complete evaluation
 
-- [ ] Define Ontario observations, action mapping, reward and episode semantics
-  through its Gymnasium adapter.
-- [ ] Run a short training check, then a bounded five-seed comparison.
-- [ ] Freeze chronological fitting/development/evaluation membership before fitted
-  forecast or policy selection. The 1995, 2017 and 2019 pilot cases are development
-  evidence. Declare additional final evaluation windows before the frozen study.
-- [ ] Report Ontario and Pointe-Claire peaks, exceedance periods and severity,
-  release changes, terminal storage, forecast errors, fallback frequency and runtime.
+- [x] Define causal Ontario observations, residual requests, common reward and finite annual episodes through Gymnasium.
+- [x] Complete a bounded five-seed training check and matched pilot comparison; longer training remains open.
+- [x] Freeze chronological fitting/development/evaluation membership before fitted
+  forecast or policy selection. The 1995, 2017 and 2019 cases are development
+  evidence; the other 2001–2020 years remain reserved in the declared protocol.
+- [x] Report Ontario/Pointe-Claire peaks, exceedance counts and severity, release
+  changes, terminal storage, forecast/realized flows, fallback frequency and runtime.
 - [ ] Include supported native performance indicators with their declared units
   and aggregation. Use the same physical execution rules across controllers.
 
 ## Reproducibility and references
 
-The migration passed 319 project tests with one skip. PPO update parameters,
-optimizer state, random-number state and outputs matched the pre-migration
-reference exactly. Checkpoint evaluation and Ontario replay also completed
-through the installed package. The later MPC adapter split passed 24 focused
-checks and reproduced all 288 paired comparison rows apart from runtime.
-
-Frozen historical manifests retain their original hashes. The verified source
-and environment archive is under `results/migration/como_before_multisystem_v1/`.
-The restore command is documented in [README.md](README.md#historical-como-studies).
+Frozen historical manifests retain their original source hashes. Reproducing an
+older study requires its recorded source revision and environment.
 
 The three diagnostics and their source/output manifests are saved under
-`results/loslr/mpc_diagnostics_v2/`. The project suite passes 322 tests with one
-skip. Details and graphs are recorded in [RESULTS.md](RESULTS.md).
+`results/loslr/mpc_diagnostics_v2/`. The coupled study records its protocol,
+source hashes, trajectories and saved PPO endpoints under
+`results/loslr/coupled_v1_information_matched/`. Details are in [RESULTS.md](RESULTS.md).
 
 Detailed model decisions and implementation milestones are in
 [the two-system design](docs/MULTI_SYSTEM_PLAN.md). Ottawa evidence and remaining
@@ -512,8 +538,8 @@ final comparison to exhaust every paper.
 
 Read [PPO findings](docs/PPO.md), [evaluation](docs/EVALUATION.md), and
 [literature review](docs/LITERATURE_REVIEW.md) as needed. Start with
-[environment walkthrough script](scripts/analysis/environment_and_data.py) for the system or
-[controller comparison script](scripts/analysis/controller_comparison.py) for current comparisons;
+[environment walkthrough script](scripts/lake_como/environment_and_data.py) for the system or
+[controller comparison script](scripts/lake_como/controller_comparison.py) for current comparisons;
 intermediate analysis scripts are optional detailed evidence.
 
 `configs/ppo.json` is the current selected baseline; `configs/experiments/ppo_studies.json`
