@@ -13,6 +13,8 @@ class MPCSettings:
     ontario_max_m: float = 75.50
     pointe_claire_max_m: float = 22.10
     beam_width: int = 12
+    tracking_weight: float = 1.0
+    terminal_weight: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -44,9 +46,11 @@ class OntarioPlanningAdapter:
     """Translate Ontario forecasts and physical rules into a search problem."""
 
     def __init__(self, model: OntarioModel, settings: MPCSettings = MPCSettings()):
-        if settings.beam_width < 1 or not all(map(isfinite, (
-            settings.ontario_max_m, settings.pointe_claire_max_m,
-        ))) or settings.pointe_claire_max_m <= 16.57:
+        numeric = (settings.ontario_max_m, settings.pointe_claire_max_m,
+                   settings.tracking_weight, settings.terminal_weight)
+        if (settings.beam_width < 1 or not all(map(isfinite, numeric))
+                or settings.pointe_claire_max_m <= 16.57
+                or min(settings.tracking_weight, settings.terminal_weight) < 0):
             raise ValueError("Invalid Ontario MPC settings")
         self.model = model
         self.settings = settings
@@ -82,10 +86,8 @@ class OntarioPlanningAdapter:
         for release in sorted({max(0.0, min(11500.0, request)) for request in requests}):
             yield ReleaseRequest(release)
 
-    def prepare(self, initial: OntarioState, decision: DecisionInputs, start: DecisionTime):
+    def forecast_stages(self, decision: DecisionInputs, start: DecisionTime):
         forecast = decision.forecast
-        inputs = []
-        target_state = initial
         for lead in range(len(forecast.nts_m3_s)):
             year_offset, period = divmod(start.period - 1 + lead, 48)
             time = DecisionTime(start.index + lead, start.year + year_offset,
@@ -97,11 +99,15 @@ class OntarioPlanningAdapter:
                 estimate = replace(decision, forecast=replace(
                     forecast, nts_m3_s=remaining + (remaining[-1],) * lead,
                 ))
-            inputs.append((estimate, time))
+            yield estimate, time
+
+    def prepare(self, initial: OntarioState, decision: DecisionInputs, start: DecisionTime):
+        stages = tuple(self.forecast_stages(decision, start))
+        target_state = initial
+        for estimate, time in stages:
             rule_action = self.rule.action(target_state, estimate.forecast, time)
             target_state = self.forecast_step(target_state, rule_action, estimate, time).state
-
-        return OntarioPlanningProblem(initial, tuple(inputs), target_state)
+        return OntarioPlanningProblem(initial, stages, target_state)
 
     def expand(self, path, stage, *, final, problem):
         estimate, time = stage
@@ -116,10 +122,10 @@ class OntarioPlanningAdapter:
             seen.add(step.release_m3_s)
             upstream = max(0.0, step.state.level_m - self.settings.ontario_max_m)
             downstream = max(0.0, step.pointe_claire_m - self.settings.pointe_claire_max_m)
-            tracking = path.tracking_cost + ((step.release_m3_s - reference.release_m3_s) / 1000) ** 2
+            tracking = path.tracking_cost + self.settings.tracking_weight * ((step.release_m3_s - reference.release_m3_s) / 1000) ** 2
             terminal = 0.0
             if final:
-                terminal = ((step.state.level_m - problem.target_state.level_m) / 0.10) ** 2
+                terminal = self.settings.terminal_weight * ((step.state.level_m - problem.target_state.level_m) / 0.10) ** 2
             yield MPCPlan(
                 path.actions + (action,), path.steps + (step,), tracking, terminal,
                 max(path.max_excess_m, upstream, downstream),

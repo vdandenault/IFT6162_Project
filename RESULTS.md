@@ -62,10 +62,98 @@ A finite search leaves global feasibility unresolved. Forecast compliance can
 also differ from realized compliance. Pointe-Claire first-step forecast mean
 absolute error is approximately **0.095 m, 0.150 m and 0.106 m**, respectively.
 
+### Shared controller score
+
+A single scorer now applies the same settings to every Ontario controller.
+The initial flood-exposure score is the negative sum of Ontario and Pointe-Claire
+exceedance, using equal weights and 1 m scales from
+`configs/studies/loslr/scoring.json`. Higher is better. Exceedance is measured
+above the experimental caps of **75.50 m for Ontario** and **22.10 m for
+Pointe-Claire**, summed over the 48 quarter-month periods in each year.
+
+**Current overview across 1995, 2017 and 2019:**
+
+- **Plan 2014 rule curve:** mean annual score **−5.282**; mean annual Ontario
+  exceedance **3.625 m·periods** and downstream exceedance **1.657 m·periods**.
+- **Four-period MPC:** mean annual score **−5.325**; mean annual Ontario
+  exceedance **3.678 m·periods** and downstream exceedance **1.647 m·periods**.
+- **Ontario PPO and bilevel MPC:** results pending.
+
+The rule curve scores slightly better overall. MPC reduces downstream
+exceedance slightly but increases Ontario exceedance in 2017; the controllers
+tie in the other two years. These three development cases do not establish
+performance across the historical record.
+
+Annual scores:
+
+- **1995:** rule curve **0.000**, MPC **0.000**.
+- **2017:** rule curve **−9.972**, MPC **−10.101**.
+- **2019:** rule curve **−5.873**, MPC **−5.873**.
+
+These are scores for the declared flood-exposure criterion. Navigation,
+low-water and other service objectives still require their own terms if the
+comparison is expanded. Equal upstream/downstream weights are an initial study
+choice, rather than calibrated stakeholder costs. Peaks, exceedance counts and
+terminal level are also retained alongside the scalar score. Ontario PPO can
+use the identical scorer when its trajectories exist.
+Saved annual and aggregate scores are in `results/loslr/controller_scores_v1/`.
+
+### Forecast, search and objective diagnostics
+
+All three controlled checks completed on the same 1995, 2017 and 2019 cases.
+The reference costs, four-period horizon, study caps and release rules were
+retained for the forecast/search checks. Objective weights changed only in the
+explicit ablations.
+
+- **Fallback feasibility.** Of 37 original fallback states, **32** have disjoint
+  one-step release requirements for the Ontario and Pointe-Claire study caps,
+  allowing for native rounding. This is conditional on the inherited state and
+  forecast. Three have a feasible first action but no feasible four-step schedule
+  in the complete candidate tree. Two late-2019 states have overlapping relaxed
+  cap bounds, but the request grid only achieves releases up to **9,910 m³/s**,
+  below the approximately **10,304 and 10,404 m³/s** needed for Ontario.
+- **Search coverage.** Increasing the beam from 12 to **96** and enumerating
+  **15,062 complete candidate schedules** across the 37 fallback states find
+  **zero additional cap-feasible plans**. A larger search improves predicted peak
+  exceedance at two 2017 states. Complete candidate enumeration covers the
+  declared finite request tree. Continuous-action feasibility remains open.
+- **Perfect inflow diagnostic.** Four realized Ontario supplies and SLON values
+  replace persistence forecasts in planning and M/F-limit evaluation. The causal
+  annual estimate and lagged ice/roughness estimates are retained. In **2017**,
+  Ontario severity falls **7.15 → 6.54 m·periods** and downstream peak falls
+  **22.94 → 22.50 m**, while downstream severity rises **2.95 → 3.15 m·periods**.
+  In **2019**, Ontario severity falls **3.88 → 3.76 m·periods** and downstream
+  peak falls **22.67 → 22.49 m**, while downstream severity rises
+  **1.99 → 2.18 m·periods**. The 1995 case stays below both study caps.
+- **Objective ablations.** Removing release tracking, terminal tracking or both
+  changes **zero of 144 executed releases** in each arm. Re-ranking the common
+  fallback candidate trees under those four objectives also selects the same
+  first release. The current ranking prioritizes peak and total constraint
+  exceedance before either tracking term. The tracking penalties did not explain
+  the tested release decisions.
+
+These results direct attention toward cap compatibility, operational release
+limits and earlier storage preparation. One-step conflicts at the reached states
+leave annual avoidability unresolved. Forecast improvement changes the upstream/
+downstream tradeoff and needs evaluation on several physical metrics.
+
+The complete records are in `results/loslr/mpc_diagnostics_v2/`, including annual
+arm trajectories, request grids, saved fallback states, common-candidate scores,
+settings and source/output hashes. Three explanatory PNGs are saved locally:
+
+- [Fallback bounds](background/images/ontario_mpc_fallback_diagnosis.png).
+- [Oracle inflow trajectories](background/images/ontario_mpc_oracle_inflows.png).
+- [Objective ablations](background/images/ontario_mpc_objective_diagnosis.png).
+
+The project suite passed **322 tests with one skip**. The persistence arm
+reproduced the original pilot's decisions and levels.
+
 ### Interpretation and saved evidence
 
-The current pilot supports investigating forecast errors, feasible action sets
-and the tracking objective before extending the comparison. The Ottawa follower
+The diagnostics identify conflicts between the current study caps at reached
+states and confirm sensitivity to the inflow information supplied to M/F limits.
+Operational threshold validation and the recovery priority need review before
+extending the comparison. The Ottawa follower
 currently has a storage-balance scaffold and an evidence specification. Coupled
 Stackelberg and Ontario PPO results remain pending.
 

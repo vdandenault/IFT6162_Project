@@ -20,10 +20,14 @@ implementations and simulator investigations.
   the declared research benchmark.
 - [x] Build a past-only rule-curve replay with 5,760 scored decisions in 1901–2020.
 - [x] Implement four-quarter-month MPC and run paired 1995, 2017 and 2019 cases.
+- [x] Add one controller-independent Ontario flood-exposure scorer with explicit
+  weights, complete-year checks and per-site physical metrics.
 - [x] Specify the Ottawa aggregate model and test its storage balance.
+- [x] Add the Ontario HTML experiment playback and dedicated MPC/PPO diagrams,
+  with the Ontario PPO application labelled as planned.
 - [ ] Validate operational stage limits, model datum and the effective time
   convention needed to couple Ottawa storage to the Ontario model.
-- [ ] Diagnose the MPC pilot before expanding the comparison.
+- [x] Complete the fallback, perfect-inflow and objective diagnostics on the three pilot cases.
 - [ ] Implement the responsive Ottawa follower and Stackelberg MPC.
 - [ ] Add the Ontario PPO comparison and a frozen evaluation protocol.
 
@@ -84,9 +88,18 @@ use. Its failure to find a feasible schedule establishes a search outcome.
 Global feasibility remains unresolved.
 
 - [ ] Verify datum and operational thresholds, including seasonal interpretation.
-- [ ] Diagnose the decisions requiring fallback with first-action feasible sets,
-  forecast errors and a larger-search check on the same costs.
-- [ ] Use a labelled perfect-forecast diagnostic to measure forecast limitations.
+- [x] Diagnose fallback decisions using first-action grids, relaxed cap bounds,
+  a 96-wide beam and complete candidate enumeration. Thirty-two of 37 states
+  have incompatible one-step forecast cap requirements. No finite candidate
+  schedule meets both caps in the 37 original fallback states.
+- [x] Run a labelled perfect-inflow diagnostic with costs and search fixed.
+  Ontario severity and downstream peaks improve in both flood years, while total
+  downstream exceedance increases.
+- [x] Remove release tracking, terminal tracking and both in matched ablations.
+  Each arm reproduces all 144 reference releases. Common candidate re-ranking
+  also preserves the selected first release at all 37 fallback states.
+- [ ] Review study-cap compatibility, operational release bounds and recovery
+  priority before changing costs or controller defaults.
 - [ ] Establish objective components for Ontario and downstream impacts, including
   low-water, release stability and supported native performance indicators.
 - [ ] Extend paired continuous trajectories across ordinary, wet and dry conditions
@@ -141,6 +154,10 @@ checks and reproduced all 288 paired comparison rows apart from runtime.
 Frozen historical manifests retain their original hashes. The verified source
 and environment archive is under `results/migration/como_before_multisystem_v1/`.
 The restore command is documented in [README.md](README.md#historical-como-studies).
+
+The three diagnostics and their source/output manifests are saved under
+`results/loslr/mpc_diagnostics_v2/`. The project suite passes 322 tests with one
+skip. Details and graphs are recorded in [RESULTS.md](RESULTS.md).
 
 Detailed model decisions and implementation milestones are in
 [the two-system design](docs/MULTI_SYSTEM_PLAN.md). Ottawa evidence and remaining

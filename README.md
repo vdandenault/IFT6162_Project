@@ -33,7 +33,10 @@ use the new package, for example
 The package migration is complete. The Ontario native reference and causal
 rule-curve replays have run, and the first four-quarter-month MPC comparison
 covers 1995, 2017 and 2019. MPC matches the rule curve in two cases and makes a
-small upstream/downstream tradeoff in 2017. The Ottawa aggregate balance is
+small upstream/downstream tradeoff in 2017. Follow-up diagnostics found conflicting
+one-step forecast caps at 32 of 37 fallback states. Removing the tracking penalties
+preserved every tested release, and perfect inflows reduced downstream peaks while
+increasing downstream total exceedance. The Ottawa aggregate balance is
 implemented. Follower optimization, Stackelberg MPC and Ontario PPO are upcoming.
 See [RESULTS.md](RESULTS.md) for measured outcomes and [PROJECT_PLAN.md](PROJECT_PLAN.md)
 for the next implementation phases.
@@ -127,12 +130,66 @@ uv run python -m reservoir_control.systems.loslr.causal \
   --output results/loslr/causal_baseline_review
 uv run python -m reservoir_control.systems.loslr.mpc \
   --output results/loslr/mpc_review --years 1995 2017 2019
+uv run python -m reservoir_control.systems.loslr.mpc_diagnostics \
+  --output results/loslr/mpc_diagnostics_review
 uv run python scripts/analysis/multisystem_overview.py
 ```
 
 The figures are PNGs under ignored `background/images/`: physical coupling,
 independent MPC/PPO adapter paths, and the 2017/2019 native baseline trajectories
 (when the `native_baseline_v1` trace is available). No new training is launched.
+
+## Score Ontario controllers
+
+Apply the same declared flood-exposure score to every controller trajectory:
+
+```bash
+uv run python -m reservoir_control.systems.loslr.scoring \
+  --output results/loslr/controller_scores_review
+```
+
+The default input is the saved MPC/rule-curve pilot. Repeat `--input path/to/run.csv`
+to include additional controller outputs. Each CSV needs a `controller`, `arm` or
+`policy` column plus `year`, `quarter_month`, `ontario_end_m`, `pointe_claire_m` and
+`release_m3_s`. Comparisons require the same complete 48-period years. Use matched
+initial states and information when generating controller runs.
+
+`configs/studies/loslr/scoring.json` declares thresholds, weights and level scales.
+The initial score is the negative sum of Ontario and Pointe-Claire exceedance,
+with equal weights and 1 m scales. Higher scores are better. The output keeps
+annual scores, both physical exceedance components, peaks, counts and terminal
+Ontario level. The same period-cost function can supply an Ontario PPO reward.
+
+## Ontario visual walkthrough
+
+Open [the Ontario playback](background/ontario_simulator.html) locally to explore
+1995, 2017 and 2019. Select the causal rule curve, MPC or the labelled perfect-inflow
+diagnostic. Step through quarter-months to see Ontario storage levels, executed
+release, SLON contribution and Pointe-Claire stage. The charts overlay the
+controller's four-period forecasts on the recorded outcomes.
+
+The page includes [the Ontario MPC diagram](background/images/ontario_mpc_controller.png)
+and [the planned Ontario PPO diagram](background/images/ontario_ppo_controller.png).
+The PPO application still needs its Ontario observations, reward and training
+protocol. The main controller programme remains rule curve, MPC, Stackelberg MPC
+and PPO. Shared FQI and SAC implementations are available for optional later work.
+
+Rebuild the local HTML and both PNGs from saved experiment traces with:
+
+```bash
+uv run python scripts/analysis/ontario_visualization.py
+```
+
+For freshly generated review runs, pass their paths explicitly:
+
+```bash
+uv run python scripts/analysis/ontario_visualization.py \
+  --comparison results/loslr/mpc_review/comparison.csv \
+  --diagnostics results/loslr/mpc_diagnostics_review
+```
+
+The generated HTML and PNGs live under ignored `background/`. The builder and
+HTML template live under `scripts/analysis/`.
 
 ## Validation and Como references
 
