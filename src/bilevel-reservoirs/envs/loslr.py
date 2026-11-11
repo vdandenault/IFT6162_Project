@@ -33,7 +33,7 @@ SIMULATED_COLUMNS = {
 }
 
 
-class LoslrRegulatedEnv(MultiAgentEnv):
+class LoslrLeaderEnv(MultiAgentEnv):
     def __init__(self, ecology: dict, **kwargs: Any):
         super().__init__(**kwargs)
 
