@@ -8,6 +8,7 @@ results/
 
 # Local explanatory notes and images
 /background/
+/docs/
 
 # macOS metadata
 .DS_Store
@@ -52,3 +53,6 @@ htmlcov/
 
 # Local reports and generated audit output
 /reports/
+
+# Local upstream checkout pending license/integration audit (not vendored)
+/external/loslr_regulation_optimization/
