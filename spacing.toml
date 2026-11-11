@@ -6,4 +6,4 @@ after_docstring = 1
 indent_width = 4
 
 [paths]
-exclude_names = ["legacy_code"]
+exclude_names = ["legacy_code", "external"]

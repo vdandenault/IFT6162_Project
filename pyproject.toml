@@ -5,6 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "loslr-regulation-optimization",
+    "metamarl>=0.1.0",
     "numpy>=2.5.4",
     "pandas>=3.1.1",
     "scipy>=1.18.1",
@@ -17,14 +19,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
+[tool.uv.sources]
+loslr-regulation-optimization = { path = "external/loslr_regulation_optimization", editable = true }
+
 [dependency-groups]
 dev = [
     "ipykernel>=7.4.0",
     "pytest>=9.2.0",
     "ruff>=0.17.4",
     "spacing>=1.0.3",
-]
-loslr = [
-    "statsmodels>=0.15.0",
-    "toml>=0.10.2",
 ]
