@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 import pandas as pd
-from lake_como.seed_study import summarize
+from reservoir_control.systems.lake_como.seed_study import summarize
 
 
 class SeedStudyChecks(unittest.TestCase):

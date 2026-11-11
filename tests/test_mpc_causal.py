@@ -2,10 +2,10 @@
 import unittest
 import numpy as np
 import pandas as pd
-from lake_como.environment import settings
-from lake_como.mpc import DeterministicMPC, MPCConfig
-from lake_como.mpc_causal import CausalMPC, fit_horizon_weights, merge_severity
-from lake_como.mpc_forecast_study import fit_anomaly_weight
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig
+from reservoir_control.systems.lake_como.mpc_causal import CausalMPC, fit_horizon_weights, merge_severity
+from reservoir_control.systems.lake_como.mpc_forecast_study import fit_anomaly_weight
 
 
 class CausalMPCChecks(unittest.TestCase):

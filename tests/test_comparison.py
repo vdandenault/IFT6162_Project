@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 import pandas as pd
 import numpy as np
-from lake_como.compare import paired_metrics, summaries, verify_matched_inputs, annual_metrics, validate_checkpoint
-from lake_como.reproduce import evaluate
-from lake_como.splits import split_years
+from reservoir_control.systems.lake_como.compare import paired_metrics, summaries, verify_matched_inputs, annual_metrics, validate_checkpoint
+from reservoir_control.systems.lake_como.reproduce import evaluate
+from reservoir_control.systems.lake_como.splits import split_years
 
 
 class ComparisonChecks(unittest.TestCase):

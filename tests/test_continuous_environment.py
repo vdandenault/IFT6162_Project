@@ -5,8 +5,8 @@ from copy import deepcopy
 import numpy as np
 from gymnasium.utils.env_checker import check_env
 
-from lake_como.continuous_environment import ContinuousDamEnv, make_continuous_env
-from lake_como.environment import make_env, settings
+from reservoir_control.systems.lake_como.continuous_environment import ContinuousDamEnv, make_continuous_env
+from reservoir_control.systems.lake_como.environment import make_env, settings
 
 
 class ContinuousEnvironmentChecks(unittest.TestCase):
@@ -84,7 +84,7 @@ class ContinuousEnvironmentChecks(unittest.TestCase):
         env.close()
 
     def test_replay_links_years_but_stores_record_end_before_reset(self):
-        from lake_como.sac import ReplayBuffer
+        from reservoir_control.controllers.sac.agent import ReplayBuffer
         env = make_continuous_env()
         replay = ReplayBuffer(730, 5, 1)
         observation, _ = env.reset()

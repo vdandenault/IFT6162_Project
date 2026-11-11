@@ -2,10 +2,10 @@ import unittest
 from dataclasses import replace
 
 import numpy as np
-from lake_como.environment import settings
-from lake_como.simulation.model import WaterState
-from lake_como.simulation.outlet import OutletSpec, make_outlet_env
-from lake_como.simulation.low_water import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.model import WaterState
+from reservoir_control.systems.lake_como.simulation.outlet import OutletSpec, make_outlet_env
+from reservoir_control.systems.lake_como.simulation.low_water import (
     LowWaterRule, ProtectedOutletLake, ProtectedOutletModel, make_protected_outlet_env,
 )
 

@@ -3,10 +3,10 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import settings
-from lake_como.simulation.low_water import make_protected_outlet_env
-from lake_como.simulation.mpc_diagnosis import TargetForecaster,DiagnosticMPC,SearchExpansion
-from lake_como.simulation.protected_mpc import CausalForecastBank,ProtectedMPC
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.low_water import make_protected_outlet_env
+from reservoir_control.systems.lake_como.simulation.mpc_diagnosis import TargetForecaster,DiagnosticMPC,SearchExpansion
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank,ProtectedMPC
 
 
 class MPCDiagnosisChecks(unittest.TestCase):

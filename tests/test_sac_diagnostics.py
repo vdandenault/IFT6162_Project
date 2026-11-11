@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import torch
 
-from lake_como.sac_diagnostics import (water_allocations, selected_training_years,
+from reservoir_control.systems.lake_como.sac_diagnostics import (water_allocations, selected_training_years,
                                       rollout_branch, same_transition)
-from lake_como.splits import split_years
+from reservoir_control.systems.lake_como.splits import split_years
 
 
 class DiagnosticChecks(unittest.TestCase):

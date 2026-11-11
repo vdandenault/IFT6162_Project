@@ -3,14 +3,14 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.simulation.carryover_check import BoundaryHistory, restore_branch, restore_memory
-from lake_como.simulation.protected_mpc import CausalForecastBank
-from lake_como.simulation.reserve_use_check import PerfectTargetRecord, make_controller, inventory_trace
-from lake_como.simulation.reserve_tie_audit import service_rounding
-from lake_como.simulation.low_water import ProtectedOutletModel
-from lake_como.simulation.model import WaterState
-from lake_como.simulation.protected_mpc import evaluate_schedules
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.carryover_check import BoundaryHistory, restore_branch, restore_memory
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank
+from reservoir_control.systems.lake_como.simulation.reserve_use_check import PerfectTargetRecord, make_controller, inventory_trace
+from reservoir_control.systems.lake_como.simulation.reserve_tie_audit import service_rounding
+from reservoir_control.systems.lake_como.simulation.low_water import ProtectedOutletModel
+from reservoir_control.systems.lake_como.simulation.model import WaterState
+from reservoir_control.systems.lake_como.simulation.protected_mpc import evaluate_schedules
 
 
 class ReserveDiagnosticChecks(unittest.TestCase):

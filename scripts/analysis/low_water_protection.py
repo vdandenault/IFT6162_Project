@@ -8,13 +8,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from lake_como.paths import PROJECT_ROOT, DAM_DATA, DAM_CONFIG
-from lake_como.simulation.low_water import (
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT, DAM_DATA, DAM_CONFIG
+from reservoir_control.systems.lake_como.simulation.low_water import (
     LowWaterRule, make_protected_outlet_env, ProtectedOutletTrainingEpisodes,
 )
-from lake_como.simulation.outlet import OutletSpec, OutletDomainError
-from lake_como.simulation.protocol import TaskProtocol
-from lake_como.simulation.training import train_operational
+from reservoir_control.systems.lake_como.simulation.outlet import OutletSpec, OutletDomainError
+from reservoir_control.systems.lake_como.simulation.protocol import TaskProtocol
+from reservoir_control.systems.lake_como.simulation.training import train_operational
 
 
 def save(path, value):
@@ -49,9 +49,9 @@ def main():
     windows=[(1946,1947),(1966,1967),(1986,1987)]
     policies=['constant_100','causal_feedback']
     seeds=[901,902,903]
-    files=list((PROJECT_ROOT/'src/lake_como/simulation').glob('*.py'))
-    files += [Path(__file__),PROJECT_ROOT/'src/lake_como/sac.py',
-        PROJECT_ROOT/'src/lake_como/environment.py',PROJECT_ROOT/'configs/splits.json',
+    files=list((PROJECT_ROOT/'src/reservoir_control/systems/lake_como/simulation').glob('*.py'))
+    files += [Path(__file__),PROJECT_ROOT/'src/reservoir_control/controllers/sac/agent.py',
+        PROJECT_ROOT/'src/reservoir_control/systems/lake_como/environment.py',PROJECT_ROOT/'configs/splits.json',
         DAM_CONFIG/'lake.py',DAM_CONFIG/'lake.yaml']
     files += [DAM_DATA/k/f'water_{k}_{part}.csv' for k in ['inflow','demand'] for part in ['train','test']]
     hashes={str(path.resolve()):hashlib.sha256(path.read_bytes()).hexdigest() for path in files}

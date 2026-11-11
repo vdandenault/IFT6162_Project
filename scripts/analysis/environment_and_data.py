@@ -9,10 +9,10 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from lake_como.environment import make_env, settings
-from lake_como.paths import DAM_DATA, PROJECT_ROOT
-from lake_como.audit import audit
-from lake_como.baselines import rollout
+from reservoir_control.systems.lake_como.environment import make_env, settings
+from reservoir_control.systems.lake_como.paths import DAM_DATA, PROJECT_ROOT
+from reservoir_control.systems.lake_como.audit import audit
+from reservoir_control.systems.lake_como.baselines import rollout
 
 
 def main():

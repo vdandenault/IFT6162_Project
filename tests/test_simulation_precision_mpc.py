@@ -2,13 +2,13 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import settings
-from lake_como.simulation.carryover_check import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.carryover_check import (
     BoundaryHistory, make_controller as original_controller, restore_branch, restore_memory, take_step,
 )
-from lake_como.simulation.precision_check import make_controller
-from lake_como.simulation.precision_mpc import service_requests, select_schedule
-from lake_como.simulation.protected_mpc import CausalForecastBank
+from reservoir_control.systems.lake_como.simulation.precision_check import make_controller
+from reservoir_control.systems.lake_como.simulation.precision_mpc import service_requests, select_schedule
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank
 
 
 class PrecisionMPCChecks(unittest.TestCase):

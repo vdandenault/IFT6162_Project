@@ -3,11 +3,11 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.simulation.low_water import ProtectedOutletModel
-from lake_como.simulation.model import WaterState
-from lake_como.simulation.feasibility_audit import full_open_lower_bound, audit_forecast
-from lake_como.simulation.flood_diagnosis import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.low_water import ProtectedOutletModel
+from reservoir_control.systems.lake_como.simulation.model import WaterState
+from reservoir_control.systems.lake_como.simulation.feasibility_audit import full_open_lower_bound, audit_forecast
+from reservoir_control.systems.lake_como.simulation.flood_diagnosis import (
     source, event_bounds, branch_specs, forecast_bank, restore, contrasts,
 )
 

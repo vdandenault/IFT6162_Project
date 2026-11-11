@@ -1,9 +1,9 @@
 """Scalar physics parity and conservative flood infeasibility bounds."""
 import unittest
 import numpy as np
-from lake_como.environment import settings
-from lake_como.mpc import MPCConfig, PlanningModel, SeasonalForecast
-from lake_como.flood_feasibility import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.mpc import MPCConfig, PlanningModel, SeasonalForecast
+from reservoir_control.systems.lake_como.flood_feasibility import (
     grid_rollout,
     lower_bounds,
     training_error_quantile,

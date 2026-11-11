@@ -5,11 +5,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.mpc import DeterministicMPC, MPCConfig, PlanningModel
-from lake_como.mpc_hindsight import perfect_inflow_controller
-from lake_como.mpc_objective_audit import compare_grid, score_plan
-from lake_como.mpc_objective_closed_loop import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig, PlanningModel
+from reservoir_control.systems.lake_como.mpc_hindsight import perfect_inflow_controller
+from reservoir_control.systems.lake_como.mpc_objective_audit import compare_grid, score_plan
+from reservoir_control.systems.lake_como.mpc_objective_closed_loop import (
     OneDayGridPolicy,
     score_actions,
     level_severity,
@@ -131,7 +131,7 @@ class ClosedLoopObjectiveChecks(unittest.TestCase):
             forecast_for_mode("seasonal", 1998, self.params, self.reference, self.config)
 
     def test_search_signature_detects_computational_changes(self):
-        from lake_como import mpc_objective_closed_loop as module
+        from reservoir_control.systems.lake_como import mpc_objective_closed_loop as module
         source = Path(module.__file__).read_text()
         self.assertEqual(search_signature(source), search_signature(source + "\n# comment\n"))
         changed = source.replace("obs.shape != (4,)", "obs.shape != (5,)")

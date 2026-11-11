@@ -4,10 +4,10 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import settings
-from lake_como.simulation.high_water import ReplayAnchor, flood_replay, capacity_volume_bound
-from lake_como.simulation.low_water import ProtectedOutletModel, ProtectedOutletLake, make_protected_outlet_env
-from lake_como.simulation.model import WaterState
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.high_water import ReplayAnchor, flood_replay, capacity_volume_bound
+from reservoir_control.systems.lake_como.simulation.low_water import ProtectedOutletModel, ProtectedOutletLake, make_protected_outlet_env
+from reservoir_control.systems.lake_como.simulation.model import WaterState
 
 
 class FloodDiagnosticChecks(unittest.TestCase):

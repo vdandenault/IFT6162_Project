@@ -13,12 +13,12 @@ import time
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.paths import PROJECT_ROOT,DAM_DATA,DAM_CONFIG
-from lake_como.simulation.low_water import LowWaterRule,make_protected_outlet_env
-from lake_como.simulation.model import PhysicalWeights,WaterState
-from lake_como.simulation.outlet import OutletSpec,OutletDomainError
-from lake_como.simulation.protected_mpc import CausalForecastBank,ProtectedMPC,ProtectedMPCConfig
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT,DAM_DATA,DAM_CONFIG
+from reservoir_control.systems.lake_como.simulation.low_water import LowWaterRule,make_protected_outlet_env
+from reservoir_control.systems.lake_como.simulation.model import PhysicalWeights,WaterState
+from reservoir_control.systems.lake_como.simulation.outlet import OutletSpec,OutletDomainError
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank,ProtectedMPC,ProtectedMPCConfig
 
 DEFAULT=PROJECT_ROOT/'results/simulator/protected_mpc_v1'
 REFERENCE=PROJECT_ROOT/'results/simulator/high_water_diagnosis_v1'
@@ -46,9 +46,9 @@ def prepare(root):
         dict(name='validation_1988_1989',split='validation',years=[1988,1989],before_year=1988,start_hour=0,end_hour=17520),
         dict(name='same_state_event',split='train',years=[1986,1987],before_year=1986,
              start_hour=anchor['hour'],end_hour=int(event['elapsed_end_hour'])+7*24,anchor=anchor)]
-    files=list((PROJECT_ROOT/'src/lake_como/simulation').glob('*.py'))
-    files += [Path(__file__),PROJECT_ROOT/'src/lake_como/environment.py',PROJECT_ROOT/'src/lake_como/hourly_telemetry.py',
-              PROJECT_ROOT/'src/lake_como/splits.py',PROJECT_ROOT/'configs/splits.json',
+    files=list((PROJECT_ROOT/'src/reservoir_control/systems/lake_como/simulation').glob('*.py'))
+    files += [Path(__file__),PROJECT_ROOT/'src/reservoir_control/systems/lake_como/environment.py',PROJECT_ROOT/'src/reservoir_control/systems/lake_como/hourly_telemetry.py',
+              PROJECT_ROOT/'src/reservoir_control/systems/lake_como/splits.py',PROJECT_ROOT/'configs/splits.json',
               DAM_CONFIG/'lake.py',DAM_CONFIG/'lake.yaml',REFERENCE/'anchor_60d.json',REFERENCE/'event.json']
     files += [DAM_DATA/k/f'water_{k}_{part}.csv' for k in ['inflow','demand'] for part in ['train','test']]
     hashes={str(path.resolve()):hashlib.sha256(path.read_bytes()).hexdigest() for path in files}

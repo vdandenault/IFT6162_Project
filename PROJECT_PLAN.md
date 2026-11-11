@@ -1,4 +1,156 @@
-# Lake Como reservoir control: project plan
+# Reservoir control project plan
+
+Lake Ontario–St. Lawrence is the main research case. We compare the Plan 2014
+rule curve, MPC and Stackelberg MPC with Lake Ontario as leader and an aggregated
+Ottawa reservoir operator as follower. PPO provides an additional learned
+comparison. Lake Como remains the completed reference case for our controller
+implementations and simulator investigations.
+
+## Current status
+
+- [x] Finish the package migration into `src/reservoir_control/`, including imports,
+  console entry points and analysis scripts.
+- [x] Separate reusable MPC search from the Ontario planning adapter. Shared PPO,
+  SAC and FQI code also lives under `controllers/`.
+- [x] Reproduce the pinned native Python Ontario simulation over 1900–2020 and
+  verify adapter parity for all 5,808 decisions. Run all seven native performance
+  indicators.
+- [x] Audit differences from the archived GLRRM results, including the annual
+  forecast and release-regime differences. Retain the Python implementation as
+  the declared research benchmark.
+- [x] Build a past-only rule-curve replay with 5,760 scored decisions in 1901–2020.
+- [x] Implement four-quarter-month MPC and run paired 1995, 2017 and 2019 cases.
+- [x] Specify the Ottawa aggregate model and test its storage balance.
+- [ ] Validate operational stage limits, model datum and the effective time
+  convention needed to couple Ottawa storage to the Ontario model.
+- [ ] Diagnose the MPC pilot before expanding the comparison.
+- [ ] Implement the responsive Ottawa follower and Stackelberg MPC.
+- [ ] Add the Ontario PPO comparison and a frozen evaluation protocol.
+
+The MPC pilot matches the rule curve in 1995 and 2019. In 2017 it changes ten
+releases, with a small downstream severity reduction and an upstream severity
+increase. The finite search finds no schedule meeting both forecast caps on
+20 decisions in 2017 and 17 in 2019. Current numbers and their interpretation
+are recorded in [RESULTS.md](RESULTS.md).
+
+## Architecture and data
+
+```text
+src/reservoir_control/
+  controllers/                   shared MPC search, PPO, SAC and FQI
+  core/                          time, state and information contracts
+  adapters/                      shared planning and Gymnasium interfaces
+  evaluation/                    rollout and provenance checks
+  systems/
+    lake_como/                   Como physics, observations and studies
+    loslr/                       Ontario–St. Lawrence physics and studies
+      planning.py                Ontario MPC planning adapter
+    ottawa/                      aggregate storage model
+```
+
+The **Adapter pattern** connects the physical systems to their application
+interfaces. MPC uses forecast-driven planning through a system adapter. PPO uses
+observations, actions, rewards and episode boundaries through Gymnasium. The
+application runner composes the system and selected controller.
+
+The Ontario adapter supplies the 48-period calendar, candidate releases, Bv7
+limits, stage calculations and objectives to
+`controllers/mpc/receding_horizon.py`. MPC and PPO have their own implementations
+and execution lifecycles.
+
+Como data lives in `external/gym4real/gym4real/data/dam/`. Ontario historical
+inputs live in `external/loslr_regulation_optimization/input/historic/1900_2020/`.
+The current reference input is `12month_sqAR.txt`. The Ottawa model still requires
+an identified aggregate boundary, storage parameters and suitable forcing data.
+Historical SLON already contains regulated tributary contributions, so coupling
+must account for those contributions before adding an optimized follower release.
+
+## Next implementation phases
+
+### 1. Establish the Ontario MPC comparison
+
+The current controller plans four quarter-month releases and executes the first
+before replanning. Ontario supply and SLON forecasts persist the last completed
+period. The annual supply estimate uses the trailing 48 periods. Both controllers
+use the same decision-time ice/roughness estimates and Bv7 release limits. Both
+start each selected year from the continuous causal rule-curve state, then carry
+storage forward independently through the year.
+
+The pilot uses fixed experimental caps of **75.50 m Ontario end-of-period level**
+and **22.10 m modeled Pointe-Claire level**. Bv7 retains its tiered F limit. The
+objective tracks rule-curve releases and its forecast terminal Ontario level.
+The beam search retains 12 schedules and records forecast margins and fallback
+use. Its failure to find a feasible schedule establishes a search outcome.
+Global feasibility remains unresolved.
+
+- [ ] Verify datum and operational thresholds, including seasonal interpretation.
+- [ ] Diagnose the decisions requiring fallback with first-action feasible sets,
+  forecast errors and a larger-search check on the same costs.
+- [ ] Use a labelled perfect-forecast diagnostic to measure forecast limitations.
+- [ ] Establish objective components for Ontario and downstream impacts, including
+  low-water, release stability and supported native performance indicators.
+- [ ] Extend paired continuous trajectories across ordinary, wet and dry conditions
+  once the objective and constraints are declared.
+
+### 2. Implement the Ottawa follower
+
+The current pure storage balance requires explicit capacity and release bounds.
+The next implementation needs an independent operating objective and a justified
+mapping from controlled releases and uncontrolled runoff to Lake St. Louis.
+
+- [ ] Identify aggregate storage, natural inflow and outlet/routing parameters,
+  labelling each parameter's source or sensitivity assumption.
+- [ ] Define storage targets, release/service requirements and terminal storage
+  value for the follower.
+- [ ] Implement a convex best-response problem with a documented dependency on
+  Ontario's announced schedule.
+- [ ] Test conservation, feasibility, response timing and sensitivity to capacity
+  and objective weights.
+
+### 3. Implement Stackelberg MPC
+
+- [ ] Define Ontario's commitment and Ottawa's information at each decision.
+- [ ] Validate a nested follower best-response reference on small cases.
+- [ ] Implement a KKT formulation for the convex follower and check its residuals
+  against the nested reference.
+- [ ] Compare external-flow MPC and anticipating MPC in the same responsive
+  follower simulator with matched forcing and initial states.
+- [ ] Report both operators' storage, service and flood outcomes.
+
+### 4. Add PPO and complete evaluation
+
+- [ ] Define Ontario observations, action mapping, reward and episode semantics
+  through its Gymnasium adapter.
+- [ ] Run a short training check, then a bounded five-seed comparison.
+- [ ] Freeze chronological fitting/development/evaluation membership before fitted
+  forecast or policy selection. The 1995, 2017 and 2019 pilot cases are development
+  evidence. Declare additional final evaluation windows before the frozen study.
+- [ ] Report Ontario and Pointe-Claire peaks, exceedance periods and severity,
+  release changes, terminal storage, forecast errors, fallback frequency and runtime.
+- [ ] Include supported native performance indicators with their declared units
+  and aggregation. Use the same physical execution rules across controllers.
+
+## Reproducibility and references
+
+The migration passed 319 project tests with one skip. PPO update parameters,
+optimizer state, random-number state and outputs matched the pre-migration
+reference exactly. Checkpoint evaluation and Ontario replay also completed
+through the installed package. The later MPC adapter split passed 24 focused
+checks and reproduced all 288 paired comparison rows apart from runtime.
+
+Frozen historical manifests retain their original hashes. The verified source
+and environment archive is under `results/migration/como_before_multisystem_v1/`.
+The restore command is documented in [README.md](README.md#historical-como-studies).
+
+Detailed model decisions and implementation milestones are in
+[the two-system design](docs/MULTI_SYSTEM_PLAN.md). Ottawa evidence and remaining
+identification questions are in [the follower specification](docs/OTTAWA_MODEL_SPEC.md).
+
+<details>
+<summary>Lake Como historical plan and completed investigations</summary>
+
+This section retains planning context from the earlier Como studies. The active
+Ontario phases are listed above.
 
 ## Research question and current status
 
@@ -348,9 +500,11 @@ Read [PPO findings](docs/PPO.md), [evaluation](docs/EVALUATION.md), and
 intermediate analysis scripts are optional detailed evidence.
 
 `configs/ppo.json` is the current selected baseline; `configs/experiments/ppo_studies.json`
-consolidates exact historical study plans. Keep experiment code in `src/lake_como/`
+consolidates exact historical study plans. Keep experiment code in `src/reservoir_control/systems/lake_como/`
 and keep the pinned fork at `external/gym4real/` stable for frozen benchmarks.
-Prototype operational extensions in `src/lake_como/simulation/`; upstreamable fork
+Prototype operational extensions in `src/reservoir_control/systems/lake_como/simulation/`; upstreamable fork
 changes can follow validation. Generated `results/`,
 `reports/`, `background/`, and local PDFs remain ignored. Nothing is committed
 without review and approval.
+
+</details>

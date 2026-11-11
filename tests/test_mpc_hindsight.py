@@ -3,9 +3,9 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import make_env, settings
-from lake_como.mpc import DeterministicMPC, MPCConfig
-from lake_como.mpc_hindsight import perfect_inflow_controller
+from reservoir_control.systems.lake_como.environment import make_env, settings
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig
+from reservoir_control.systems.lake_como.mpc_hindsight import perfect_inflow_controller
 
 
 class PerfectInflowChecks(unittest.TestCase):

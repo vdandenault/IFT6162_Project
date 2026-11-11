@@ -2,9 +2,9 @@ import unittest
 
 import numpy as np
 
-from lake_como.continuous_environment import make_continuous_env
-from lake_como.environment import make_env
-from lake_como.hourly_telemetry import HourlyTelemetry, linear_exposure, make_hourly_env
+from reservoir_control.systems.lake_como.continuous_environment import make_continuous_env
+from reservoir_control.systems.lake_como.environment import make_env
+from reservoir_control.systems.lake_como.hourly_telemetry import HourlyTelemetry, linear_exposure, make_hourly_env
 
 
 class HourlyTelemetryChecks(unittest.TestCase):

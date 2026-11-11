@@ -144,9 +144,9 @@ mixed-precision experiments are outside this first implementation.
 
 ## Code and checks
 
-- [sac.py](../src/lake_como/sac.py): configuration, replay, actor, critics,
+- [sac.py](../src/reservoir_control/controllers/sac/agent.py): configuration, replay, actor, critics,
   detached Bellman target, temperature, Polyak updates, and learner checkpoints.
-- [sac_loop.py](../src/lake_como/sac_loop.py): explicit collection → replay →
+- [sac_loop.py](../src/reservoir_control/systems/lake_como/sac_loop.py): explicit collection → replay →
   updates → episode reset loop. It starts no work on import and has no study CLI.
 - [test_sac.py](../tests/test_sac.py): numerical targets, annual masks, ring-buffer
   behavior, transformed density including saturation, gradient direction through
@@ -179,7 +179,7 @@ its example implementation uses fixed temperature, whereas ours learns it.
 ## First bounded reservoir study
 
 [configs/sac.json](../configs/sac.json) is the predeclared study configuration.
-[sac_study.py](../src/lake_como/sac_study.py) runs the preparation, smoke gate,
+[sac_study.py](../src/reservoir_control/systems/lake_como/sac_study.py) runs the preparation, smoke gate,
 five independent learner processes, and final validation stages. Generated artifacts
 are in ignored `results/sac/baseline_200k_v1/`; its `plan.json` freezes configuration,
 source/data hashes, reference-result hashes, dependency versions, and normalization.
@@ -231,10 +231,10 @@ To reproduce in a **new** output directory, execute these stages in order (exist
 outputs are protected):
 
 ```bash
-uv run --group reproduction python -m lake_como.sac_study --stage prepare --output results/sac/new_run
-uv run --group reproduction python -m lake_como.sac_study --stage smoke --output results/sac/new_run
-uv run --group reproduction python -m lake_como.sac_study --stage train --output results/sac/new_run
-uv run --group reproduction python -m lake_como.sac_study --stage evaluate --output results/sac/new_run
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_study --stage prepare --output results/sac/new_run
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_study --stage smoke --output results/sac/new_run
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_study --stage train --output results/sac/new_run
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_study --stage evaluate --output results/sac/new_run
 ```
 
 
@@ -326,7 +326,7 @@ untouched. Next: a bounded critic-fit check around hydraulic plateaus with the a
 frozen, before changing optimization settings or extending training.
 
 ```bash
-uv run --group reproduction python -m lake_como.sac_diagnostics --output results/sac/new_diagnostic
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_diagnostics --output results/sac/new_diagnostic
 ```
 
 Diagnostic checks cover the volume identity, training-only selection, exact state
@@ -365,7 +365,7 @@ saved in the experimental outputs, separate from baseline SAC checkpoints.
 
 See [the PNG](../background/images/22_sac_frozen_actor_critic_fit.png) and
 [full local report](../results/sac/critic_fit_v1/report.md). The predeclared settings
-and code are in [sac_critic_fit.py](../src/lake_como/sac_critic_fit.py); no best-step
+and code are in [sac_critic_fit.py](../src/reservoir_control/systems/lake_como/sac_critic_fit.py); no best-step
 selection is made. Cost: 95,970 training-only transitions and 10,000 critic-only
 updates across both arms and five seeds. Full suite: **117 passed, one optional
 check skipped**. Frozen source/reference hashes and actor-state checks pass.
@@ -374,7 +374,7 @@ Next, separate targeted data coverage from extra update count using a fixed
 training-only dataset and equal fitting budgets before unfreezing any actor.
 
 ```bash
-uv run --group reproduction python -m lake_como.sac_critic_fit --output results/sac/new_critic_fit
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_critic_fit --output results/sac/new_critic_fit
 ```
 
 
@@ -405,7 +405,7 @@ controller scores remain unchanged.
 
 See [the PNG](../background/images/23_sac_sampling_vs_updates.png),
 [full local report](../results/sac/critic_sampling_v1/report.md), and
-[implementation](../src/lake_como/sac_critic_sampling.py). The common pool consists of
+[implementation](../src/reservoir_control/systems/lake_como/sac_critic_sampling.py). The common pool consists of
 fresh frozen-deterministic-actor rollouts plus the earlier cheaper branch examples;
 it is not the original stochastic replay buffer. This isolates sampling emphasis,
 not collection strategy or pair co-occurrence versus weighting separately.
@@ -417,7 +417,7 @@ checks pass. Next investigate maintaining broad value fit alongside focused cove
 before declaring any actor/control experiment.
 
 ```bash
-uv run --group reproduction python -m lake_como.sac_critic_sampling --output results/sac/new_sampling_study
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_critic_sampling --output results/sac/new_sampling_study
 ```
 
 
@@ -458,7 +458,7 @@ endpoint after seeing its slightly better return error.
 
 [Annotated PNG](../background/images/24_sac_return_reference.png),
 [full local report](../results/sac/critic_reference_v1/report.md), and
-[code](../src/lake_como/sac_critic_reference.py). The 658,035 new simulator transitions
+[code](../src/reservoir_control/systems/lake_como/sac_critic_reference.py). The 658,035 new simulator transitions
 are training-year reference diagnostics, not fit data; both fitting arms reuse the
 cached pool. Full suite: **123 passed, one optional check skipped**. Baseline hashes,
 noncritic state, exact uniform reproduction, and checking/fitting separation pass.
@@ -468,7 +468,7 @@ value targets, fitted only on fitting years and checked against untouched checki
 returns. Sampling-fraction tuning alone has not resolved broad value estimation.
 
 ```bash
-uv run --group reproduction python -m lake_como.sac_critic_reference --output results/sac/new_reference_check
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_critic_reference --output results/sac/new_reference_check
 ```
 
 
@@ -507,7 +507,7 @@ and action comparisons must be measured separately.
 
 [PNG](../background/images/25_sac_bootstrap_vs_rollout_targets.png),
 [full local report](../results/sac/critic_targets_v1/report.md), and
-[implementation](../src/lake_como/sac_critic_targets.py). Cost: 658,035 fitting-year
+[implementation](../src/reservoir_control/systems/lake_como/sac_critic_targets.py). Cost: 658,035 fitting-year
 simulator calls for fresh labels, checking references reused, 10,000 critic updates;
 about 72.2 seconds. Full suite: **126 passed, one optional check skipped**. All
 noncritic state and baseline/source hashes remain unchanged.
@@ -517,7 +517,7 @@ stale labels from bootstrapping, and assess action-diverse rollout targets rathe
 than assuming single-action value fits teach release comparisons.
 
 ```bash
-uv run --group reproduction python -m lake_como.sac_critic_targets --output results/sac/new_target_comparison
+uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_critic_targets --output results/sac/new_target_comparison
 ```
 
 
@@ -535,7 +535,7 @@ TD convergence or general inferiority evidence, and does not change any actor or
 controller score. No new simulator calls or validation/test evaluation were needed.
 See [PNG](../background/images/26_sac_iterative_td.png),
 [local report](../results/sac/iterative_td_v1/report.md), and
-[code](../src/lake_como/sac_iterative_td.py). All five seeds are retained.
+[code](../src/reservoir_control/systems/lake_como/sac_iterative_td.py). All five seeds are retained.
 
 The standalone SAC learning phase has a verified implementation, a frozen first
 study, and bounded follow-up evidence, including the action-diverse diagnostic
@@ -570,7 +570,7 @@ a descriptive noise screen, not a statistical significance test. Checking years
 were part of original SAC training and prior diagnostics. Neither these labels nor
 these diagnostic critics train an actor or establish better reservoir control.
 
-Run `uv run --group reproduction python -m lake_como.sac_action_diverse`.
+Run `uv run --group reproduction python -m reservoir_control.systems.lake_como.sac_action_diverse`.
 The active declared output is `results/sac/action_diverse_v2/`; v1 was stopped
 before fitting to tighten physical-state cache identity. Source hashes, cached
 single-action controls, all seeds, and both budgets remain auditable locally.

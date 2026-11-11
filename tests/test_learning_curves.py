@@ -1,7 +1,7 @@
 """Check late-window summaries without treating log points as independent trials."""
 import unittest
 import pandas as pd
-from lake_como.learning_curves import window_summary,TAGS,SEEDS
+from reservoir_control.systems.lake_como.learning_curves import window_summary,TAGS,SEEDS
 
 
 class LearningCurveChecks(unittest.TestCase):

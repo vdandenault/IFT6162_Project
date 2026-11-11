@@ -3,10 +3,11 @@ import unittest
 import numpy as np
 import torch
 
-from lake_como.sac import SACAgent,SACConfig
-from lake_como.sac_critic_fit import (critic_pair_losses,fixed_targets,training_partitions,
+from reservoir_control.systems.lake_como.sac import SACAgent
+from reservoir_control.controllers.sac.agent import SACConfig
+from reservoir_control.systems.lake_como.sac_critic_fit import (critic_pair_losses,fixed_targets,training_partitions,
                                      freeze_noncritics,frozen_state,assert_frozen)
-from lake_como.splits import split_years
+from reservoir_control.systems.lake_como.splits import split_years
 
 
 class CriticFitChecks(unittest.TestCase):

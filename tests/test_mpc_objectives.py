@@ -4,9 +4,9 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import make_env, settings
-from lake_como.mpc import MPCConfig, PlanningModel
-from lake_como.mpc_objective_audit import compare_grid, score_plan
+from reservoir_control.systems.lake_como.environment import make_env, settings
+from reservoir_control.systems.lake_como.mpc import MPCConfig, PlanningModel
+from reservoir_control.systems.lake_como.mpc_objective_audit import compare_grid, score_plan
 
 
 class MPCObjectiveChecks(unittest.TestCase):

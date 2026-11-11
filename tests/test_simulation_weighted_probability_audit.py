@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from lake_como.simulation.weighted_probability_audit import distribution_metrics
-from lake_como.simulation.weighted_forecast import weighted_crps
+from reservoir_control.systems.lake_como.simulation.weighted_probability_audit import distribution_metrics
+from reservoir_control.systems.lake_como.simulation.weighted_forecast import weighted_crps
 
 
 class ProbabilityAuditChecks(unittest.TestCase):

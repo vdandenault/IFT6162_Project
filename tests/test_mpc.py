@@ -5,10 +5,10 @@ from unittest.mock import patch
 import numpy as np
 from scipy.optimize import OptimizeResult
 
-from lake_como.environment import make_env, settings
-from lake_como.mpc import DeterministicMPC, MPCConfig, PlanningModel, SeasonalForecast
-from lake_como.reproduce import evaluate
-from lake_como.splits import split_years
+from reservoir_control.systems.lake_como.environment import make_env, settings
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig, PlanningModel, SeasonalForecast
+from reservoir_control.systems.lake_como.reproduce import evaluate
+from reservoir_control.systems.lake_como.splits import split_years
 
 
 class MPCChecks(unittest.TestCase):
@@ -97,7 +97,7 @@ class MPCChecks(unittest.TestCase):
             nit=1,
             nfev=1,
         )
-        with patch("lake_como.mpc.minimize", return_value=failed):
+        with patch("reservoir_control.systems.lake_como.mpc.minimize", return_value=failed):
             action = controller(np.array([0.35, 0.0, 1.0, 0.0], dtype=np.float32))
         self.assertTrue(controller.diagnostics[-1]["used_fallback"])
         self.assertTrue(np.isfinite(action).all())

@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from lake_como.calendar_audit import describe_year
+from reservoir_control.systems.lake_como.calendar_audit import describe_year
 
 
 class CalendarAuditChecks(unittest.TestCase):

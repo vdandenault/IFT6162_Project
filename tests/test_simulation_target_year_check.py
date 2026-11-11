@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from lake_como.simulation.target_year_check import (
+from reservoir_control.systems.lake_como.simulation.target_year_check import (
     validation_pairs,annual_metrics,paired_scope,DAILY_FIELDS,
 )
 

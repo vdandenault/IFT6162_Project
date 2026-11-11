@@ -9,11 +9,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.paths import PROJECT_ROOT,DAM_DATA,DAM_CONFIG
-from lake_como.simulation.high_water import flood_replay,capacity_volume_bound
-from lake_como.simulation.low_water import LowWaterRule,ProtectedOutletModel
-from lake_como.simulation.outlet import OutletSpec
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT,DAM_DATA,DAM_CONFIG
+from reservoir_control.systems.lake_como.simulation.high_water import flood_replay,capacity_volume_bound
+from reservoir_control.systems.lake_como.simulation.low_water import LowWaterRule,ProtectedOutletModel
+from reservoir_control.systems.lake_como.simulation.outlet import OutletSpec
 
 
 def save(path,value):
@@ -38,8 +38,8 @@ def main():
     params=settings('train');years=(1986,1987)
     lookbacks=[1,3,7,14,30,60]
     refinements=[1,2,4,8,16,32]
-    files=list((PROJECT_ROOT/'src/lake_como/simulation').glob('*.py'))
-    files += [Path(__file__),PROJECT_ROOT/'src/lake_como/environment.py',PROJECT_ROOT/'src/lake_como/hourly_telemetry.py',
+    files=list((PROJECT_ROOT/'src/reservoir_control/systems/lake_como/simulation').glob('*.py'))
+    files += [Path(__file__),PROJECT_ROOT/'src/reservoir_control/systems/lake_como/environment.py',PROJECT_ROOT/'src/reservoir_control/systems/lake_como/hourly_telemetry.py',
         PROJECT_ROOT/'configs/splits.json',DAM_CONFIG/'lake.py',DAM_CONFIG/'lake.yaml']
     files += [DAM_DATA/k/f'water_{k}_{part}.csv' for k in ['inflow','demand'] for part in ['train','test']]
     pdf=PROJECT_ROOT/'results/simulator/calibration_research/sources/ranzi_2021_historical_methods.pdf'

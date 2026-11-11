@@ -1,21 +1,66 @@
-# Lake Como reservoir control
+# Reservoir control: Lake Como and Lake Ontario–Ottawa
 
-IFT6162 project: compare a literature-based MPC controller with PPO for daily
-Lake Como releases using Gym4ReaL's DamEnv. Demand, flood, and low-water control
-are the core scope; hydropower is optional.
+IFT6162 project: compare Plan 2014, MPC and Stackelberg MPC for Lake Ontario–
+St. Lawrence releases with an aggregated Ottawa reservoir operator. PPO is an
+additional comparison. Lake Como remains a supported research and regression case.
+
+All application code lives under `src/reservoir_control/`. Shared PPO, SAC and
+FQI implementations live in `controllers/`. Each system owns its physics,
+observations, operational policies and study runners under `systems/`.
+Planning and Gymnasium adapters connect those systems to the controllers.
+The MPC search lives in `controllers/mpc/receding_horizon.py`. Ontario's planning
+adapter lives in `systems/loslr/planning.py` and supplies its calendar, release
+rules, candidate actions, stage constraints and objective.
+
+```text
+reservoir_control/
+  controllers/       mpc/, ppo/, sac/, fqi/
+  core/              time, state and information contracts
+  adapters/          planning and Gymnasium interfaces
+  evaluation/        rollout and source verification
+  systems/
+    lake_como/       Como model, operational policies and studies
+    loslr/           Ontario–St. Lawrence model and studies
+    ottawa/          aggregate Ottawa storage model
+```
+
+Lake Como console commands retain their `lake-como-` names. Python module commands
+use the new package, for example
+`python -m reservoir_control.systems.lake_como.simulation.mapped_ppo_duration`.
+
+## Current status
+
+The package migration is complete. The Ontario native reference and causal
+rule-curve replays have run, and the first four-quarter-month MPC comparison
+covers 1995, 2017 and 2019. MPC matches the rule curve in two cases and makes a
+small upstream/downstream tradeoff in 2017. The Ottawa aggregate balance is
+implemented. Follower optimization, Stackelberg MPC and Ontario PPO are upcoming.
+See [RESULTS.md](RESULTS.md) for measured outcomes and [PROJECT_PLAN.md](PROJECT_PLAN.md)
+for the next implementation phases.
 
 ## Start here
 
-- [Project plan](PROJECT_PLAN.md): model, scope, current status, and remaining work.
+- [Project plan](PROJECT_PLAN.md): current scope, completed work and next phases.
+- [Results](RESULTS.md): Ontario pilot and Como reference outcomes.
+- [Architecture and model details](docs/MULTI_SYSTEM_PLAN.md): Adapter pattern and system specifications.
+- [Ottawa model specification](docs/OTTAWA_MODEL_SPEC.md): available evidence, aggregate storage and coupling assumptions.
 - [PPO findings](docs/PPO.md): selected settings and consolidated experimental evidence.
 - [Evaluation](docs/EVALUATION.md): run the comparison and interpret metrics.
 - [Simulator development](docs/SIMULATOR.md): continuous/subdaily research gym, physical checks, scenario uncertainty, routing and explicit training protocols.
 - [Literature review](docs/LITERATURE_REVIEW.md): references and MPC/FQI decisions.
 
-For a visual introduction, run [the environment walkthrough](scripts/analysis/environment_and_data.py).
-For current results, run [the controller comparison](scripts/analysis/controller_comparison.py).
-The historical analysis scripts retain detailed experimental evidence; they are optional
-reading, linked from the PPO findings.
+## Dataset locations
+
+| Data | Location |
+|---|---|
+| Como benchmark inflow, demand, levels and environmental flow | `external/gym4real/gym4real/data/dam/` |
+| Como downloaded calibration sources | `results/simulator/calibration_research/sources/` |
+| Ontario historical supplies and supplied forecasts | `external/loslr_regulation_optimization/input/historic/1900_2020/` |
+| Generated trajectories, checkpoints and summaries | `results/` |
+
+The Ontario reference reads `12month_sqAR.txt`. Its SLON series represents the
+non-Ontario contribution used in routing. A separate Ottawa reservoir dataset
+and controlled/uncontrolled decomposition still need to be established.
 
 ## Setup
 
@@ -34,13 +79,82 @@ in editable mode. Scripts import the installed packages directly; no `sys.path` 
 activation are needed. `uv.lock` pins dependencies. Use `uv add` for changes
 and review both the project file and lockfile.
 
-## Common commands
+## Historical Como studies
+
+Frozen manifests retain the original source paths and hashes. The pre-migration
+source, workspace dependency and environment files are archived locally under
+`results/migration/como_before_multisystem_v1/`. To inspect or reproduce that
+source version, restore it into an empty directory:
+
+```bash
+python scripts/migration/preserve_como.py --restore-to /tmp/lake-como-reference
+```
+
+Generated results and checkpoints remain in their existing directories. Studies
+with absolute manifest paths require the original checkout location or explicit
+path mapping in a copied study. Current source verification reports a historical
+source-tree mismatch when an old manifest references the removed package.
+
+## Ontario baseline and architecture figures
+
+The native runner reproduces the pinned upstream Python implementation. The
+causal runner uses past-only inputs for the Python rule curve and Bv7 limits
+and reports differences against the archived GLRRM baseline. See the
+[migration status](docs/MULTI_SYSTEM_PLAN.md#implementation-status).
+
+The upstream checkout is currently local and ignored, pending the licensing audit;
+it is not a registered submodule. It is already present in this workspace. For a
+fresh checkout, these commands fetch only the required upstream directories:
+
+```bash
+git clone --filter=blob:none --no-checkout --single-branch --branch dps \
+  https://github.com/ksemmendinger/loslr_regulation_optimization.git \
+  external/loslr_regulation_optimization
+git -C external/loslr_regulation_optimization fetch --depth 1 origin \
+  8b8de9e89487552f8590f4d42d87484e5edc6872
+git -C external/loslr_regulation_optimization sparse-checkout set \
+  functions objectiveFunctions input/historic/1900_2020 \
+  output/data/baseline/Plan2014_GLRRM
+git -C external/loslr_regulation_optimization checkout --detach \
+  8b8de9e89487552f8590f4d42d87484e5edc6872
+```
+
+```bash
+# Existing output directories are protected; use a fresh path for another replay.
+uv run python -m reservoir_control.systems.loslr.baseline \
+  --output results/loslr/native_baseline_review
+uv run python -m reservoir_control.systems.loslr.causal \
+  --output results/loslr/causal_baseline_review
+uv run python -m reservoir_control.systems.loslr.mpc \
+  --output results/loslr/mpc_review --years 1995 2017 2019
+uv run python scripts/analysis/multisystem_overview.py
+```
+
+The figures are PNGs under ignored `background/images/`: physical coupling,
+independent MPC/PPO adapter paths, and the 2017/2019 native baseline trajectories
+(when the `native_baseline_v1` trace is available). No new training is launched.
+
+## Validation and Como references
+
+```bash
+uv run --group reproduction --with pytest python -m pytest tests -q
+```
+
+The improved Como simulator uses continuous two-year episodes and has its own
+matched MPC/PPO studies. The earlier DamEnv benchmark uses annual episodes.
+[Simulator development](docs/SIMULATOR.md) documents the improved model and
+[current results](RESULTS.md#lake-como) records its comparison.
+
+<details>
+<summary>Earlier Como annual benchmark commands and analysis scripts</summary>
+
+### Como annual benchmark commands
 
 ```bash
 uv run --group reproduction lake-como-audit
 uv run --group reproduction lake-como-rollout --split validation --years 1990
 uv run --group reproduction lake-como-compare
-uv run --group reproduction python -m unittest discover -s tests -v
+uv run --group reproduction --with pytest python -m pytest tests -q
 ```
 
 The comparison defaults to Random, Mean, Max, EAD, and all five selected 1M PPO
@@ -50,7 +164,7 @@ controller subsets, other splits, and explicit checkpoint paths. Existing nonemp
 comparison output directories are rejected; choose a new `--output` for another run.
 PPO reproduction/training commands are listed together in [PPO findings](docs/PPO.md#reproduce-or-inspect-details).
 
-## Start the MPC prototype
+### Como MPC prototype
 
 ```bash
 uv run --group reproduction lake-como-mpc
@@ -123,7 +237,7 @@ uv run --group reproduction --with scikit-learn==1.5.2 \
   python scripts/analysis/run_fqi_pilot.py
 ```
 
-## Readable analysis scripts
+### Como analysis scripts
 
 ```bash
 uv run --group reproduction python scripts/analysis/environment_and_data.py
@@ -139,24 +253,25 @@ Scripts retain the explanations as comments and run top-to-bottom through `main(
 Generated outputs stay ignored; original notebook files were archived locally in
 `reports/archive/notebooks_before_scripts/`.
 
+</details>
+
 ## Configuration and local artifacts
 
-- `configs/splits.json`: train 1946–1987, validation 1988–1997, test 1998–2010.
-- `configs/ppo.json`: current selected PPO settings and default checkpoint locations.
-- `configs/mpc.json`: initial deterministic MPC horizon, solver, and surrogate settings.
-- `configs/experiments/ppo_studies.json`: exact historical experiment plans, grouped by study.
+- `configs/studies/loslr/native_baseline.json` specifies the native Ontario recipe.
+- `src/reservoir_control/systems/loslr/planning.py` contains the current Ontario MPC settings, study caps
+  and objective. The runner accepts selected years and a fresh output directory.
+- `configs/splits.json`, `configs/ppo.json` and `configs/mpc.json` define the earlier
+  Como annual benchmark and its selected checkpoints.
+- `configs/experiments/` retains recorded Como study protocols and plans.
 
-Use validation for design decisions; reserve test years for the final comparison.
-Leap years currently retain 365-step episodes, annual storage resets to level
-0.35 m, and terminal level observations are corrected. See the plan for limitations.
-`lake-como-rollout --no-include-leap-years` supports sensitivity checks;
-`--protocol upstream` selects the separate original benchmark membership.
+Ontario data uses 48 quarter-months per year and the pinned balance conversion.
+The current causal replay scores 1901–2020 after initialization and warmup. MPC
+case studies use common year-start states and preserve within-year storage.
+Como's annual and improved two-year protocols are described in their study docs.
 
-Generated `results/`, `reports/`, `background/`, and local PDF papers are ignored.
-Only PNG graphics are needed. Our [Gym4ReaL fork](https://github.com/vdandenault/gym4ReaL)
-is pinned at `external/gym4real/`; keep simulator changes in that fork and project
-experiments here. Its existing packaging change is separate from simulator physics.
-Review and commit fork changes separately before updating the parent submodule pin.
+Generated `results/`, `reports/`, `background/`, PDFs and packaging metadata are
+ignored. Explanatory graphics use PNG. The Gym4ReaL fork is pinned under
+`external/gym4real/`. The Ontario upstream checkout is currently local and ignored.
 
 ## Team
 

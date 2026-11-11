@@ -1,9 +1,9 @@
 from copy import deepcopy
 import numpy as np
 import torch
-from lake_como.simulation.ppo_agent import PPOAgent
-from lake_como.simulation.ppo_diagnosis import discounted_returns,make_env,storage_branch,first_action_branch,stochastic_return
-from lake_como.simulation.ppo_protocol import ObservationHistory
+from reservoir_control.systems.lake_como.simulation.ppo_agent import PPOAgent
+from reservoir_control.systems.lake_como.simulation.ppo_diagnosis import discounted_returns,make_env,storage_branch,first_action_branch,stochastic_return
+from reservoir_control.systems.lake_como.simulation.ppo_protocol import ObservationHistory
 
 
 def setup_state():

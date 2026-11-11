@@ -2,12 +2,12 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import settings
-from lake_como.simulation.history_forecast import HistoryForecastBank
-from lake_como.simulation.tail_diagnosis import pool_details,nested_draws,support_record,fallback_contrasts,forecast_infeasible
-from lake_como.simulation.low_water import ProtectedOutletModel
-from lake_como.simulation.model import WaterState
-from lake_como.simulation.feasibility_audit import full_open_lower_bound
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.history_forecast import HistoryForecastBank
+from reservoir_control.systems.lake_como.simulation.tail_diagnosis import pool_details,nested_draws,support_record,fallback_contrasts,forecast_infeasible
+from reservoir_control.systems.lake_como.simulation.low_water import ProtectedOutletModel
+from reservoir_control.systems.lake_como.simulation.model import WaterState
+from reservoir_control.systems.lake_como.simulation.feasibility_audit import full_open_lower_bound
 
 
 class TailDiagnosisChecks(unittest.TestCase):

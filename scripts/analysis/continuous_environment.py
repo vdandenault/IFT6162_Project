@@ -11,9 +11,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from lake_como.continuous_environment import make_continuous_env
-from lake_como.mpc_hindsight import digest
-from lake_como.paths import DAM_CONFIG, DAM_DATA, PROJECT_ROOT
+from reservoir_control.systems.lake_como.continuous_environment import make_continuous_env
+from reservoir_control.systems.lake_como.mpc_hindsight import digest
+from reservoir_control.systems.lake_como.paths import DAM_CONFIG, DAM_DATA, PROJECT_ROOT
 
 
 def main():
@@ -28,15 +28,15 @@ def main():
     root.mkdir(parents=True, exist_ok=True)
     env = make_continuous_env('train', (1946, 1947))
     rows = []
-    files = [Path(__file__), PROJECT_ROOT / 'src/lake_como/continuous_environment.py',
-             PROJECT_ROOT / 'src/lake_como/environment.py',
-             PROJECT_ROOT / 'src/lake_como/inflow_observation.py',
+    files = [Path(__file__), PROJECT_ROOT / 'src/reservoir_control/systems/lake_como/continuous_environment.py',
+             PROJECT_ROOT / 'src/reservoir_control/systems/lake_como/environment.py',
+             PROJECT_ROOT / 'src/reservoir_control/systems/lake_como/inflow_observation.py',
              PROJECT_ROOT / 'configs/splits.json', DAM_CONFIG / 'env.py', DAM_CONFIG / 'lake.py',
              DAM_CONFIG / 'world_train.yaml', DAM_CONFIG / 'lake.yaml', DAM_DATA / 'MEF.csv']
     files += [DAM_DATA / signal / f'water_{signal}_{part}.csv'
               for signal in ['demand', 'inflow'] for part in ['train', 'test']]
     if args.train_smoke:
-        files += [PROJECT_ROOT / 'src/lake_como/sac.py', PROJECT_ROOT / 'src/lake_como/sac_loop.py']
+        files += [PROJECT_ROOT / 'src/reservoir_control/controllers/sac/agent.py', PROJECT_ROOT / 'src/reservoir_control/systems/lake_como/sac_loop.py']
     hashes = {str(p.relative_to(PROJECT_ROOT)): digest(p) for p in files}
     declaration = dict(protocol='continuous-model-years-v1', years=[1946, 1947],
         calendar='365 samples per model year; original leap approximation unchanged',
@@ -61,8 +61,9 @@ def main():
     try:
         if args.train_smoke:
             import torch
-            from lake_como.sac import SACAgent, SACConfig, ReplayBuffer
-            from lake_como.sac_loop import train_steps
+            from reservoir_control.systems.lake_como.sac import SACAgent
+            from reservoir_control.controllers.sac.agent import SACConfig, ReplayBuffer
+            from reservoir_control.systems.lake_como.sac_loop import train_steps
             torch.set_num_threads(1)
             agent = SACAgent(SACConfig(observation_dim=5),
                 observation_mean=np.zeros(5), observation_scale=[1, 1, 1, 100, 100],

@@ -3,9 +3,9 @@ from dataclasses import replace
 
 import numpy as np
 from gymnasium.utils.env_checker import check_env
-from lake_como.environment import settings
-from lake_como.simulation import make_operational_env
-from lake_como.simulation.outlet import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation import make_operational_env
+from reservoir_control.systems.lake_como.simulation.outlet import (
     OutletSpec, OutletLake, OutletDomainError, make_outlet_env,
 )
 
@@ -74,7 +74,8 @@ class OutletChecks(unittest.TestCase):
         # Learner plumbing check on a short prescribed-action dataset. This is
         # separate from the free-action study that hits its domain in warmup.
         import torch
-        from lake_como.sac import SACAgent, SACConfig, ReplayBuffer
+        from reservoir_control.systems.lake_como.sac import SACAgent
+        from reservoir_control.controllers.sac.agent import SACConfig, ReplayBuffer
         torch.set_num_threads(1)
         env = make_outlet_env(years=(1946,))
         agent = SACAgent(SACConfig(observation_dim=8),observation_mean=np.zeros(8),

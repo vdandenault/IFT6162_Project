@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
-from lake_como.residual_duration import extended_config,check_prefix
-from lake_como.residual_study import CONFIG
+from reservoir_control.systems.lake_como.residual_duration import extended_config,check_prefix
+from reservoir_control.systems.lake_como.residual_study import CONFIG
 
 class DurationChecks(unittest.TestCase):
     def test_only_steps_change_without_mutating_original(self):

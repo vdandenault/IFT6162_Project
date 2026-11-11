@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from lake_como.simulation import mapped_ppo_duration as duration
-from lake_como.simulation.hydraulic_ppo_study import train as reference_train
-from lake_como.simulation.ppo_controlled import same_state
-from lake_como.simulation.target_year_check import validation_pairs
+from reservoir_control.systems.lake_como.simulation import mapped_ppo_duration as duration
+from reservoir_control.systems.lake_como.simulation.hydraulic_ppo_study import train as reference_train
+from reservoir_control.systems.lake_como.simulation.ppo_controlled import same_state
+from reservoir_control.systems.lake_como.simulation.target_year_check import validation_pairs
 
 
 def make_reference(tmp_path,seed,prefix):
@@ -76,8 +76,22 @@ def test_required_cohort_scoring_and_duplicate_guards():
 def test_prepare_freezes_plan_without_training(tmp_path,monkeypatch):
     def forbidden(*args,**kwargs):raise AssertionError('Training must not run in prepare')
     monkeypatch.setattr(duration,'train_seed',forbidden)
+    reference = tmp_path/'declared_reference'
+    reference.mkdir()
+    config = duration.asdict(duration.PPOConfig())
+    plan = dict(config=config, steps_per_seed=duration.PREFIX_STEPS, seeds=list(duration.SEEDS),
+                action_contract=duration.CONTRACT, source_sha256={}, quartiles=[])
+    (reference/'plan.json').write_text(json.dumps(plan))
+    annual(1.).assign(arm='treatment').to_csv(reference/'annual.csv', index=False)
+    for seed in duration.SEEDS:
+        folder = reference/f'seed{seed}'
+        folder.mkdir()
+        (folder/'training.json').write_text(json.dumps(dict(complete=True, steps=duration.PREFIX_STEPS)))
+        torch.save(dict(seed=seed, steps=duration.PREFIX_STEPS, config=config), folder/'final.pt')
+        (folder/'final.action.json').write_text(json.dumps(duration.CONTRACT))
+        (folder/'updates.csv').write_text('step\n')
     root=tmp_path/'study'
-    assert duration.main(['--stage','prepare','--root',str(root)])==0
+    assert duration.main(['--stage','prepare','--reference',str(reference),'--root',str(root)])==0
     plan=json.loads((root/'plan.json').read_text())
     assert plan['prefix_steps']==200000 and plan['total_steps']==400000
     assert plan['seeds']==[123,124,125,126,127] and not plan['test_evaluated']

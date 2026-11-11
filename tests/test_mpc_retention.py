@@ -6,9 +6,9 @@ import unittest
 from unittest.mock import patch
 import numpy as np
 from scipy.optimize import OptimizeResult
-from lake_como.environment import settings
-from lake_como.mpc import DeterministicMPC, MPCConfig
-from lake_como.mpc_retention import RetainingMPC, select_plan
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig
+from reservoir_control.systems.lake_como.mpc_retention import RetainingMPC, select_plan
 
 
 class RetentionChecks(unittest.TestCase):
@@ -99,7 +99,7 @@ class RetentionChecks(unittest.TestCase):
         )
         experimental.model.cost = lambda x, *args: float(np.sum((x - target) ** 2))
         with patch(
-            "lake_como.mpc_retention.minimize", return_value=self.result(target)
+            "reservoir_control.systems.lake_como.mpc_retention.minimize", return_value=self.result(target)
         ):
             experimental(np.array([0.35, 0, 1, 0], dtype=np.float32))
         diagnostic = experimental.diagnostics[-1]

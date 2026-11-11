@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from lake_como.simulation.mapped_duration_inspection import episodes,select_period,trend_rows
+from reservoir_control.systems.lake_como.simulation.mapped_duration_inspection import episodes,select_period,trend_rows
 
 
 def record():

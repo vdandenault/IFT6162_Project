@@ -3,8 +3,9 @@ import unittest
 import numpy as np
 import pandas as pd
 import torch
-from lake_como.sac import SACAgent,SACConfig
-from lake_como.sac_critic_sampling import (SamplingConfig,matched_minibatches,
+from reservoir_control.systems.lake_como.sac import SACAgent
+from reservoir_control.controllers.sac.agent import SACConfig
+from reservoir_control.systems.lake_como.sac_critic_sampling import (SamplingConfig,matched_minibatches,
                                           merge_counterfactuals,common_targets)
 
 

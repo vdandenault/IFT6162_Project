@@ -6,9 +6,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from lake_como.hourly_telemetry import make_hourly_env
-from lake_como.mpc_hindsight import digest
-from lake_como.paths import DAM_CONFIG, DAM_DATA, PROJECT_ROOT
+from reservoir_control.systems.lake_como.hourly_telemetry import make_hourly_env
+from reservoir_control.systems.lake_como.mpc_hindsight import digest
+from reservoir_control.systems.lake_como.paths import DAM_CONFIG, DAM_DATA, PROJECT_ROOT
 
 
 def main():
@@ -18,9 +18,9 @@ def main():
     if root.exists() and any(root.iterdir()):
         p.error('Choose an empty directory; prior runs are preserved')
     root.mkdir(parents=True, exist_ok=True)
-    sources = [Path(__file__), PROJECT_ROOT/'src/lake_como/hourly_telemetry.py',
-        PROJECT_ROOT/'src/lake_como/continuous_environment.py', PROJECT_ROOT/'src/lake_como/environment.py',
-        PROJECT_ROOT/'src/lake_como/inflow_observation.py', PROJECT_ROOT/'configs/splits.json',
+    sources = [Path(__file__), PROJECT_ROOT/'src/reservoir_control/systems/lake_como/hourly_telemetry.py',
+        PROJECT_ROOT/'src/reservoir_control/systems/lake_como/continuous_environment.py', PROJECT_ROOT/'src/reservoir_control/systems/lake_como/environment.py',
+        PROJECT_ROOT/'src/reservoir_control/systems/lake_como/inflow_observation.py', PROJECT_ROOT/'configs/splits.json',
         DAM_CONFIG/'env.py', DAM_CONFIG/'lake.py', DAM_CONFIG/'lake.yaml', DAM_CONFIG/'world_train.yaml',
         DAM_DATA/'MEF.csv']
     sources += [DAM_DATA/s/f'water_{s}_{part}.csv' for s in ['inflow','demand'] for part in ['train','test']]

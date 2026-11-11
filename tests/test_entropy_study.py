@@ -5,8 +5,8 @@ import tempfile
 import unittest
 import numpy as np
 import pandas as pd
-from lake_como.entropy_study import COEFFICIENT, decision_from_means
-from lake_como.stabilize import agent_config
+from reservoir_control.systems.lake_como.entropy_study import COEFFICIENT, decision_from_means
+from reservoir_control.systems.lake_como.stabilize import agent_config
 
 
 class EntropyChecks(unittest.TestCase):

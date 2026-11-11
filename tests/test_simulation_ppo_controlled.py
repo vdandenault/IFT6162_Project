@@ -1,8 +1,8 @@
 from dataclasses import asdict,replace
 import torch
-from lake_como.simulation.ppo_agent import PPOConfig,gae
-from lake_como.simulation.ppo_controlled import train,same_state
-from lake_como.simulation.ppo_study import train as original_train,aggregate as original_aggregate
+from reservoir_control.systems.lake_como.simulation.ppo_agent import PPOConfig,gae
+from reservoir_control.systems.lake_como.simulation.ppo_controlled import train,same_state
+from reservoir_control.systems.lake_como.simulation.ppo_study import train as original_train,aggregate as original_aggregate
 
 
 def test_collector_control_reproduces_model_optimizer_and_counters(tmp_path):

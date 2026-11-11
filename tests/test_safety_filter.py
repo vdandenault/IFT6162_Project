@@ -1,9 +1,9 @@
 """Common scenario checks, intervention selection, recovery, and causal timing."""
 import unittest
 import numpy as np
-from lake_como.environment import settings
-from lake_como.mpc import MPCConfig, PlanningModel, SeasonalForecast
-from lake_como.safety_filter import choose_request, FloodSafetyFilter, fit_error_limits
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.mpc import MPCConfig, PlanningModel, SeasonalForecast
+from reservoir_control.systems.lake_como.safety_filter import choose_request, FloodSafetyFilter, fit_error_limits
 
 
 class SafetyFilterChecks(unittest.TestCase):

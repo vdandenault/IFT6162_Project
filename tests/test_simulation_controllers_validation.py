@@ -3,11 +3,11 @@ from unittest.mock import patch
 from types import SimpleNamespace
 import numpy as np
 import pandas as pd
-from lake_como.environment import settings
-from lake_como.simulation import make_operational_env,PhysicalWeights,Operations
-from lake_como.simulation.controllers import ContinuousMPC,ContinuousResidual,ScenarioPlanner,ScenarioConstraintFilter
-from lake_como.simulation.scenarios import HistoricalScenarios
-from lake_como.simulation.validation import measured_balance
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation import make_operational_env,PhysicalWeights,Operations
+from reservoir_control.systems.lake_como.simulation.controllers import ContinuousMPC,ContinuousResidual,ScenarioPlanner,ScenarioConstraintFilter
+from reservoir_control.systems.lake_como.simulation.scenarios import HistoricalScenarios
+from reservoir_control.systems.lake_como.simulation.validation import measured_balance
 
 class OperationalControlChecks(unittest.TestCase):
     def test_mpc_horizon_and_warmstart_cross_year_without_reset(self):
@@ -15,7 +15,7 @@ class OperationalControlChecks(unittest.TestCase):
         for _ in range(364):obs,_,_,_,info=env.step(np.array([100],np.float32))
         base=ContinuousMPC(settings('train'));base.reset()
         def solver(fun,initial,**kwargs):return SimpleNamespace(x=initial,success=True,status=0)
-        with patch('lake_como.simulation.controllers.minimize',solver):
+        with patch('reservoir_control.systems.lake_como.simulation.controllers.minimize',solver):
             action=base(obs,info)
             self.assertEqual(base.diagnostics[-1]['days'],[365,1,2,3,4,5,6])
             obs,_,_,_,info=env.step(action);base(obs,info)

@@ -1,16 +1,16 @@
 import unittest
 import numpy as np
 import pandas as pd
-from lake_como.environment import settings
-from lake_como.simulation.weighted_forecast import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.weighted_forecast import (
     WeightedForecastBank,mixture_distribution,probability_strata,weighted_crps,expected_costs,CONFIGS,
 )
-from lake_como.simulation.weighted_study import make_controller,choose
-from lake_como.simulation.forecast_study import controller as old_controller
-from lake_como.simulation.tail_diagnosis import pool_details
-from lake_como.simulation.low_water import make_protected_outlet_env
-from lake_como.simulation.carryover_check import take_step
-from lake_como.simulation.flood_diagnosis import restore
+from reservoir_control.systems.lake_como.simulation.weighted_study import make_controller,choose
+from reservoir_control.systems.lake_como.simulation.forecast_study import controller as old_controller
+from reservoir_control.systems.lake_como.simulation.tail_diagnosis import pool_details
+from reservoir_control.systems.lake_como.simulation.low_water import make_protected_outlet_env
+from reservoir_control.systems.lake_como.simulation.carryover_check import take_step
+from reservoir_control.systems.lake_como.simulation.flood_diagnosis import restore
 
 
 class WeightedForecastChecks(unittest.TestCase):

@@ -3,11 +3,11 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import settings
-from lake_como.simulation.low_water import ProtectedOutletModel,make_protected_outlet_env
-from lake_como.simulation.model import WaterState,PhysicalWeights,physical_cost
-from lake_como.simulation.outlet import OutletDomainError
-from lake_como.simulation.protected_mpc import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.low_water import ProtectedOutletModel,make_protected_outlet_env
+from reservoir_control.systems.lake_como.simulation.model import WaterState,PhysicalWeights,physical_cost
+from reservoir_control.systems.lake_como.simulation.outlet import OutletDomainError
+from reservoir_control.systems.lake_como.simulation.protected_mpc import (
     CausalForecastBank,ProtectedMPC,ProtectedMPCConfig,evaluate_schedules,
 )
 

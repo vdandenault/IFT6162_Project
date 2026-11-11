@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 import unittest
 import numpy as np
-from lake_como.simulation.calibration import fit_balance_area,balance_scores,read_pangaea,require_operational_calibration
+from reservoir_control.systems.lake_como.simulation.calibration import fit_balance_area,balance_scores,read_pangaea,require_operational_calibration
 
 class CalibrationEvidenceChecks(unittest.TestCase):
     def test_robust_fit_recovers_balance_identity_without_outlier_tuning(self):

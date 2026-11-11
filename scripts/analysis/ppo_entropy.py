@@ -5,7 +5,7 @@ Tables print to the terminal; PNG plots stay in ignored results directories.
 """
 import json
 import pandas as pd
-from lake_como.paths import PROJECT_ROOT
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT
 
 
 def main():

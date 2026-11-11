@@ -2,7 +2,8 @@
 import importlib.util
 import unittest
 import numpy as np
-from lake_como.fqi import state_actions, greedy_values, bellman_targets, FQIController
+from reservoir_control.systems.lake_como.fqi import FQIController
+from reservoir_control.controllers.fqi.agent import state_actions, greedy_values, bellman_targets
 
 
 class FQIChecks(unittest.TestCase):

@@ -3,9 +3,9 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.simulation.protected_mpc import CausalForecastBank
-from lake_como.simulation.precision_validation import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank
+from reservoir_control.systems.lake_como.simulation.precision_validation import (
     SEEDS, METRICS, specs, make_controller, annual_records, paired_annual, scope_summary,
 )
 
@@ -68,7 +68,7 @@ class PrecisionValidationChecks(unittest.TestCase):
         self.assertIsNone(missing['mean_original_annual_cost'])
 
     def test_empty_failed_episode_preserves_missing_years(self):
-        from lake_como.simulation.carryover_check import FIELDS
+        from reservoir_control.systems.lake_como.simulation.carryover_check import FIELDS
         frame = pd.DataFrame(columns=FIELDS)
         rows = annual_records(frame, dict(years=[1994, 1995], seed=901, arm='combined', name='failed'),
                               [80., 120.], 145900000.)

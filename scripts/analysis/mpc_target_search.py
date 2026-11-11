@@ -9,13 +9,13 @@ import time
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.paths import PROJECT_ROOT,DAM_CONFIG,DAM_DATA
-from lake_como.simulation.low_water import make_protected_outlet_env,ProtectedOutletModel
-from lake_como.simulation.model import WaterState
-from lake_como.simulation.outlet import OutletDomainError
-from lake_como.simulation.protected_mpc import CausalForecastBank,evaluate_schedules
-from lake_como.simulation.mpc_diagnosis import DiagnosticMPC,TargetForecaster,SearchExpansion
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT,DAM_CONFIG,DAM_DATA
+from reservoir_control.systems.lake_como.simulation.low_water import make_protected_outlet_env,ProtectedOutletModel
+from reservoir_control.systems.lake_como.simulation.model import WaterState
+from reservoir_control.systems.lake_como.simulation.outlet import OutletDomainError
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank,evaluate_schedules
+from reservoir_control.systems.lake_como.simulation.mpc_diagnosis import DiagnosticMPC,TargetForecaster,SearchExpansion
 
 REF=PROJECT_ROOT/'results/simulator/protected_mpc_v1'
 DEFAULT=PROJECT_ROOT/'results/simulator/mpc_target_search_v1'
@@ -46,9 +46,9 @@ def metrics(frame):
 def prepare(root):
     root.mkdir(parents=True,exist_ok=False)
     reference=json.loads((REF/'plan.json').read_text())
-    paths=list((PROJECT_ROOT/'src/lake_como/simulation').glob('*.py'))+[Path(__file__),REF/'plan.json']
-    paths += [PROJECT_ROOT/'src/lake_como/environment.py',PROJECT_ROOT/'src/lake_como/hourly_telemetry.py',
-        PROJECT_ROOT/'src/lake_como/splits.py',PROJECT_ROOT/'configs/splits.json',
+    paths=list((PROJECT_ROOT/'src/reservoir_control/systems/lake_como/simulation').glob('*.py'))+[Path(__file__),REF/'plan.json']
+    paths += [PROJECT_ROOT/'src/reservoir_control/systems/lake_como/environment.py',PROJECT_ROOT/'src/reservoir_control/systems/lake_como/hourly_telemetry.py',
+        PROJECT_ROOT/'src/reservoir_control/systems/lake_como/splits.py',PROJECT_ROOT/'configs/splits.json',
         DAM_CONFIG/'lake.py',DAM_CONFIG/'lake.yaml',DAM_CONFIG/'world_train.yaml',DAM_CONFIG/'world_test.yaml',DAM_DATA/'MEF.csv']
     paths += [DAM_DATA/k/f'water_{k}_{p}.csv' for k in ['inflow','demand'] for p in ['train','test']]
     for case in reference['cases']:

@@ -101,18 +101,18 @@ handling, zero-mean residual initialization, and custom checkpoint restoration.
 
 ## Code and reproduction
 
-- [residual_mpc.py](../src/lake_como/residual_mpc.py): proposal wrapper, bounded
+- [residual_mpc.py](../src/reservoir_control/systems/lake_como/residual_mpc.py): proposal wrapper, bounded
   composition, combined-action LayerNorm critics, and proposal-aware SAC checkpoints.
-- [residual_study.py](../src/lake_como/residual_study.py): smoke gate, training,
+- [residual_study.py](../src/reservoir_control/systems/lake_como/residual_study.py): smoke gate, training,
   validation, exact forcing/reset checks, paired results, and compute accounting.
 
 Use a new directory; existing outputs are protected:
 
 ```bash
-uv run --group reproduction python -m lake_como.residual_study --stage prepare --output results/residual/new_pilot
-uv run --group reproduction python -m lake_como.residual_study --stage smoke --output results/residual/new_pilot
-uv run --group reproduction python -m lake_como.residual_study --stage train --output results/residual/new_pilot
-uv run --group reproduction python -m lake_como.residual_study --stage evaluate --output results/residual/new_pilot
+uv run --group reproduction python -m reservoir_control.systems.lake_como.residual_study --stage prepare --output results/residual/new_pilot
+uv run --group reproduction python -m reservoir_control.systems.lake_como.residual_study --stage smoke --output results/residual/new_pilot
+uv run --group reproduction python -m reservoir_control.systems.lake_como.residual_study --stage train --output results/residual/new_pilot
+uv run --group reproduction python -m reservoir_control.systems.lake_como.residual_study --stage evaluate --output results/residual/new_pilot
 ```
 
 [Training-loop PNG](../background/images/27_mpc_residual_training_loop.png).
@@ -167,7 +167,7 @@ not contain replay/environment state. Their first ten completed training episode
 must match the short pilot exactly. Only final checkpoints are evaluated, on all
 ten validation years, with plain and shared-filter tracks. Test years stay reserved.
 
-Run with `uv run --group reproduction python -m lake_como.residual_duration
+Run with `uv run --group reproduction python -m reservoir_control.systems.lake_como.residual_duration
 --stage prepare`, followed by `--stage train` and `--stage evaluate`.
 The declared plan and outputs live in ignored
 `results/residual/duration_36500_v1/`; the short pilot remains intact.
@@ -250,7 +250,7 @@ attempts are retained locally with explanations for float32/CSV replay-check fix
 Reproduce into a new directory:
 
 ```bash
-uv run --group reproduction python -m lake_como.residual_diagnosis --output results/residual/new_diagnosis
+uv run --group reproduction python -m reservoir_control.systems.lake_como.residual_diagnosis --output results/residual/new_diagnosis
 ```
 
 [Physical diagnosis PNG](../background/images/34_residual_release_deterioration.png) ·

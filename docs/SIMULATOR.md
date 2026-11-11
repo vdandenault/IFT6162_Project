@@ -33,7 +33,7 @@ Use the operational environment for new experiments:
 
 ```python
 import numpy as np
-from lake_como.simulation import make_operational_env, Operations
+from reservoir_control.systems.lake_como.simulation import make_operational_env, Operations
 
 env = make_operational_env(
     "train", years=(1946, 1947), decision_hours=6,
@@ -56,7 +56,7 @@ weights; its return is not the benchmark return or a monetary damage measure.
 Run the complete declared suite into a fresh directory:
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.study \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.study \
   --output results/simulator/new_operational_study
 ```
 
@@ -238,7 +238,7 @@ cross-year MPC warm start and scenario planning/filtering at 24/6/1-hour interva
 
 ## Protected MPC with causal forecasts
 
-`lake_como.simulation.protected_mpc` implements a finite-candidate MPC prototype
+`reservoir_control.systems.lake_como.simulation.protected_mpc` implements a finite-candidate MPC prototype
 using the protected outlet physics. It is separate from frozen benchmark MPC and
 does not reproduce the published continuous/scenario optimization algorithm.
 The batched planning kernel is tested against `ProtectedOutletModel`; every
@@ -347,7 +347,7 @@ for the event, validation costs and forecast shortfall.
 
 ## Target forecast and search diagnosis
 
-`lake_como.simulation.mpc_diagnosis` runs a **two-by-two diagnostic** on the same
+`reservoir_control.systems.lake_como.simulation.mpc_diagnosis` runs a **two-by-two diagnostic** on the same
 three cases above, holding conditional inflow forecasts, seven-day horizon,
 protected physics, initial states, domain feasibility and physical costs fixed.
 There are four MPC variants plus feedback per case: **15 arm results**, including
@@ -449,7 +449,7 @@ summarizes validation costs, target errors and paired planning diagnostics.
 
 ## Broader-year validation of the target forecast
 
-`lake_como.simulation.target_year_check` freezes the history-aware target forecast
+`reservoir_control.systems.lake_como.simulation.target_year_check` freezes the history-aware target forecast
 and original search and checks **all ten validation model years, 1988–1997**.
 The primary expansion is **1990–1997**, reported separately from the previously
 inspected 1988–1989 screen. Three controllers are compared: seasonal-target MPC,
@@ -534,7 +534,7 @@ explicit matched-prefix comparisons. No controller defaults or frozen reference
 results are replaced. Final test years **1998–2010 remain unused**.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.target_year_check \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.target_year_check \
   --output results/simulator/new_target_year_check
 ```
 
@@ -545,7 +545,7 @@ for annual variation, cost components and the 1994–1995 carryover example.
 
 ## Controlled 1995 storage carryover replay
 
-`lake_como.simulation.carryover_check` compares MPC and feedback from **both**
+`reservoir_control.systems.lake_como.simulation.carryover_check` compares MPC and feedback from **both**
 1995 starting inventories. The four primary branches hold exogenous history,
 forecast fits/paths, physics, constraints and costs fixed. Two additional MPC
 branches reset its carried plan to check numerical warm-start dependence.
@@ -626,7 +626,7 @@ is relative to the model datum, not total lake volume. Incomplete primary branch
 would suppress the full-year decomposition rather than create a cheap failure score.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.carryover_check \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.carryover_check \
   --output results/simulator/new_carryover_check
 ```
 
@@ -709,12 +709,12 @@ CSV parsing caused a 1.86×10⁻⁹ m³ comparison discrepancy; round-trip parsi
 exact trajectory parity. The controller itself was unchanged.
 
 ```bash
-uv run python -m lake_como.simulation.reserve_use_check \
+uv run python -m reservoir_control.systems.lake_como.simulation.reserve_use_check \
   --output results/simulator/new_reserve_use_check
 ```
 
 Stages `prepare`, `run`, `analyze` support resumption with source hashes frozen.
-The separate post-hoc audit is `python -m lake_como.simulation.reserve_tie_audit`
+The separate post-hoc audit is `python -m reservoir_control.systems.lake_como.simulation.reserve_tie_audit`
 and uses the recorded default study. The [reserve-use PNG](../background/images/48_reserve_use_check.png)
 shows timing, information effects and the saved-state schedule comparison.
 
@@ -796,7 +796,7 @@ inventory traces, `marginal_inventory.csv`, source manifest and information/cost
 identity checks. Reproduce into a fresh output directory:
 
 ```bash
-uv run python -m lake_como.simulation.precision_check \
+uv run python -m reservoir_control.systems.lake_como.simulation.precision_check \
   --output results/simulator/new_precision_check
 ```
 
@@ -887,7 +887,7 @@ source/reference checks. Incomplete years/episodes would retain their completion
 status and prefix scores while suppressing required-scope full averages.
 
 ```bash
-uv run python -m lake_como.simulation.precision_validation \
+uv run python -m reservoir_control.systems.lake_como.simulation.precision_validation \
   --output results/simulator/new_precision_validation --workers 2
 ```
 
@@ -1012,7 +1012,7 @@ and independent source, replay, ledger and certificate checks. See the
 [forecast/feasibility PNG](../background/images/52_flood_forecast_feasibility.png).
 
 ```bash
-uv run python -m lake_como.simulation.flood_diagnosis \
+uv run python -m reservoir_control.systems.lake_como.simulation.flood_diagnosis \
   --output results/simulator/new_flood_diagnosis
 ```
 
@@ -1130,7 +1130,7 @@ The [forecast-study PNG](../background/images/53_causal_forecast_study.png) show
 confirmation performance and the event tradeoff.
 
 ```bash
-uv run python -m lake_como.simulation.forecast_study \
+uv run python -m reservoir_control.systems.lake_como.simulation.forecast_study \
   --output results/simulator/new_forecast_study
 ```
 
@@ -1244,7 +1244,7 @@ checks. The [tail/fallback PNG](../background/images/54_tail_and_fallback_diagno
 shows miss causes, sampling limits and the crossed forecast/state results.
 
 ```bash
-uv run python -m lake_como.simulation.tail_diagnosis \
+uv run python -m reservoir_control.systems.lake_como.simulation.tail_diagnosis \
   --output results/simulator/new_tail_diagnosis
 ```
 
@@ -1377,9 +1377,9 @@ checks. The [weighted-tail PNG](../background/images/55_weighted_tail_scenarios.
 shows band probabilities, score improvements, flood exposure and early headroom.
 
 ```bash
-uv run python -m lake_como.simulation.weighted_study \
+uv run python -m reservoir_control.systems.lake_como.simulation.weighted_study \
   --output results/simulator/new_weighted_study
-uv run python -m lake_como.simulation.weighted_probability_audit \
+uv run python -m reservoir_control.systems.lake_como.simulation.weighted_probability_audit \
   --study results/simulator/new_weighted_study
 ```
 
@@ -1490,7 +1490,7 @@ prefix/completion status and suppress required-scope full averages. See the
 [full-validation PNG](../background/images/56_weighted_full_validation.png).
 
 ```bash
-uv run python -m lake_como.simulation.weighted_validation \
+uv run python -m reservoir_control.systems.lake_como.simulation.weighted_validation \
   --output results/simulator/new_weighted_validation --workers 2
 ```
 
@@ -1500,7 +1500,7 @@ evaluation or operational calibration claim is added.
 
 ## Reproduction, prior adapters and remaining work
 
-Current implementation lives in `src/lake_como/simulation/`; the configuration and
+Current implementation lives in `src/reservoir_control/systems/lake_como/simulation/`; the configuration and
 source hashes are frozen in the active run. The first prototype run is preserved
 with original source snapshots and a supersession note: scenario-count-dependent
 conditioning and candidate precision were corrected before the current rerun.
@@ -1509,7 +1509,7 @@ All source hashes for the active run verify. No original fork or benchmark file 
 Earlier narrow adapters remain available:
 
 ```bash
-uv run python -m lake_como.calendar_audit
+uv run python -m reservoir_control.systems.lake_como.calendar_audit
 uv run python scripts/analysis/continuous_environment.py
 uv run --group reproduction python scripts/analysis/continuous_environment.py --train-smoke
 uv run python scripts/analysis/hourly_environment.py
@@ -1578,9 +1578,9 @@ logging-field error before training updates. The matched run freezes source/data
 checksums and its protocol in `results/simulator/ppo_comparison_v1/plan.json`.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.ppo_study \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_study \
   --stage smoke --root results/simulator/new_ppo_smoke
-uv run --group reproduction python -m lake_como.simulation.ppo_study \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_study \
   --stage all --root results/simulator/new_ppo_comparison
 ```
 
@@ -1733,11 +1733,11 @@ and physical metrics; no validation checkpoint selection or default promotion.
 The baseline source and all previous results remain unchanged.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.ppo_diagnosis \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_diagnosis \
   --stage all --root results/simulator/new_ppo_diagnosis
-uv run --group reproduction python -m lake_como.simulation.ppo_diagnosis_report \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_diagnosis_report \
   --root results/simulator/new_ppo_diagnosis
-uv run --group reproduction python -m lake_como.simulation.ppo_controlled \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_controlled \
   --factor gae --root results/simulator/new_ppo_controlled \
   --rationale 'Record the training-only evidence and hypothesis before running.'
 ```
@@ -1918,11 +1918,11 @@ Normal draws and identical recorded weather. This distinguishes immediate mappin
 from subsequent policy changes descriptively, without a new training sweep.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.ppo_identification \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_identification \
   --stage all --root results/simulator/new_ppo_identification
-uv run --group reproduction python -m lake_como.simulation.hydraulic_ppo_study \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.hydraulic_ppo_study \
   --stage smoke --root results/simulator/new_hydraulic_smoke
-uv run --group reproduction python -m lake_como.simulation.hydraulic_ppo_study \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.hydraulic_ppo_study \
   --stage all --root results/simulator/new_hydraulic_study
 ```
 
@@ -2010,7 +2010,7 @@ See the [mapping and results PNG](../background/images/62_hydraulic_ppo_results.
 For a fresh reproduction including the mechanism plan frozen before training:
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.hydraulic_ppo_followup \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.hydraulic_ppo_followup \
   --root results/simulator/new_complete_hydraulic_followup
 ```
 
@@ -2123,11 +2123,11 @@ annual cost decomposition, one exact common-state branch and one full own-policy
 stochastic-return replay. Tests: **272 passed, one skipped**.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.ppo_coverage \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_coverage \
   --stage all --root results/simulator/new_ppo_coverage
-uv run --group reproduction python -m lake_como.simulation.ppo_seed_gain \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_seed_gain \
   --stage all --root results/simulator/new_ppo_coverage
-uv run --group reproduction python -m lake_como.simulation.ppo_coverage_report \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_coverage_report \
   --root results/simulator/new_ppo_coverage
 ```
 
@@ -2237,7 +2237,7 @@ an explicit weather-dummy least-squares regression. Source/checkpoint hashes
 verify. Tests: **277 passed, one skipped**. No commits, default or fork changes.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.ppo_execution \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.ppo_execution \
   --stage all --root results/simulator/new_ppo_execution
 ```
 
@@ -2249,12 +2249,12 @@ fresh roots protect prior studies, and model files are never modified. PNGs rema
 ## Mapped PPO duration runner
 
 The duration-only runner is implemented at
-`src/lake_como/simulation/mapped_ppo_duration.py`. The user subsequently completed
+`src/reservoir_control/systems/lake_como/simulation/mapped_ppo_duration.py`. The user subsequently completed
 the five-seed 400k study; see the result and curve inspection below. For a fresh
 reproduction from the repository root, run:
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.mapped_ppo_duration \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.mapped_ppo_duration \
   --root results/simulator/new_mapped_ppo_duration \
   --workers 2
 ```
@@ -2386,7 +2386,7 @@ The original study files and model weights are unchanged. Tests: **288 passed,
 one skipped**. No new training, final-test use or commits.
 
 ```bash
-uv run --group reproduction python -m lake_como.simulation.mapped_duration_inspection \
+uv run --group reproduction python -m reservoir_control.systems.lake_como.simulation.mapped_duration_inspection \
   --source results/simulator/mapped_ppo_duration_v1 \
   --output results/simulator/new_mapped_duration_inspection
 ```

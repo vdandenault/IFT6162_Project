@@ -4,8 +4,8 @@ import unittest
 import gymnasium as gym
 import numpy as np
 import torch
-from lake_como.sac import SACConfig
-from lake_como.residual_mpc import combine_request,MPCProposalEnv,CombinedCritic,ProposalSACAgent
+from reservoir_control.controllers.sac.agent import SACConfig
+from reservoir_control.systems.lake_como.residual_mpc import combine_request,MPCProposalEnv,CombinedCritic,ProposalSACAgent
 
 
 class ResidualChecks(unittest.TestCase):

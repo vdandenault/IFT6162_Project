@@ -10,9 +10,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from lake_como.sac import (SACAgent, SACConfig, ReplayBuffer, SquashedGaussianActor,
-                          polyak_update, soft_bellman_target)
-from lake_como.sac_loop import train_steps
+from reservoir_control.systems.lake_como.sac import SACAgent
+from reservoir_control.controllers.sac.agent import SACConfig, ReplayBuffer, SquashedGaussianActor, polyak_update, soft_bellman_target
+from reservoir_control.systems.lake_como.sac_loop import train_steps
 
 
 class SACChecks(unittest.TestCase):

@@ -1,9 +1,9 @@
 import numpy as np
 import torch
-from lake_como.simulation.ppo_agent import PPOAgent
-from lake_como.simulation.ppo_protocol import ObservationHistory
-from lake_como.simulation.ppo_diagnosis import make_env
-from lake_como.simulation.ppo_identification import choose,snapshot,restore,daily_mean,digest_actor,sample_saturation
+from reservoir_control.systems.lake_como.simulation.ppo_agent import PPOAgent
+from reservoir_control.systems.lake_como.simulation.ppo_protocol import ObservationHistory
+from reservoir_control.systems.lake_como.simulation.ppo_diagnosis import make_env
+from reservoir_control.systems.lake_como.simulation.ppo_identification import choose,snapshot,restore,daily_mean,digest_actor,sample_saturation
 
 
 def state():

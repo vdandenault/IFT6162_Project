@@ -84,7 +84,7 @@ Finish with an explicit decision: retain MPC/PPO as the core; select FQI, scenar
 
 ## Implemented deterministic MPC prototype
 
-The first implementation is `src/lake_como/mpc.py`, configured by
+The first implementation is `src/reservoir_control/systems/lake_como/mpc.py`, configured by
 [configs/mpc.json](../configs/mpc.json). Cestari et al. Section 2 explicitly includes
 a deterministic climatology baseline; that is the starting reference. Their hourly
 convex formulation is adapted to daily requests and nonlinear DamEnv hydraulics.

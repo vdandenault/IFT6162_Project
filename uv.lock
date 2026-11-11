@@ -5,7 +5,7 @@ requires-python = "==3.12.*"
 [manifest]
 members = [
     "gym4real",
-    "lake-como-control",
+    "reservoir-control",
 ]
 
 [[package]]
@@ -188,45 +188,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a9/c4/1407df7512a5b36cc79840e01710dc575733c461b13ab866cae77eaf87f3/kiwisolver-1.5.1-graalpy312-graalpy250_312_native-macosx_11_0_arm64.whl", hash = "sha256:482676e5bd48d70ac99d9fc78863469845421e01184fa83f1f9366dc49f7e974", size = 134002, upload-time = "2026-08-28T10:28:08.881Z" },
     { url = "https://files.pythonhosted.org/packages/16/45/c37a21ad5c0ab581a93c55ad544721aaa1f0ae94edb29c6a678a23d013e6/kiwisolver-1.5.1-graalpy312-graalpy250_312_native-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:072bdb15a3c19a5b5dbc8f8fb1f4e1884bf4f3507eeb4cc6334401274d37a5c0", size = 194292, upload-time = "2026-08-28T10:28:11.06Z" },
     { url = "https://files.pythonhosted.org/packages/a6/c1/69f00d627949580e43d57af0aa465df46868d7c29801c137a55374101294/kiwisolver-1.5.1-graalpy312-graalpy250_312_native-win_amd64.whl", hash = "sha256:a5a00665d1a0e26763a7338d7e911d4598fbc1d50dd0d6b7919b7dc6c5d6569f", size = 73362, upload-time = "2026-08-28T10:28:12.449Z" },
-]
-
-[[package]]
-name = "lake-como-control"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "gym4real" },
-    { name = "gymnasium" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "pygame" },
-    { name = "pyyaml" },
-    { name = "scipy" },
-]
-
-[package.dev-dependencies]
-reproduction = [
-    { name = "skrl" },
-    { name = "torch" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "gym4real", editable = "external/gym4real" },
-    { name = "gymnasium", specifier = "==1.1.1" },
-    { name = "matplotlib", specifier = "==3.10.1" },
-    { name = "numpy", specifier = "==2.2.4" },
-    { name = "pandas", specifier = "==2.2.3" },
-    { name = "pygame", specifier = "==2.6.1" },
-    { name = "pyyaml", specifier = "==6.0.2" },
-    { name = "scipy", specifier = "==1.15.3" },
-]
-
-[package.metadata.requires-dev]
-reproduction = [
-    { name = "skrl", specifier = "==1.4.3" },
-    { name = "torch", specifier = "==2.6.0" },
 ]
 
 [[package]]
@@ -568,6 +529,45 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c9/1f/4f998c900485e5c0ef43838363ba4a9723ac0ad73a9dc42068b12aaba4e4/PyYAML-6.0.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:8b9c7197f7cb2738065c481a0461e50ad02f18c78cd75775628afb4d7137fb3b", size = 756611, upload-time = "2024-08-06T20:32:38.898Z" },
     { url = "https://files.pythonhosted.org/packages/df/d1/f5a275fdb252768b7a11ec63585bc38d0e87c9e05668a139fea92b80634c/PyYAML-6.0.2-cp312-cp312-win32.whl", hash = "sha256:ef6107725bd54b262d6dedcc2af448a266975032bc85ef0172c5f059da6325b4", size = 140591, upload-time = "2024-08-06T20:32:40.241Z" },
     { url = "https://files.pythonhosted.org/packages/0c/e8/4f648c598b17c3d06e8753d7d13d57542b30d56e6c2dedf9c331ae56312e/PyYAML-6.0.2-cp312-cp312-win_amd64.whl", hash = "sha256:7e7401d0de89a9a855c839bc697c079a4af81cf878373abd7dc625847d25cbd8", size = 156338, upload-time = "2024-08-06T20:32:41.93Z" },
+]
+
+[[package]]
+name = "reservoir-control"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "gym4real" },
+    { name = "gymnasium" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pygame" },
+    { name = "pyyaml" },
+    { name = "scipy" },
+]
+
+[package.dev-dependencies]
+reproduction = [
+    { name = "skrl" },
+    { name = "torch" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "gym4real", editable = "external/gym4real" },
+    { name = "gymnasium", specifier = "==1.1.1" },
+    { name = "matplotlib", specifier = "==3.10.1" },
+    { name = "numpy", specifier = "==2.2.4" },
+    { name = "pandas", specifier = "==2.2.3" },
+    { name = "pygame", specifier = "==2.6.1" },
+    { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "scipy", specifier = "==1.15.3" },
+]
+
+[package.metadata.requires-dev]
+reproduction = [
+    { name = "skrl", specifier = "==1.4.3" },
+    { name = "torch", specifier = "==2.6.0" },
 ]
 
 [[package]]

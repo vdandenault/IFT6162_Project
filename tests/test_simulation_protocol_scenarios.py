@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
-from lake_como.environment import settings
-from lake_como.simulation.protocol import TaskProtocol,TrainingEpisodes,replay_terminal
-from lake_como.simulation.scenarios import HistoricalScenarios,within_day_shape,stress_profiles
-from lake_como.splits import split_years
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.protocol import TaskProtocol,TrainingEpisodes,replay_terminal
+from reservoir_control.systems.lake_como.simulation.scenarios import HistoricalScenarios,within_day_shape,stress_profiles
+from reservoir_control.systems.lake_como.splits import split_years
 
 class OperationalProtocolChecks(unittest.TestCase):
     def test_seeded_train_windows_spinup_and_discount(self):

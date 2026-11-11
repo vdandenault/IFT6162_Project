@@ -3,9 +3,9 @@ import unittest
 from types import SimpleNamespace
 import gymnasium as gym
 import numpy as np
-from lake_como.environment import make_env
-from lake_como.inflow_observation import PastInflowObservation
-from lake_como.ppo_inflow_study import first_day_fallback
+from reservoir_control.systems.lake_como.environment import make_env
+from reservoir_control.systems.lake_como.inflow_observation import PastInflowObservation
+from reservoir_control.systems.lake_como.ppo_inflow_study import first_day_fallback
 
 
 class TelemetryOnlyEnv(gym.Env):

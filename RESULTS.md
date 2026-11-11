@@ -1,5 +1,109 @@
 # Results and current understanding
 
+## Ontario–St. Lawrence
+
+**The Ontario simulation and first MPC comparison have completed.** The current
+pilot matches the causal rule curve in 1995 and 2019. In 2017 it trades a small
+reduction in downstream exceedance severity for greater Ontario severity and
+one additional downstream exceedance period.
+
+### Simulation and benchmark checks
+
+- The native Python reference ran **5,808 quarter-month decisions over 1900–2020**,
+  following the supplied initialization year. Adapter parity passed and all
+  **seven native performance indicators** executed.
+- The causal rule curve ran **5,760 scored decisions over 1901–2020**, following
+  initialization and a past-only 1900 warmup.
+- The MPC comparison contains **288 paired trajectory rows**, covering 48 periods
+  per controller in each of 1995, 2017 and 2019. Each controller starts the year
+  from the same continuous causal rule-curve state.
+
+### Rule curve versus four-quarter-month MPC
+
+The fixed study caps are **75.50 m Ontario end-of-period level** and **22.10 m
+modeled Pointe-Claire level**, using their respective simulator level coordinates.
+The Bv7 F limit retains its separate tiered thresholds. Operational threshold
+and datum validation remain open.
+
+- **1995.** MPC and the rule curve use identical releases. Peak Ontario
+  end-of-period level is **74.828 m** and peak Pointe-Claire level is **21.78 m**.
+  Both stay below the study caps throughout the year.
+- **2017.** MPC changes **10 of 48 releases**. Ontario exceedance rises from
+  **6.99 to 7.15 m·periods**, with **19 periods above the cap** for both controllers.
+  Peak Ontario end-of-period level rises from **76.109 to 76.126 m**.
+  Pointe-Claire exceedance falls from **2.98 to 2.95 m·periods**, while periods
+  above its cap increase from **10 to 11**. Both peak at **22.94 m** downstream.
+- **2019.** MPC and the rule curve use identical releases. Peak Ontario
+  end-of-period level is **75.919 m**, with **14 periods above the cap** and
+  **3.88 m·periods** of exceedance. Pointe-Claire peaks at **22.67 m**, with
+  **9 periods above the cap** and **1.99 m·periods** of exceedance.
+
+Exceedance in m·periods sums the amount above the study cap at each model period.
+These trajectories resolve quarter-month conditions. Daily peaks require finer
+observations and a suitable model time step.
+
+### What the controller currently optimizes
+
+MPC searches four future releases, executes the first and replans. Its objective
+penalizes squared deviations from forecast rule-curve releases and from the
+rule curve's forecast terminal Ontario level. This keeps its preferred schedule
+close to the benchmark while searching for schedules that satisfy the study caps.
+
+Both controllers use past-only persistence forecasts of Ontario supply and SLON,
+plus a trailing annual supply estimate. They share the same estimated ice and
+roughness inputs and the same Bv7 release limits. Realized supplies determine
+storage and routed levels after the decision.
+
+The beam search retains **12 schedules**. It finds no schedule meeting both
+forecast caps on **0/48 decisions in 1995, 20/48 in 2017 and 17/48 in 2019**.
+Those decisions use the retained schedule with the smallest peak exceedance,
+then smallest total exceedance, then lowest tracking/terminal objective.
+A finite search leaves global feasibility unresolved. Forecast compliance can
+also differ from realized compliance. Pointe-Claire first-step forecast mean
+absolute error is approximately **0.095 m, 0.150 m and 0.106 m**, respectively.
+
+### Interpretation and saved evidence
+
+The current pilot supports investigating forecast errors, feasible action sets
+and the tracking objective before extending the comparison. The Ottawa follower
+currently has a storage-balance scaffold and an evidence specification. Coupled
+Stackelberg and Ontario PPO results remain pending.
+
+The archived GLRRM comparison exposes different annual forecasts and release
+regimes. The largest original release gap is **2,100 m³/s** in 1934, where GLRRM
+uses `M-`. Replacing the Python annual forecast with the archived values reduces
+the largest gap to **2,010 m³/s**. The declared benchmark is the pinned Python
+rule curve with Bv7 limits and explicit past-only inputs. The archival configuration
+still needs further verification.
+
+Saved local artifacts include:
+
+- `results/loslr/native_baseline_v4/` — native reference, adapter parity and indicators.
+- `results/loslr/causal_baseline_v2/` — causal full-record replay and forecast audit.
+- `results/loslr/mpc_v2/` — initial paired MPC pilot.
+- `results/migration/ontario_adapter_split_v1/` — latest replay through the shared
+  search and Ontario planning adapter, matching all physical outcomes of the pilot.
+
+The paired `comparison.csv` contains requests, executed releases, levels, forecast
+inputs, every predicted stage margin and fallback status. `summary.json` aggregates
+metrics and records the study settings and source hashes.
+
+## Lake Como
+
+In the improved Como simulator, history MPC has annual cost **517.51**, compared
+with **617.91** for mapped PPO trained for 400k decisions per seed. PPO costs
+approximately **19.4% more**, with slightly lower flood exposure and substantially
+more low-water exposure. These are development results over **1988–1997**, using
+training/fitting years **1946–1987**. Final **1998–2010** testing remains reserved.
+
+The two-system package migration preserved a deterministic PPO update exactly,
+loaded existing checkpoints and reproduced Ontario trajectories. The project
+suite passed **319 tests with one skip**. The later MPC adapter split passed
+**24 focused checks**.
+
+<details>
+<summary>Lake Como results, investigations and earlier DamEnv benchmarks</summary>
+
 **MPC remains the strongest controller in the improved simulator.** Our latest
 mapped PPO improves with extra training, but still costs about **19.4% more** and
 spends much longer below the preferred low-water level. We stop the duration sweep
@@ -250,5 +354,7 @@ adds **32.03 million m³ surplus**, lowers terminal storage **15.52 million m³*
 and leaves **16.51 million m³ more demand unmet** annually. The later actor makes
 larger positive corrections even on the same saved states. This identifies changed
 behavior, not the causal training failure. [Details](docs/RESIDUAL_RL.md#diagnosing-the-duration-regression).
+
+</details>
 
 </details>

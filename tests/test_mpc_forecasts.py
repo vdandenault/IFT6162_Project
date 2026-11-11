@@ -1,9 +1,9 @@
 """Causal forecast timing and training partition guards."""
 import unittest
 import numpy as np
-from lake_como.environment import settings
-from lake_como.mpc import DeterministicMPC, MPCConfig
-from lake_como.mpc_forecast_study import HistoricalInflowPolicy, fit_anomaly_weight
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig
+from reservoir_control.systems.lake_como.mpc_forecast_study import HistoricalInflowPolicy, fit_anomaly_weight
 
 
 class ForecastChecks(unittest.TestCase):

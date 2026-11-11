@@ -4,13 +4,13 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.simulation.history_forecast import HistoryForecastBank,HistoryMPC,METHODS
-from lake_como.simulation.forecast_study import select,crps
-from lake_como.simulation.protected_mpc import CausalForecastBank,ProtectedMPCConfig
-from lake_como.simulation.precision_validation import make_controller
-from lake_como.simulation.low_water import make_protected_outlet_env
-from lake_como.simulation.carryover_check import take_step
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.history_forecast import HistoryForecastBank,HistoryMPC,METHODS
+from reservoir_control.systems.lake_como.simulation.forecast_study import select,crps
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank,ProtectedMPCConfig
+from reservoir_control.systems.lake_como.simulation.precision_validation import make_controller
+from reservoir_control.systems.lake_como.simulation.low_water import make_protected_outlet_env
+from reservoir_control.systems.lake_como.simulation.carryover_check import take_step
 
 
 class HistoryForecastChecks(unittest.TestCase):

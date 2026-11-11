@@ -1,8 +1,9 @@
 import unittest
 import numpy as np
 import torch
-from lake_como.sac import SACAgent,SACConfig
-from lake_como.sac_iterative_td import td_target,policy_state
+from reservoir_control.systems.lake_como.sac import SACAgent
+from reservoir_control.controllers.sac.agent import SACConfig
+from reservoir_control.systems.lake_como.sac_iterative_td import td_target,policy_state
 
 class IterativeTDChecks(unittest.TestCase):
     def test_terminal_mask_and_shared_noise(self):

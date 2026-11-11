@@ -9,9 +9,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from lake_como.mpc_hindsight import digest
-from lake_como.paths import PROJECT_ROOT
-from lake_como.splits import split_years
+from reservoir_control.systems.lake_como.mpc_hindsight import digest
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT
+from reservoir_control.systems.lake_como.splits import split_years
 
 
 def main():

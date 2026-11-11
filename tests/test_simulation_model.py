@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 from gymnasium.utils.env_checker import check_env
-from lake_como.environment import settings,make_env
-from lake_como.simulation import make_operational_env,Operations,PhysicalWeights
-from lake_como.simulation.model import OperationalModel,WaterState
+from reservoir_control.systems.lake_como.environment import settings,make_env
+from reservoir_control.systems.lake_como.simulation import make_operational_env,Operations,PhysicalWeights
+from reservoir_control.systems.lake_como.simulation.model import OperationalModel,WaterState
 
 class OperationalPhysicsChecks(unittest.TestCase):
     def test_full_year_benchmark_parity(self):

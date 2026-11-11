@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 import pandas as pd
-from lake_como.simulation.weighted_validation import specs,pair_annual,scope_summary,METRICS
-from lake_como.simulation.precision_validation import annual_records
-from lake_como.simulation.carryover_check import FIELDS
+from reservoir_control.systems.lake_como.simulation.weighted_validation import specs,pair_annual,scope_summary,METRICS
+from reservoir_control.systems.lake_como.simulation.precision_validation import annual_records
+from reservoir_control.systems.lake_como.simulation.carryover_check import FIELDS
 
 
 def fixture():

@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
-from lake_como.simulation.protocol import TaskProtocol,TrainingEpisodes
-from lake_como.simulation.training import train_operational
-from lake_como.simulation import make_operational_env,PhysicalWeights
+from reservoir_control.systems.lake_como.simulation.protocol import TaskProtocol,TrainingEpisodes
+from reservoir_control.systems.lake_como.simulation.training import train_operational
+from reservoir_control.systems.lake_como.simulation import make_operational_env,PhysicalWeights
 
 class OperationalLearningChecks(unittest.TestCase):
     def test_record_reset_and_bootstrap_masks_are_separate(self):

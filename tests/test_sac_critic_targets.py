@@ -3,9 +3,9 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from lake_como.sac_critic_targets import (TargetConfig,check_fit_scope,target_batches,
+from reservoir_control.systems.lake_como.sac_critic_targets import (TargetConfig,check_fit_scope,target_batches,
                                          assert_identical_non_targets,ordered_returns)
-from lake_como.sac_critic_fit import training_partitions
+from reservoir_control.systems.lake_como.sac_critic_fit import training_partitions
 
 
 class TargetChecks(unittest.TestCase):

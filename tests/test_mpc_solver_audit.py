@@ -3,7 +3,7 @@ import unittest
 from types import SimpleNamespace
 import numpy as np
 import pandas as pd
-from lake_como.mpc_solver_audit import (
+from reservoir_control.systems.lake_como.mpc_solver_audit import (
     first_action_slice,
     inspect_result,
     select_slice_cases,

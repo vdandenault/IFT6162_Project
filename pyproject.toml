@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lake-como-control"
+name = "reservoir-control"
 version = "0.1.0"
-description = "Lake Como reservoir control experiments for IFT6162"
+description = "Lake Como and Ontario–Ottawa reservoir control experiments for IFT6162"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "gym4real==0.1.0",
@@ -25,18 +25,18 @@ reproduction = [
 ]
 
 [project.scripts]
-lake-como-audit = "lake_como.audit:main"
-lake-como-rollout = "lake_como.baselines:main"
-lake-como-mpc = "lake_como.run_mpc:main"
-lake-como-compare = "lake_como.compare:main"
-lake-como-reproduce = "lake_como.reproduce:main"
-lake-como-train-reference = "lake_como.train_reference:main"
-lake-como-seed-study = "lake_como.seed_study:main"
-lake-como-stabilize = "lake_como.stabilize:main"
-lake-como-precision-study = "lake_como.precision_study:main"
-lake-como-entropy-study = "lake_como.entropy_study:main"
-lake-como-inspect-curves = "lake_como.learning_curves:main"
-lake-como-duration-study = "lake_como.duration_study:main"
+lake-como-audit = "reservoir_control.systems.lake_como.audit:main"
+lake-como-rollout = "reservoir_control.systems.lake_como.baselines:main"
+lake-como-mpc = "reservoir_control.systems.lake_como.run_mpc:main"
+lake-como-compare = "reservoir_control.systems.lake_como.compare:main"
+lake-como-reproduce = "reservoir_control.systems.lake_como.reproduce:main"
+lake-como-train-reference = "reservoir_control.systems.lake_como.train_reference:main"
+lake-como-seed-study = "reservoir_control.systems.lake_como.seed_study:main"
+lake-como-stabilize = "reservoir_control.systems.lake_como.stabilize:main"
+lake-como-precision-study = "reservoir_control.systems.lake_como.precision_study:main"
+lake-como-entropy-study = "reservoir_control.systems.lake_como.entropy_study:main"
+lake-como-inspect-curves = "reservoir_control.systems.lake_como.learning_curves:main"
+lake-como-duration-study = "reservoir_control.systems.lake_como.duration_study:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

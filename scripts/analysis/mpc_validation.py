@@ -7,7 +7,7 @@ Generate inputs with lake-como-compare --controllers ead max mpc ppo
 import json
 
 import pandas as pd
-from lake_como.paths import PROJECT_ROOT
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT
 
 
 def main():

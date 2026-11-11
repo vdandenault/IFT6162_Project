@@ -4,9 +4,9 @@ import unittest
 from unittest.mock import patch
 import numpy as np
 from scipy.optimize import OptimizeResult
-from lake_como.environment import settings
-from lake_como.mpc import DeterministicMPC, MPCConfig
-from lake_como.mpc_horizon_study import make_policy
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig
+from reservoir_control.systems.lake_como.mpc_horizon_study import make_policy
 
 
 class HorizonChecks(unittest.TestCase):
@@ -39,7 +39,7 @@ class HorizonChecks(unittest.TestCase):
                     message="test",
                 )
 
-            with patch("lake_como.mpc_retention.minimize", side_effect=fake_minimize):
+            with patch("reservoir_control.systems.lake_como.mpc_retention.minimize", side_effect=fake_minimize):
                 policy(
                     np.array([0.35, 0, 1, 0], dtype=np.float32),
                     {"storage": 1e8, "future_inflow": 99999},

@@ -3,10 +3,11 @@ import unittest
 import numpy as np
 import torch
 
-from lake_como.environment import make_env
-from lake_como.inflow_observation import PastInflowObservation
-from lake_como.sac import SACAgent, SACConfig, checked_optimizer_step
-from lake_como.sac_study import SACController
+from reservoir_control.systems.lake_como.environment import make_env
+from reservoir_control.systems.lake_como.inflow_observation import PastInflowObservation
+from reservoir_control.systems.lake_como.sac import SACAgent
+from reservoir_control.controllers.sac.agent import SACConfig, checked_optimizer_step
+from reservoir_control.systems.lake_como.sac_study import SACController
 
 
 class SACStudyChecks(unittest.TestCase):

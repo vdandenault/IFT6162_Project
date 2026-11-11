@@ -2,11 +2,11 @@ import math
 import numpy as np
 import pytest
 import torch
-from lake_como.simulation.hydraulic_ppo import HydraulicTransform,HydraulicPPOAgent
-from lake_como.simulation.ppo_agent import PPOAgent
-from lake_como.simulation.ppo_controlled import same_state
-from lake_como.simulation.ppo_study import train as original_train
-from lake_como.simulation.hydraulic_ppo_study import train
+from reservoir_control.systems.lake_como.simulation.hydraulic_ppo import HydraulicTransform,HydraulicPPOAgent
+from reservoir_control.systems.lake_como.simulation.ppo_agent import PPOAgent
+from reservoir_control.systems.lake_como.simulation.ppo_controlled import same_state
+from reservoir_control.systems.lake_como.simulation.ppo_study import train as original_train
+from reservoir_control.systems.lake_como.simulation.hydraulic_ppo_study import train
 
 
 def observation(level,day=1):

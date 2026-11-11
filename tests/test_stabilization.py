@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 import unittest
 import pandas as pd
-from lake_como.stabilize import agent_config, select_candidate, VARIANTS, COMMON
+from reservoir_control.systems.lake_como.stabilize import agent_config, select_candidate, VARIANTS, COMMON
 
 
 class StabilizationChecks(unittest.TestCase):

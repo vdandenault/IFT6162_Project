@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 import torch
-from lake_como.simulation.ppo_agent import PPOAgent,PPOConfig,gae,log_probability
-from lake_como.simulation.ppo_protocol import ObservationHistory,MatchedTrainingEpisodes
+from reservoir_control.systems.lake_como.simulation.ppo_agent import PPOAgent,PPOConfig,gae,log_probability
+from reservoir_control.systems.lake_como.simulation.ppo_protocol import ObservationHistory,MatchedTrainingEpisodes
 
 
 def test_gae_reset_and_bootstrap():
@@ -50,7 +50,7 @@ def test_matched_task_no_burnin():
 
 def test_failed_required_seed_suppresses_study_mean(tmp_path):
     import json
-    from lake_como.simulation.ppo_study import aggregate,SEEDS
+    from reservoir_control.systems.lake_como.simulation.ppo_study import aggregate,SEEDS
     for seed in SEEDS:
         folder=tmp_path/f'seed{seed}';folder.mkdir()
         (folder/'training.json').write_text(json.dumps({'complete':False}))
@@ -59,3 +59,18 @@ def test_failed_required_seed_suppresses_study_mean(tmp_path):
     assert not result['all_required_complete']
     assert result['complete_training_seeds']==0
     assert all(value is None for metrics in result['means'].values() for value in metrics.values())
+
+
+def test_shared_ppo_uses_explicit_observation_scales(tmp_path):
+    from reservoir_control.controllers.ppo.agent import PPOAgent as SharedPPOAgent
+    agent = SharedPPOAgent(PPOConfig(observation_dim=3), action_low=[-1], action_high=[1],
+                           observation_scales=[1, 10, 100])
+    observation = np.array([1, 2, 3], np.float32)
+    action = agent.act(observation, deterministic=True)[0]
+    path = tmp_path/'shared.pt'
+    agent.save(path)
+    restored = SharedPPOAgent.load(path)
+    np.testing.assert_array_equal(restored.act(observation, deterministic=True)[0], action)
+    with pytest.raises(ValueError, match='scale'):
+        SharedPPOAgent(PPOConfig(observation_dim=3), action_low=[-1], action_high=[1],
+                       observation_scales=[1, 0, 1])

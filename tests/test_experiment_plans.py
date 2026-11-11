@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from lake_como.experiment_plans import record_plan, PLAN_MANIFEST
-from lake_como.paths import PROJECT_ROOT
+from reservoir_control.systems.lake_como.experiment_plans import record_plan, PLAN_MANIFEST
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT
 
 
 class PlanChecks(unittest.TestCase):

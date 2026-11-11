@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from lake_como.sac_action_diverse import diverse_batches,gap_metrics,old
-from lake_como.sac_critic_fit import training_partitions
+from reservoir_control.systems.lake_como.sac_action_diverse import diverse_batches,gap_metrics,old
+from reservoir_control.systems.lake_como.sac_critic_fit import training_partitions
 
 class ActionDiverseChecks(unittest.TestCase):
     def test_same_states_and_fitting_scope(self):

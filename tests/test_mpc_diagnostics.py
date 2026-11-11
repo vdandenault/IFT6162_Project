@@ -4,8 +4,8 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from lake_como.mpc import DeterministicMPC, MPCConfig
-from lake_como.mpc_diagnostics import (
+from reservoir_control.systems.lake_como.mpc import DeterministicMPC, MPCConfig
+from reservoir_control.systems.lake_como.mpc_diagnostics import (
     boundary_audit,
     exhaustive_grid,
     level_penalties,

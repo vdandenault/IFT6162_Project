@@ -5,7 +5,7 @@ Add --inflow-source seasonal for training-only non-oracle inflows. Both arms
 use the identical exhaustive grid. This does not
 change the deployed seven-day MPC or access chronological test years.
 """
-from lake_como.mpc_objective_closed_loop import main
+from reservoir_control.systems.lake_como.mpc_objective_closed_loop import main
 
 
 if __name__ == "__main__":

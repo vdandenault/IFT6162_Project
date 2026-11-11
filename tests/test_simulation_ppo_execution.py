@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from lake_como.simulation.ppo_execution import specs,noise_seed,pair_annual,METRICS
-from lake_como.simulation.ppo_curve_audit import fixed_effect_slope,episode_frame,duration_signal
+from reservoir_control.systems.lake_como.simulation.ppo_execution import specs,noise_seed,pair_annual,METRICS
+from reservoir_control.systems.lake_como.simulation.ppo_curve_audit import fixed_effect_slope,episode_frame,duration_signal
 
 
 def test_case_counts_and_randomness_are_declared():

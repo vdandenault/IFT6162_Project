@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 import unittest
 import pandas as pd
-from lake_como.duration_study import trees_equal, compare_prefix, decision_from_means, decide_million
+from reservoir_control.systems.lake_como.duration_study import trees_equal, compare_prefix, decision_from_means, decide_million
 
 
 class DurationChecks(unittest.TestCase):

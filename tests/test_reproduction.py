@@ -3,9 +3,9 @@ import importlib.util
 import unittest
 import numpy as np
 
-from lake_como.baselines import rollout
-from lake_como.environment import make_env, settings
-from lake_como.reproduce import evaluate, CheckpointPolicy, CHECKPOINT
+from reservoir_control.systems.lake_como.baselines import rollout
+from reservoir_control.systems.lake_como.environment import make_env, settings
+from reservoir_control.systems.lake_como.reproduce import evaluate, CheckpointPolicy, CHECKPOINT
 
 
 class ReproductionChecks(unittest.TestCase):

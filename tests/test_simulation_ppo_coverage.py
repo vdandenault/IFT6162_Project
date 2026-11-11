@@ -2,12 +2,12 @@ from copy import deepcopy
 import numpy as np
 import pytest
 import torch
-from lake_como.simulation.ppo_coverage import allocation,first_replicates,eligible,refit,CHECK_PAIRS,digest_actor
-from lake_como.simulation.ppo_agent import PPOAgent
-from lake_como.simulation.hydraulic_ppo import HydraulicPPOAgent
-from lake_como.simulation.ppo_seed_gain import policy_branch
-from lake_como.simulation.ppo_diagnosis import make_env
-from lake_como.simulation.ppo_protocol import ObservationHistory
+from reservoir_control.systems.lake_como.simulation.ppo_coverage import allocation,first_replicates,eligible,refit,CHECK_PAIRS,digest_actor
+from reservoir_control.systems.lake_como.simulation.ppo_agent import PPOAgent
+from reservoir_control.systems.lake_como.simulation.hydraulic_ppo import HydraulicPPOAgent
+from reservoir_control.systems.lake_como.simulation.ppo_seed_gain import policy_branch
+from reservoir_control.systems.lake_como.simulation.ppo_diagnosis import make_env
+from reservoir_control.systems.lake_como.simulation.ppo_protocol import ObservationHistory
 
 
 def test_year_diversity_trades_repeats_at_identical_sample_budget():

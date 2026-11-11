@@ -8,13 +8,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from lake_como.environment import settings
-from lake_como.paths import PROJECT_ROOT, DAM_DATA, DAM_CONFIG
-from lake_como.simulation.outlet import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.paths import PROJECT_ROOT, DAM_DATA, DAM_CONFIG
+from reservoir_control.systems.lake_como.simulation.outlet import (
     OutletSpec, OutletLake, OutletDomainError, make_outlet_env, OutletTrainingEpisodes,
 )
-from lake_como.simulation.protocol import TaskProtocol
-from lake_como.simulation.training import train_operational
+from reservoir_control.systems.lake_como.simulation.protocol import TaskProtocol
+from reservoir_control.systems.lake_como.simulation.training import train_operational
 
 
 def save(path, value):
@@ -32,9 +32,9 @@ def main():
     spec = OutletSpec()
     variants = {name: OutletLake(params['lake_params'], replace(spec, capacity=name))
                 for name in ['legacy', 'published_full_open']}
-    files = list((PROJECT_ROOT/'src/lake_como/simulation').glob('*.py'))
-    files += [Path(__file__), PROJECT_ROOT/'src/lake_como/sac.py',
-              PROJECT_ROOT/'src/lake_como/environment.py',
+    files = list((PROJECT_ROOT/'src/reservoir_control/systems/lake_como/simulation').glob('*.py'))
+    files += [Path(__file__), PROJECT_ROOT/'src/reservoir_control/controllers/sac/agent.py',
+              PROJECT_ROOT/'src/reservoir_control/systems/lake_como/environment.py',
               PROJECT_ROOT/'configs/splits.json', DAM_CONFIG/'lake.py', DAM_CONFIG/'lake.yaml']
     files += [DAM_DATA/k/f'water_{k}_{part}.csv'
               for k in ['level', 'inflow', 'demand'] for part in ['train','test']]

@@ -3,12 +3,12 @@ import unittest
 
 import numpy as np
 
-from lake_como.environment import settings
-from lake_como.simulation.carryover_check import (
+from reservoir_control.systems.lake_como.environment import settings
+from reservoir_control.systems.lake_como.simulation.carryover_check import (
     BoundaryHistory,restore_branch,restore_memory,make_controller,decompose,
 )
-from lake_como.simulation.protected_mpc import CausalForecastBank
-from lake_como.simulation.low_water import ProtectedOutletModel
+from reservoir_control.systems.lake_como.simulation.protected_mpc import CausalForecastBank
+from reservoir_control.systems.lake_como.simulation.low_water import ProtectedOutletModel
 
 
 class CarryoverExperimentChecks(unittest.TestCase):

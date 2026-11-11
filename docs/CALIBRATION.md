@@ -177,7 +177,7 @@ Open Data. No data-request forms or messages were submitted.
 
 ## Outlet ablation: implemented findings
 
-The opt-in implementation is `lake_como.simulation.outlet`. It wraps the existing
+The opt-in implementation is `reservoir_control.systems.lake_como.simulation.outlet`. It wraps the existing
 operational model without changing the fork, benchmark or previously hashed
 modules. `OutletSpec(capacity='legacy')` reproduces a full annual benchmark rollout
 exactly. The default candidate changes only maximum outlet capacity, keeping the
@@ -224,7 +224,7 @@ and its allowable use range are defined. Do not widen the range just to complete
 training or fit the capacity curve to every regulated outflow observation.
 
 ```python
-from lake_como.simulation.outlet import make_outlet_env, OutletSpec
+from reservoir_control.systems.lake_como.simulation.outlet import make_outlet_env, OutletSpec
 
 env = make_outlet_env(years=(1946,), outlet=OutletSpec())
 ```
@@ -242,7 +242,7 @@ assets and run artifacts remain ignored.
 
 ## Explicit low-water operating protection
 
-`lake_como.simulation.low_water` adds an optional operating layer to the published
+`reservoir_control.systems.lake_como.simulation.low_water` adds an optional operating layer to the published
 capacity candidate. It leaves that capacity curve unchanged. The rule recomputes
 an operating release ceiling each hour:
 
@@ -318,7 +318,7 @@ rule/domain limit. Do not tune these choices to eliminate observed failures and
 then describe that same sample as independent validation.
 
 ```python
-from lake_como.simulation.low_water import make_protected_outlet_env, LowWaterRule
+from reservoir_control.systems.lake_como.simulation.low_water import make_protected_outlet_env, LowWaterRule
 
 env = make_protected_outlet_env(years=(1946,), rule=LowWaterRule())
 ```
@@ -463,7 +463,7 @@ independent lake inflow or authenticate gate opening by themselves.
 ## Reproduce and inspect
 
 ```bash
-uv run python -m lake_como.simulation.calibration --fetch \
+uv run python -m reservoir_control.systems.lake_como.simulation.calibration --fetch \
   --output results/simulator/new_calibration_evidence
 ```
 

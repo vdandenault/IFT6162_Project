@@ -5,10 +5,11 @@ import unittest
 import numpy as np
 import torch
 
-from lake_como.sac import SACAgent,SACConfig
-from lake_como.sac_critic_reference import (ReferenceConfig,gentle_batches,reference_errors,
+from reservoir_control.systems.lake_como.sac import SACAgent
+from reservoir_control.controllers.sac.agent import SACConfig
+from reservoir_control.systems.lake_como.sac_critic_reference import (ReferenceConfig,gentle_batches,reference_errors,
                                            verify_critic_reproduction)
-from lake_como.sac_critic_sampling import matched_minibatches,SamplingConfig
+from reservoir_control.systems.lake_como.sac_critic_sampling import matched_minibatches,SamplingConfig
 
 
 class ReferenceChecks(unittest.TestCase):

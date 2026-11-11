@@ -4,8 +4,8 @@ import calendar
 import unittest
 import numpy as np
 
-from lake_como.environment import make_env, settings
-from lake_como.paths import UPSTREAM_ROOT
+from reservoir_control.systems.lake_como.environment import make_env, settings
+from reservoir_control.systems.lake_como.paths import UPSTREAM_ROOT
 
 
 class ReservoirChecks(unittest.TestCase):
