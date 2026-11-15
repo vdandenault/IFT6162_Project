@@ -1,3 +1,29 @@
+## Standalone Ottawa follower with hard constraints
+
+The separately selectable `systems/ottawa/hard_follower.py` implements the Step 2
+QP for a **supplied executable Ontario schedule**. It leaves the legacy soft
+follower and coupled Ontario experiments unchanged. The pure entry point is
+`solve_hard_follower(HardFollowerProblem(...))`; successful results include the
+first action, full plan, exact normalized objective and SI/KKT residuals.
+Invalid inputs raise `InvalidFollowerInput`; infeasible or failed solves return
+no action. Storage variables are eliminated using the exact water balance.
+
+Synthetic assumptions are frozen in
+`configs/studies/ottawa/hard_follower_v1.json`. No parameters are calibrated to
+Baskatong or the entire Ottawa system. Demonstrations use 657,000-second periods,
+a four-period horizon, explicit transit queues and first-action-only execution.
+
+```sh
+uv run --group reproduction python -m reservoir_control.systems.ottawa.hard_follower_study --forecast perfect --output results/ottawa/hard_follower_perfect_rerun
+uv run --group reproduction python -m reservoir_control.systems.ottawa.hard_follower_study --forecast noisy --output results/ottawa/hard_follower_noisy_rerun
+```
+
+Use fresh output directories. Each contains `report.md`, `summary.csv`,
+`paired_comparison.csv`, per-rollout traces and PNGs, full horizon `plans.json`,
+configuration and source hashes. Noisy forecasts use past-only persistence plus
+seeded perturbations; realized forcing is separate. Predicted constraints do not
+guarantee realized safety or recursive feasibility. Terminal transit is retained.
+
 # Baskatong historical water-balance pilot
 
 ## Actual one-year observation pilot: 1970
@@ -256,3 +282,16 @@ a storage–elevation curve (or an explicitly justified usable-volume scenario).
 Only then can this method be evaluated historically and extended reservoir by
 reservoir without double counting transfers. Do not replace the existing
 synthetic Ottawa parameters with these inventory figures.
+
+## Diagnose the delayed perfect-forecast failure
+
+```sh
+uv run --group reproduction python -m reservoir_control.systems.ottawa.delay_diagnostic --output results/ottawa/delay_diagnostic_rerun
+```
+
+The standalone diagnosis uses an independent explicit-storage feasibility LP,
+checks full-remaining feasibility after each original action, and repeats H=4,
+5, 6, 8 and 12 without changing the controller or scenario. Outputs include
+`report.md`, `diagnostic.png`, feasible witness/continuation trajectories,
+constraint certificates, endpoint queues and implementation consistency checks.
+The saved run is `results/ottawa/delay_diagnostic_verified_v2/`.

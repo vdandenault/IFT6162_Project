@@ -8,6 +8,21 @@ implementations and simulator investigations.
 
 ## Current status
 
+- [x] Diagnose the H=4 delayed follower failure using independent full-experiment
+  and prefix feasibility LPs. The original state is feasible; loss follows the
+  second action. H=5/6/8/12 complete with original constraints and weights.
+  Record the short-window arrival-boundary effect and terminal transit before
+  considering controller changes (`delay_diagnostic_verified_v2`).
+
+- [x] Step 2: implement a standalone, hard-constrained Ottawa follower for an
+  executable Ontario schedule; test pure QP solving, first-action-only execution,
+  conservation, infeasibility, routing queues and noisy forecast departures.
+- [x] Run six synthetic cases with perfect forecasts and three noisy seeds,
+  preserving the historical datasets and earlier Ontario studies.
+- [ ] Investigate recursive feasibility and uncertainty handling before coupling
+  this new follower to any leader. The tight delayed case fails even with perfect
+  forecasts; these demos do not establish operational flood protection.
+
 - [x] Separate reusable MPC search from the Ontario planning adapter. Shared PPO,
   SAC and FQI code also lives under `controllers/`.
 - [x] Reproduce the pinned native Python Ontario simulation over 1900–2020 and

@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "name": "Standalone hard-constrained Ottawa follower \u2014 synthetic aggregate v1",
+  "physical_status": "All capacities, targets, release limits and routing delays are synthetic assumptions. This is not Baskatong or a calibrated entire-Ottawa model.",
+  "clock": {
+    "periods_per_365_day_year": 48,
+    "duration_seconds": 657000.0,
+    "baskatong_daily_scenario_unchanged": true
+  },
+  "horizon": 4,
+  "initial_storage_m3": 3000000000.0,
+  "previous_executed_release_m3_s": 900.0,
+  "storage_minimum_m3": 1000000000.0,
+  "storage_maximum_m3": 5000000000.0,
+  "release_minimum_m3_s": 100.0,
+  "release_maximum_m3_s": 2500.0,
+  "storage_target_m3": 3000000000.0,
+  "release_target_m3_s": 900.0,
+  "storage_scale_m3": 1000000000.0,
+  "flow_scale_m3_s": 1000.0,
+  "weights": {
+    "storage": 1.0,
+    "release": 1.0,
+    "change": 0.2,
+    "terminal": 2.0
+  },
+  "reference_release_m3_s": 900.0,
+  "known_ontario_executable_schedule_m3_s": [
+    7000,
+    7000,
+    7000,
+    7000,
+    7000,
+    7000,
+    7000,
+    7000,
+    7000,
+    7000,
+    7000,
+    7000
+  ],
+  "known_other_downstream_forecast_m3_s": [
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000
+  ],
+  "information": "Ontario schedule is supplied as executable, without a request projection or leader optimization. b and C are assumed known; inflow information mode is explicitly selected below. No Ontario level model is constructed.",
+  "forecast_noise": {
+    "seeds": [
+      11,
+      22,
+      33
+    ],
+    "standard_deviation_m3_s": 700.0,
+    "initial_observed_inflow_estimate_m3_s": 900.0,
+    "method": "Previous completed realized inflow persistence plus seeded Gaussian forecast perturbations; no future realized inputs. Negative net-inflow forecasts are allowed and reported, not clipped."
+  },
+  "acceptance": {
+    "storage_m3": 0.01,
+    "flow_m3_s": 1e-05,
+    "normalized_kkt": 0.0002
+  },
+  "scenarios": [
+    {
+      "id": "deterministic_feasible",
+      "realized_net_inflow_m3_s": [
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900
+      ],
+      "downstream_capacity_m3_s": [
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000
+      ],
+      "routing_delay_periods": 0,
+      "initial_transit_volumes_m3": []
+    },
+    {
+      "id": "spring_pulse",
+      "realized_net_inflow_m3_s": [
+        900,
+        900,
+        1100,
+        1600,
+        2000,
+        1800,
+        1400,
+        1000,
+        900,
+        900,
+        900,
+        900
+      ],
+      "downstream_capacity_m3_s": [
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000
+      ],
+      "routing_delay_periods": 0,
+      "initial_transit_volumes_m3": []
+    },
+    {
+      "id": "tight_downstream",
+      "realized_net_inflow_m3_s": [
+        900,
+        900,
+        1100,
+        1600,
+        2000,
+        1800,
+        1400,
+        1000,
+        900,
+        900,
+        900,
+        900
+      ],
+      "downstream_capacity_m3_s": [
+        12000,
+        12000,
+        12000,
+        9600,
+        9600,
+        9600,
+        9600,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000
+      ],
+      "routing_delay_periods": 0,
+      "initial_transit_volumes_m3": []
+    },
+    {
+      "id": "deliberately_infeasible",
+      "realized_net_inflow_m3_s": [
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900
+      ],
+      "downstream_capacity_m3_s": [
+        9050,
+        9050,
+        9050,
+        9050,
+        9050,
+        9050,
+        9050,
+        9050,
+        9050,
+        9050,
+        9050,
+        9050
+      ],
+      "routing_delay_periods": 0,
+      "initial_transit_volumes_m3": []
+    },
+    {
+      "id": "one_period_delay",
+      "realized_net_inflow_m3_s": [
+        900,
+        900,
+        1100,
+        1600,
+        2000,
+        1800,
+        1400,
+        1000,
+        900,
+        900,
+        900,
+        900
+      ],
+      "downstream_capacity_m3_s": [
+        12000,
+        12000,
+        12000,
+        9600,
+        9600,
+        9600,
+        9600,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000
+      ],
+      "routing_delay_periods": 1,
+      "initial_transit_volumes_m3": [
+        591300000.0
+      ]
+    },
+    {
+      "id": "one_period_delay_feasible",
+      "realized_net_inflow_m3_s": [
+        900,
+        900,
+        1100,
+        1600,
+        2000,
+        1800,
+        1400,
+        1000,
+        900,
+        900,
+        900,
+        900
+      ],
+      "downstream_capacity_m3_s": [
+        12000,
+        12000,
+        12000,
+        10200,
+        10200,
+        10200,
+        10200,
+        12000,
+        12000,
+        12000,
+        12000,
+        12000
+      ],
+      "routing_delay_periods": 1,
+      "initial_transit_volumes_m3": [
+        591300000.0
+      ]
+    }
+  ],
+  "routing_assumption": "Zero delay or one nominal-period plug-flow delay, unit volume gain. Initial delayed transit is one prior 900 m3/s release over 657000 s. Queue volumes persist at every planning/rollout boundary. These are not measured Ottawa routing times.",
+  "comparison": "Fixed reference and MPC share initial storage, previous release, transit, realized inflows, u, b and C. Stop on physical storage departure; report reference downstream violations. Whole-task objective costs are comparable only for complete trajectories. Common-prefix stage costs exclude a premature terminal reward.",
+  "scope": "No Ontario leader/bilevel solve, historical inflow fitting, flood slack, emergency policy, routing to a specific Lake St Louis gauge or formal stability claim."
+}

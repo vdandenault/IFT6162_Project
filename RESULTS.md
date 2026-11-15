@@ -2,6 +2,44 @@
 
 ## Ontario–St. Lawrence
 
+### Standalone Ottawa hard-follower study (synthetic)
+
+**Delayed-case diagnosis:** the original 12-period experiment is feasible.
+H=4 loses completion feasibility after its second action and detects failure
+before period 4. At that point the downstream caps require 2,365.200 million m³
+of retention, but only 2,224.135 million m³ of room remains. An independent LP
+confirms the 141.065-million-m³ incompatibility. H=5, 6, 8 and full remaining
+H=12 all complete with unchanged constraints and weights. The short window also
+omits the downstream arrival of its last planned release; that water stays
+queued, rather than disappearing. This is consistent with the implemented
+finite-horizon formulation, but does not assure a feasible continuation.
+Full diagnosis and plots: `results/ottawa/delay_diagnostic_verified_v2/`.
+No controller defaults were changed.
+
+
+A new, separate follower solves a normalized convex QP with hard storage,
+outlet and downstream-capacity constraints for a supplied executable Ontario
+schedule. No flood slack, clipping, leader solve or calibrated Ottawa physics.
+
+- **Perfect forecasts:** 4/6 MPC rollouts complete: constant inflow, spring pulse,
+  tight zero-delay capacity, and a feasible one-period delay. The impossible
+  capacity case refuses an action. The tighter delayed case stops after three
+  actions: four-period feasibility is insufficient for recursive feasibility.
+- **Past-only noisy forecasts (seeds 11/22/33):** 8/18 complete; 10 stop as
+  infeasible (including the deliberately impossible cases). No emergency action
+  is substituted. These outcomes do not establish robustness under uncertainty.
+- Executed MPC downstream excess is below **3.3e-10 m³/s**; cumulative
+  reservoir-plus-transit balance error is below **2e-6 m³**. Water remaining in
+  transit is preserved. The fixed-release reference exceeds storage bounds in
+  the pulse cases and stops without clipping; its violations remain visible.
+
+Full costs are comparable only for paired complete rollouts; common-prefix stage
+costs are reported separately. Reports, PNGs, plans, residuals and timing:
+`results/ottawa/hard_follower_v1_perfect_verified/` and
+`results/ottawa/hard_follower_v1_noisy_verified/`. Commands are in the
+[Ottawa study guide](configs/studies/ottawa/README.md). Earlier results below are
+unchanged and use their original formulations.
+
 **The coupled Ontario–Ottawa pilot now runs all four approaches:** the rule
 curve, external-flow MPC, nested bilevel MPC and PPO. The earlier uncoupled
 fixed-cap benchmark is retained below with its original score definition.

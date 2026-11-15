@@ -1,5 +1,9 @@
 # Reservoir control: Lake Como and Lake Ontario–Ottawa
 
+Standalone Ottawa hard-follower demos and reproduction commands are documented in
+[the Ottawa study guide](configs/studies/ottawa/README.md). This synthetic Step 2
+controller is separate from the earlier soft follower and Ontario experiments.
+
 IFT6162 project: compare Plan 2014, MPC and Stackelberg MPC for Lake Ontario–
 St. Lawrence releases with an aggregated Ottawa reservoir operator. PPO is an
 additional comparison. Lake Como remains a supported research and regression case.
