@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "reservoir": "Baskatong",
+  "assessment_date": "2026-11-15",
+  "owner": "Hydro-Québec",
+  "target": {
+    "start_date": "2016-01-01",
+    "end_date_exclusive": "2020-01-01",
+    "expected_daily_intervals": 1461,
+    "expected_boundary_levels": 1462
+  },
+  "capacity_inventory": {
+    "value_m3": 3049000000,
+    "source_id": "orrpb_inventory",
+    "definition": "Listed reservoir storage capacity; table carries an asterisk but no corresponding definition was found in the consulted rendered page. Elevation endpoints and active/total distinction unresolved.",
+    "usable_over_operating_range_confirmed": false
+  },
+  "operating_bounds": {
+    "minimum_m": 207.6,
+    "maximum_m": 223.14,
+    "source_id": "orrpb_baskatong",
+    "season": "All year, operation category; not a full dated seasonal operating rule set"
+  },
+  "vertical_datum": {
+    "description": "ORRPB describes geodetic elevation above mean sea level; datum realization and gauge offset unverified",
+    "verified_identifier": null
+  },
+  "timing": {
+    "orrpb_reservoir_table": "Level at 24:00 and daily mean flow",
+    "location_page": "General description permits either midnight or daily-average level",
+    "historical_level_statistic_confirmed": false,
+    "daily_timezone": null,
+    "daylight_saving_convention": null
+  },
+  "measurement_boundary": {
+    "description": "Water stored in Baskatong; all outward discharge paths must be counted, not just turbine flow at Mercier",
+    "orrpb_flow_definition": "Daily-average flow attributed to Hydro-Québec; total-outlet versus turbine-only definition not established",
+    "upstream_regulated_inflow": "Cabonga south outlet via Rivière Gens de Terre reaches Baskatong; Cabonga also has a west outlet toward Dozois outside this boundary",
+    "structures_to_reconcile": [
+      "Mercier X0005473: dam, spillways and power-station discharge",
+      "Castor X0005474: additional Baskatong structure; active outlet contribution unresolved",
+      "Lacroix-1/2 and Bitobi/Philémon dikes in the official development roster; hydraulic connectivity/outlet status requires owner confirmation"
+    ],
+    "outlet_completeness_confirmed": false
+  },
+  "storage_elevation_curve": {
+    "status": "No usable sourced curve found in the consulted sources",
+    "usable_volume_m3": null,
+    "default_mode": "normalized_fraction_only",
+    "inventory_capacity_must_not_be_used_as_K": true
+  },
+  "sources": [
+    {
+      "id": "orrpb_inventory",
+      "url": "https://www.ottawariver.ca/about-us/what-we-do/the-ottawa-river-basin-and-its-reservoirs/",
+      "finding": "Baskatong listed at 3049 million m3; capacity range definition unresolved",
+      "target_coverage": "Metadata only",
+      "target_observation_count_verified": null,
+      "terms": "No time-series observations copied"
+    },
+    {
+      "id": "orrpb_baskatong",
+      "url": "https://www.ottawariver.ca/location/baskatong/",
+      "finding": "207.60–223.14 m operating band; interactive date controls do not prove observations exist for selected dates",
+      "target_coverage": "2016–2019 observed coverage unverified; restricted service not exported",
+      "target_observation_count_verified": null,
+      "terms": "Web-service observations may not be reproduced or redistributed; directs users to data owner"
+    },
+    {
+      "id": "orrpb_conditions",
+      "url": "https://www.ottawariver.ca/conditions/?display=reservoir",
+      "finding": "Reservoir table identifies HQ, midnight level and mean flow; does not define total outlet components or historical clock",
+      "target_coverage": "Current table only; no historical observations obtained",
+      "target_observation_count_verified": null,
+      "terms": "Restricted web-service observations not downloaded or packaged"
+    },
+    {
+      "id": "hq_hydrometric_open",
+      "url": "https://donnees.hydroquebec.com/explore/dataset/donnees-hydrometriques/information/?flg=fr-fr",
+      "finding": "Owner portal describes turbine flow, spill flow and inferred inflow as distinct quantities",
+      "target_coverage": "Documented rolling ten days, initially published 2021-12-06; does not supply target years through this product",
+      "target_observation_count_verified": null,
+      "terms": "CC BY-NC 4.0 for this open product; no downloaded observations"
+    },
+    {
+      "id": "hq_levels_open",
+      "url": "https://www.hydroquebec.com/documents-donnees/donnees-ouvertes/donnees-hydrometeorologiques/",
+      "finding": "Indexed owner documentation: instrument levels, aggregation metadata and UTC timestamps",
+      "target_coverage": "Documented rolling ten days; direct page access returned HTTP 403 during assessment",
+      "target_observation_count_verified": null,
+      "terms": "Owner indexed documentation identifies CC BY-NC 4.0; no historical records obtained"
+    },
+    {
+      "id": "hq_tool",
+      "url": "https://www.hydroquebec.com/production/debits-niveaux-eau.html",
+      "finding": "Owner FAQ confirms ten displayed days and separate instruments/backup sensors",
+      "target_coverage": "Ten-day public tool does not establish 2016–2019 coverage",
+      "target_observation_count_verified": null,
+      "terms": "Links to owner open-data products; not treated as a historical archive"
+    },
+    {
+      "id": "wsc_baskatong",
+      "url": "https://wateroffice.ec.gc.ca/report/data_availability_e.html?parameter_type=Flow+and+Level&station=02LG007&type=historical",
+      "finding": "Actual availability table lists flow 1963–1971 and level 1963–1994, with some partial/missing months",
+      "target_coverage": "No 2016–2019 years listed; target coverage zero for this published archive",
+      "target_observation_count_verified": 0,
+      "terms": "Metadata inspected only; no unrelated historical observations downloaded"
+    },
+    {
+      "id": "wsc_mercier",
+      "url": "https://wateroffice.ec.gc.ca/report/data_availability_e.html?parameter_type=Flow&station=02LG006&type=historical",
+      "finding": "Official downstream Mercier flow table lists 1926–1993 with missing/partial months near the endpoint",
+      "target_coverage": "No target years listed; 2016–2019 coverage zero in this published archive",
+      "target_observation_count_verified": 0,
+      "terms": "Metadata only"
+    },
+    {
+      "id": "hq_disclosure_c6882",
+      "url": "https://www.hydroquebec.com/data/loi-sur-acces/pdf/c-6882-document.pdf",
+      "finding": "Indexed disclosure preview labels Mercier total outlet flow and gauge levels as means, with initial January 2018 rows; it does not establish instantaneous boundary levels",
+      "target_coverage": "Full document access returned HTTP 403; complete dates, gaps, clock, licence and all-outlet scope unverified",
+      "target_observation_count_verified": null,
+      "terms": "Public disclosure is not assumed to inherit the open-data CC licence; not copied or parsed"
+    },
+    {
+      "id": "cehq_historical",
+      "url": "https://www.cehq.gouv.qc.ca/hydrometrie/historique_donnees/aide.htm",
+      "finding": "Supported government station-search route identified; no additional Baskatong 2016–2019 paired station product established",
+      "target_coverage": "Unverified, not claimed absent",
+      "target_observation_count_verified": null,
+      "terms": "No records downloaded"
+    },
+    {
+      "id": "quebec_mercier",
+      "url": "https://www.cehq.gouv.qc.ca/barrages/detail.asp?no_mef_lieu=X0005473",
+      "finding": "Mercier inventory lists 3664 million m3 retention capacity by an administrative height/area definition, different from ORRPB; not a storage–elevation curve",
+      "target_coverage": "Structure metadata only",
+      "target_observation_count_verified": null,
+      "terms": "Factual metadata summarized; no complete source page packaged"
+    },
+    {
+      "id": "quebec_castor",
+      "url": "https://www.cehq.gouv.qc.ca/barrages/detail.asp?no_mef_lieu=X0005474",
+      "finding": "Castor is separately registered on Baskatong; outlet completeness must be reconciled",
+      "target_coverage": "Structure metadata only",
+      "target_observation_count_verified": null,
+      "terms": "Factual metadata only"
+    },
+    {
+      "id": "hq_boundary",
+      "url": "https://www.hydroquebec.com/generation/runoff/outaouais.html",
+      "finding": "Owner confirms Cabonga south route into Baskatong and west route to Dozois, and Mercier at Baskatong outlet",
+      "target_coverage": "Boundary description only",
+      "target_observation_count_verified": null,
+      "terms": "Factual boundary summary only"
+    }
+  ],
+  "status": "Historical reconstruction not completed: no suitably licensed, aligned 2016–2019 observation pair and no sourced storage curve obtained",
+  "next_specific_requirement": "Owner-provided boundary-instantaneous reservoir levels at 2016-01-01 00:00 through 2020-01-01 00:00 and matching daily mean total outlet discharge, with explicit timezone/day-label convention, vertical datum, quality flags, Mercier/Castor/spill completeness and permitted local processing. A storage–elevation curve or independently justified usable K is additionally required for volumetric inflow."
+}

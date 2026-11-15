@@ -94,6 +94,61 @@ require the source revision and environment recorded by their manifests; the
 current source tree is checked strictly against those hashes. Generated results
 and checkpoints remain in their existing directories.
 
+## Baskatong: approximate release-response scenarios
+
+```bash
+uv run python -m reservoir_control.systems.ottawa.baskatong_scenario \
+  --pilot results/ottawa/baskatong_1970_observed_v1 \
+  --output results/ottawa/baskatong_scenario_review
+```
+
+This separate offline model demonstrates release → storage → level under three
+explicit effective-area assumptions and both discharge interpretations. It uses
+assumed daily-center timing and **effective net input**, not measured natural
+inflow. Primary-proxy release retention raises modeled level by approximately
+2.20 / 1.10 / 0.55 m across the scales; the smallest exceeds the assumed upper
+experiment bound. All retained volume is later repaid in this prescribed run.
+These are scenario results, not calibration or an optimized controller. See
+[the scenario guide](configs/studies/ottawa/README.md). Strict reconstruction,
+observations and Ontario controllers are unchanged.
+
+## Baskatong: actual 1970 observations
+
+```bash
+uv run python -m reservoir_control.systems.ottawa.historical_pilot \
+  --output results/ottawa/baskatong_1970_review
+```
+
+The [one-year pilot guide](configs/studies/ottawa/README.md) describes acquisition,
+offline replay and source definitions. ECCC records supply 365 paired dates of
+Baskatong daily mean level and downstream Mercier discharge; 28 discharges carry
+Partial Day flags. The outputs show observed seasonal behavior and normalized
+water-level position. They do not establish storage or net inflow: levels are
+means in an arbitrary datum, clock/outlet completeness remains unverified, and
+no storage curve or usable K is assumed. Ontario controllers remain unchanged.
+
+For the two-station discharge overlay, differences, flags and outlet-definition
+review, use `uv run python -m reservoir_control.systems.ottawa.discharge_comparison
+--output results/ottawa/baskatong_discharge_comparison_review` (one line).
+See [the data guide](configs/studies/ottawa/README.md) for the full command.
+
+## Baskatong historical data pilot
+
+The [measurement and ingestion guide](configs/studies/ottawa/README.md) documents
+Baskatong's boundary, source coverage, permissions and daily input schema.
+Reproduce the source assessment without downloading restricted observations:
+
+```bash
+uv run python -m reservoir_control.systems.ottawa.reconstruction \
+  --output results/ottawa/baskatong_assessment_review
+```
+
+This currently produces an **assessment**, not a historical reconstruction: no
+suitable aligned, licensed 2016–2019 level/total-outlet pair or storage curve was
+obtained. The module can process permitted records with explicit timing/datum
+contracts; normalized, curve-based and assumed-volume scenarios remain separate.
+It does not modify the synthetic Ottawa model or run a controller.
+
 ## Coupled Ontario–Ottawa comparison
 
 ```bash

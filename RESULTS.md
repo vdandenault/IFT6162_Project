@@ -6,6 +6,102 @@
 curve, external-flow MPC, nested bilevel MPC and PPO. The earlier uncoupled
 fixed-cap benchmark is retained below with its original score definition.
 
+### Baskatong: approximate physical release-response scenarios
+
+Saved under `results/ottawa/baskatong_linear_scenario_final_v2/`: three assumed
+linear-storage scales × two separate discharge interpretations, each with replay
+and retain-then-release trajectories. This is a **research scenario model**, not
+calibrated Baskatong operations. It does not replace the strict reconstruction.
+
+For the primary 02LG006 proxy, reducing April–May release by 40% retains
+**247.271 million m³**, subsequently repaid under the assumed outlet limits.
+Maximum modeled level increases are **2.198 / 1.099 / 0.549 m** for smaller,
+inventory-order and larger assumed volume scales. The smallest reaches
+**225.548 m**, exceeding the independently assumed 225 m bound by **0.548 m**:
+that prescribed experiment is **infeasible**. The other two satisfy the declared
+bounds. No storage clipping repairs the violation.
+
+The 02LG007 sensitivity retains/re-releases **250.530 million m³**; maximum
+increases are **2.227 / 1.113 / 0.557 m**, with the same small-scale infeasibility.
+Both interpretations recover their replay after repayment, and modeled total
+releases match within the declared 0.001 m³ accounting tolerance. Agreement is a
+structural consequence of the assumed balance, not independent physical validation.
+
+The area scales assume volume changes of **1.5245 / 3.049 / 6.098 billion m³**
+over the observed level range. The listed inventory is merely a scale anchor.
+Daily means are placed at model-day centers; interval flow is the adjacent-day
+average. Each case constructs **effective net input** once and holds it fixed
+across releases. Negative-input counts for 02LG006 are **1 / 29 / 129 out of 365**,
+with minima **−33.0 / −332.5 / −931.5 m³/s**. All remain negative after excluding
+source-flag-affected intervals. This strong scale sensitivity cautions against
+interpreting effective input as measured/natural inflow.
+
+29 intervals are affected by the 28 Partial Day dates under the primary proxy;
+reported values remain uncertain inputs. The observed-record alternative is not
+independent validation. The original observations, provenance and strict workflow
+are preserved. No Lake St. Louis prediction or controller changes occur.
+See [the assumptions and offline command](configs/studies/ottawa/README.md).
+
+### Baskatong: actual one-year observation pilot
+
+Saved under `results/ottawa/baskatong_1970_observed_v1/`: raw official ECCC API
+responses, date-labelled `observations.csv`, pipeline audit, plots and hashes.
+Baskatong 02LG007 level and downstream Mercier 02LG006 discharge overlap on all
+**365 dates in 1970**, with no missing dates/values. **28 discharge values carry
+Partial Day symbols**, leaving 337 unflagged paired dates. Source date coverage
+is not proof of complete within-day measurement coverage.
+
+Reported daily mean level spans **209.800–223.350 m in the station's arbitrary
+datum**; downstream discharge spans **7.36–702 m³/s**. The plot shows winter
+drawdown followed by spring refill. Normalized **water-level position** is a
+rescaling of this observed annual level range, not a storage fraction. No modern
+geodetic operating bounds are superimposed on that unaligned datum.
+
+02LG007's own discharge differs from the downstream Mercier series on **231
+dates**, up to **92.7 m³/s**. Both remain separate. No volumetric inflow is
+computed: mean levels cannot stand in for midnight boundaries, daily clock and
+all-outlet equivalence need confirmation, and no storage relationship is supplied.
+The additional January 1, 1971 mean is context, not a closing midnight observation.
+The earlier assessment and all controller experiments are preserved. See the
+[reproduction commands](configs/studies/ottawa/README.md).
+
+### 1970 discharge comparison: outlet interpretation
+
+The read-only comparison in `results/ottawa/baskatong_discharge_comparison_v2/`
+provides both original series, daily differences, source flags, an April–June
+view and a sourced station-description comparison. Mean absolute difference is
+**10.049 m³/s**, maximum **92.7 m³/s on September 26**; the signed annual mean
+of −0.264 m³/s conceals cancellation. All **28 Partial Day pairs agree exactly**;
+all **231 discrepancies occur on unflagged dates**. Excluding flags does not
+resolve the disagreement.
+
+The official station description supports **02LG006 as a Mercier downstream-flow
+proxy**. Neither record has verified completeness for all Baskatong outlets.
+02LG007's reservoir name does not establish how its discharge was derived or
+whether it is outlet flow. No transfer, natural-inflow or corrected-average
+interpretation is inferred. Current official Partial Day guidance concerns
+within-day gaps; precise 1970 flag provenance and averaging clocks remain open.
+The original pilot files are verified unchanged. Reproduce via
+`python -m reservoir_control.systems.ottawa.discharge_comparison`; see
+[the guide](configs/studies/ottawa/README.md).
+
+### Baskatong historical reconstruction: assessment only
+
+The daily source/measurement assessment is saved in
+`results/ottawa/baskatong_assessment_v2/report.md`. It found no suitably licensed,
+aligned 2016–2019 level/total-outlet pair: the inspected ECCC Baskatong archive
+ends before the target, owner open products describe rolling recent coverage,
+and ORRPB's observation service restricts reproduction. Other leads have unresolved
+access, coverage or measurement definitions; their absence is not claimed.
+
+Baskatong's listed inventory volume is not assumed to be usable storage between
+its operating elevations. Datum realization, historical day boundaries, a storage
+curve and total outlet coverage (including the separate Castor structure) remain
+unresolved. A tested ingestion/accounting interface is implemented; **historical
+reconstruction and operational calibration are not completed**. No Ontario
+controller, synthetic coupling parameter or previous experiment was changed.
+See [the evidence and input guide](configs/studies/ottawa/README.md).
+
 ### Coupled research pilot: current overview
 
 Saved run: `results/loslr/coupled_v1_information_matched/`. Each controller covers complete

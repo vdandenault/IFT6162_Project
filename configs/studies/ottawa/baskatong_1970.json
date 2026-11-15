@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reservoir": "Baskatong",
+  "year": 1970,
+  "target": {"start_date": "1970-01-01", "end_date_exclusive": "1971-01-01", "expected_daily_intervals": 365},
+  "level_station": "02LG007",
+  "discharge_station": "02LG006",
+  "comparison_discharge_station": "02LG007",
+  "dataset": "hydrometric-daily-mean",
+  "api_root": "https://api.weather.gc.ca/collections/",
+  "terms_url": "https://wateroffice.ec.gc.ca/disclaimer_info_e.html",
+  "api_documentation": "https://eccc-msc.github.io/open-data/msc-geomet/ogc_api_en/",
+  "reference_rule": "Normalize reported daily mean levels using the minimum and maximum actually observed in 1970, within the same station datum. Not an operating range or a storage fraction.",
+  "measurement_timing": "Official collection defines daily means. DATE is a calendar date, not a midnight reading or offset-aware instant. Historical daily clock is not established by this API response. UTC is used only as an internal date-axis anchor; timing_verified remains false.",
+  "discharge_boundary": "02LG006 is officially named GATINEAU (RIVIERE) EN AVAL DU BARRAGE MERCIER. Treat it as downstream Mercier gauge discharge, not a turbine-only series. Total Baskatong outlet completeness and Castor connectivity are unverified. 02LG007 DISCHARGE is retained separately and never assumed interchangeable.",
+  "vertical_datum": "Use the station metadata returned by ECCC; no conversion to modern geodetic operating elevations is inferred.",
+  "operating_bounds": {"minimum_m": 207.60, "maximum_m": 223.14, "datum_matches_series": false, "source_url": "https://www.ottawariver.ca/location/baskatong/", "interpretation": "Modern listed operating elevations; not overlaid on the historical arbitrary station datum"},
+  "volume_mode": "No storage curve or K; no volumetric storage or inflow estimates",
+  "attribution": "Source: Environment and Climate Change Canada, HYDAT via MSC GeoMet; contributing agency identified in the saved station metadata.",
+  "reuse": "Wateroffice permits copying/distribution with acknowledgement, excludes resale of bundled raw information and disclaims warranties. No ORRPB observations are accessed."
+}

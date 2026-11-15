@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-11-15",
+  "scope": "1970 02LG007 versus 02LG006; compare saved official observations without replacing either record",
+  "sources": {
+    "daily_mean_definition": {"url": "https://api.weather.gc.ca/collections/hydrometric-daily-mean?f=json", "finding": "Both API discharge fields belong to the daily-mean collection, whose description defines an average of unit values for a given day. It does not identify the station-specific discharge derivation or historical clock."},
+    "partial_day_definition": {"url": "https://wateroffice.ec.gc.ca/contactus/faq_e.html", "finding": "Current official FAQ grade 30 Partial Day applies to a daily mean containing a missing period longer than 120 consecutive minutes. The daily-symbol explanation also describes daily means estimated despite gaps or missing data not warranting an Estimated symbol. Preserve the API's label; historical hourly coverage and original 1970 flag provenance are not supplied."},
+    "station_index": {"url": "https://wateroffice.ec.gc.ca/station_metadata/reference_index_e.html?stnIndex=7332", "finding": "Official name identifies 02LG006 as Gatineau downstream of Mercier dam. Index drainage areas may be rounded relative to saved API metadata."},
+    "reservoir_station": {"url": "https://wateroffice.ec.gc.ca/report/data_availability_e.html?parameter_type=Flow+and+Level&station=02LG007&type=historical", "finding": "Official name places 02LG007 at Baskatong reservoir and lists both level and flow archives; this alone does not establish outlet completeness or whether flow was directly gauged or calculated."},
+    "mercier_structure": {"url": "https://www.cehq.gouv.qc.ca/barrages/detail.asp?no_mef_lieu=X0005473", "finding": "Mercier is a Baskatong structure; this inventory is not a measurement-method record for either gauge."},
+    "castor_structure": {"url": "https://www.cehq.gouv.qc.ca/barrages/detail.asp?no_mef_lieu=X0005474", "finding": "Castor is separately registered on Baskatong. Whether it contributed an additional active outlet path in 1970 remains unresolved."}
+  },
+  "documented_vs_inferred": {
+    "documented": "Saved station names, coordinates, contributors, drainage areas, datum and archived source values/symbols; current official publication definitions.",
+    "derived": "Signed daily differences, error summaries and straight-line distance between published coordinates.",
+    "working_judgment": "02LG006 is the better-supported Mercier downstream-flow proxy. Neither record is yet verified as total Baskatong outlet discharge for closed water accounting.",
+    "hypotheses_not_established": ["Different daily averaging clocks or timestamp labels", "Different calculation/rating/operational estimation methods", "Corrections or differing data provenance", "Real routing, local inflow or additional outlet effects"]
+  },
+  "constraints": "Do not average the two series, infer a transfer from the difference, rescale Partial Day values by assumed sampling hours, or treat unflagged values as independently validated. Modern station metadata do not prove unchanged 1970 gauge locations or methods. No contact with data owners and no controller modifications."
+}

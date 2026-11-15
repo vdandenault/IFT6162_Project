@@ -71,6 +71,58 @@ an identified aggregate boundary, storage parameters and suitable forcing data.
 Historical SLON already contains regulated tributary contributions, so coupling
 must account for those contributions before adding an optimized follower release.
 
+## Approximate Baskatong physical scenario milestone
+
+- [x] Implement a separate linear storage/level scenario mapping with three
+  documented positive area scales; retain strict reconstruction unchanged.
+- [x] Apply explicit daily-center timing, adjacent-discharge averaging and
+  source-flag propagation to the preserved 1970 records, including context.
+- [x] Reconstruct fixed effective-input interpretations separately by area and
+  discharge proxy; retain negative values and unflagged-only diagnostics.
+- [x] Run historical-proxy accounting replay and prescribed release retention/
+  repayment; report remaining volume, conservation errors and unclipped bounds violations.
+- [x] Save all six case interpretations, twelve trajectories and sensitivity PNGs
+  under `results/ottawa/baskatong_linear_scenario_final_v2/`.
+- [ ] Resolve actual storage mapping, physical timing and complete outlet boundary
+  before interpreting the scenario inputs or constraints operationally.
+
+This is an offline research experiment, not an optimized controller or calibrated
+Ottawa model. Reproduce with `python -m reservoir_control.systems.ottawa.baskatong_scenario`;
+see [the guide](configs/studies/ottawa/README.md).
+
+## Actual one-year Ottawa observation milestone
+
+- [x] Acquire official ECCC Baskatong/Mercier daily observations for 1970 and
+  retain raw station/collection metadata, permissions, source symbols and hashes.
+- [x] Process 365 paired dates; distinguish the 28 Partial Day discharge values
+  from missing days and preserve the separate reservoir-station discharge.
+- [x] Produce observed level/discharge, normalized water-level-position and
+  coverage plots using the existing pipeline. Verify offline source replay.
+- [x] Compare both 1970 discharge records and source flags; retain 02LG006 as a
+  labelled downstream proxy, without claiming total-reservoir outlet completeness.
+- [ ] Resolve midnight boundary levels, historical daily clock, all-outlet
+  definition and a storage–elevation mapping before estimating volumetric inflow.
+
+Run: `uv run python -m reservoir_control.systems.ottawa.historical_pilot --output results/ottawa/baskatong_1970_review`.
+See [the pilot guide](configs/studies/ottawa/README.md). This is an actual
+observation milestone; it does not calibrate the synthetic Ottawa controller.
+
+## Baskatong measurement milestone
+
+- [x] Assess the reservoir boundary, inventory volume, operating elevations,
+  owner access routes and actual ECCC archive coverage for the 2016–2019 target.
+- [x] Implement a permission-aware daily ingestion and net-balance interface,
+  with explicit timestamps, quality checks and separate storage modes.
+- [x] Save the assessment and input templates under
+  `results/ottawa/baskatong_assessment_v2/`; no historical observations were fabricated.
+- [ ] Obtain owner-permitted boundary-instantaneous levels and matching total
+  outlet means, including the 2020-01-01 closing level. Resolve datum/clock and
+  Mercier/Castor/spill completeness, then source the storage–elevation mapping.
+- [ ] Run and inspect the actual reconstruction before using it in a follower.
+
+See [the data milestone guide](configs/studies/ottawa/README.md). The synthetic
+coupled parameters and existing Ontario experiments remain unchanged.
+
 ## Coupled study implementation
 
 The five requested implementation areas now have an executable research pilot:
