@@ -1,3 +1,6 @@
 [submodule "external/loslr_regulation_optimization"]
 	path = external/loslr_regulation_optimization
 	url = https://github.com/nadinemgh/loslr_regulation_optimization.git
+[submodule "external/metamarl"]
+	path = external/metamarl
+	url = git@github.com:nadinemgh/MetaMARL.git
