@@ -4,6 +4,19 @@
 
 ### Standalone Ottawa hard-follower study (synthetic)
 
+**Matched horizon study (120 rollouts):** excluding the deliberately infeasible
+scenario, perfect completion improves from 4/5 at H4 to 5/5 at H5/6/8/12. Noisy
+completion stays at 8/15 for every horizon, with the same eight completed cases.
+On those eight matched noisy cases, H5 has the lowest mean cost (8.132066);
+longer horizons do not consistently help. All remaining failures are
+infeasibility, not numerical solver failure. H5 is a provisional working horizon
+for the next uncertainty diagnostic, with H8 a longer-lookahead deterministic
+reference; the H4 default is unchanged. Three seeds do not establish robustness.
+The frozen forecast bank differs from the old sequential RNG allocation.
+Report, matched sample definitions and plots:
+`results/ottawa/horizon_sensitivity_v2/`.
+
+
 **Delayed-case diagnosis:** the original 12-period experiment is feasible.
 H=4 loses completion feasibility after its second action and detects failure
 before period 4. At that point the downstream caps require 2,365.200 million m³

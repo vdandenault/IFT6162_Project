@@ -295,3 +295,21 @@ checks full-remaining feasibility after each original action, and repeats H=4,
 `report.md`, `diagnostic.png`, feasible witness/continuation trajectories,
 constraint certificates, endpoint queues and implementation consistency checks.
 The saved run is `results/ottawa/delay_diagnostic_verified_v2/`.
+
+## Matched-forecast horizon sensitivity
+
+```sh
+uv run --group reproduction python -m reservoir_control.systems.ottawa.horizon_study --output results/ottawa/horizon_sensitivity_rerun
+```
+
+Runs all six original scenarios at H=4/5/6/8/12 with perfect forecasts and noisy
+seeds 11/22/33: 120 MPC rollouts. Forecast banks are frozen before execution;
+each horizon takes the same time/lead prefix. This changes noisy RNG allocation
+relative to earlier studies; it does not reproduce those old noisy trajectories.
+The original runner retains its behavior when no bank is supplied.
+
+Saved outputs: `results/ottawa/horizon_sensitivity_v2/`, including `report.md`,
+`summary.csv`, forecast banks/provenance, per-run traces/plans, matched costs,
+verification, and three PNG plots. H5 is a provisional working horizon for the
+next uncertainty diagnostic; the default remains H4. This study does not change
+constraints, objective weights, terminal treatment or the controller formulation.

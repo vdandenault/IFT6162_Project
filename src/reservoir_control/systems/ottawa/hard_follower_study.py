@@ -37,7 +37,7 @@ def make_problem(c, scenario, k, storage, previous, transit, forecast):
         c['storage_scale_m3'], c['flow_scale_m3_s'], FollowerWeights(**c['weights']))
 
 
-def rollout(c, scenario, policy, mode, seed, *, solver=solve_hard_follower):
+def rollout(c, scenario, policy, mode, seed, *, solver=solve_hard_follower, forecast_bank=None):
     if policy not in ('mpc', 'reference'): raise ValueError('Unknown policy')
     realized = np.asarray(scenario['realized_net_inflow_m3_s'], float)
     storage, previous = c['initial_storage_m3'], c['previous_executed_release_m3_s']
@@ -50,9 +50,15 @@ def rollout(c, scenario, policy, mode, seed, *, solver=solve_hard_follower):
     input_volume, arrived_volume = 0., 0.
     for k in range(n):
         h = min(c['horizon'], n-k)
-        forecast = inflow_forecast(mode, realized[:k], c['forecast_noise']['initial_observed_inflow_estimate_m3_s'],
-            h, rng, c['forecast_noise']['standard_deviation_m3_s'],
-            perfect_values=realized[k:k+h] if mode == 'perfect' else None)
+        if forecast_bank is None:
+            forecast = inflow_forecast(mode, realized[:k], c['forecast_noise']['initial_observed_inflow_estimate_m3_s'],
+                h, rng, c['forecast_noise']['standard_deviation_m3_s'],
+                perfect_values=realized[k:k+h] if mode == 'perfect' else None)
+        else:
+            # Optional frozen bank: no RNG consumption depends on H or early stopping.
+            forecast = np.asarray(forecast_bank[k, :h], float).copy()
+            if forecast.shape != (h,) or not np.isfinite(forecast).all():
+                raise ValueError('Forecast bank must cover every requested time and lead')
         problem = make_problem(c, scenario, k, storage, previous, transit, forecast)
         status, seconds, residuals, prediction = 'fixed_reference', 0., {}, None
         planned_next, predicted_downstream = np.nan, np.nan
