@@ -73,7 +73,7 @@ and controlled/uncontrolled decomposition still need to be established.
 ## Setup
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and clone
-with the pinned simulator fork:
+with the pinned simulator submodules:
 
 ```bash
 git clone --recurse-submodules https://github.com/vdandenault/IFT6162_Project.git
@@ -123,22 +123,17 @@ The native runner reproduces the pinned upstream Python implementation. The
 causal runner uses past-only inputs for the Python rule curve and Bv7 limits
 and reports differences against the archived GLRRM baseline. See [RESULTS.md](RESULTS.md) for the current benchmark findings.
 
-The upstream checkout is currently local and ignored, pending the licensing audit;
-it is not a registered submodule. It is already present in this workspace. For a
-fresh checkout, these commands fetch only the required upstream directories:
+The upstream simulator is registered as a submodule at
+`external/loslr_regulation_optimization/`, pinned to inspected commit
+`8b8de9e89487552f8590f4d42d87484e5edc6872`. Initialize it on an existing clone:
 
 ```bash
-git clone --filter=blob:none --no-checkout --single-branch --branch dps \
-  https://github.com/ksemmendinger/loslr_regulation_optimization.git \
-  external/loslr_regulation_optimization
-git -C external/loslr_regulation_optimization fetch --depth 1 origin \
-  8b8de9e89487552f8590f4d42d87484e5edc6872
-git -C external/loslr_regulation_optimization sparse-checkout set \
-  functions objectiveFunctions input/historic/1900_2020 \
-  output/data/baseline/Plan2014_GLRRM
-git -C external/loslr_regulation_optimization checkout --detach \
-  8b8de9e89487552f8590f4d42d87484e5edc6872
+git submodule update --init --recursive
 ```
+
+Cloning this project with `--recurse-submodules` initializes both simulators.
+The Ontario submodule points directly to the authors' repository; local changes
+and parent-project commits do not modify that upstream repository.
 
 ```bash
 # Existing output directories are protected; use a fresh path for another replay.
@@ -348,7 +343,8 @@ Como's annual and improved two-year protocols are described in their study docs.
 
 Generated `results/`, `reports/`, `background/`, PDFs and packaging metadata are
 ignored. Explanatory graphics use PNG. The Gym4ReaL fork is pinned under
-`external/gym4real/`. The Ontario upstream checkout is currently local and ignored.
+`external/gym4real/`; the Ontario simulator is pinned as a submodule under
+`external/loslr_regulation_optimization/`.
 
 ## Team
 
