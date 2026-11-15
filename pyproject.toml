@@ -26,6 +26,7 @@ loslr-regulation-optimization = { path = "external/loslr_regulation_optimization
 dev = [
     "ipykernel>=7.4.0",
     "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.17.4",
     "spacing>=1.0.3",
 ]
