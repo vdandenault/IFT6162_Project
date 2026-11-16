@@ -11,6 +11,7 @@ import toml
 from metamarl.mechanism.base import MDPState
 from metamarl.optimizers.base import Optimizer, OptimizerConfig
 
+from bilevel_reservoirs.controllers.operator import Ontario
 from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
 from external.loslr_regulation_optimization.functions.limits.septemberRule import (
     septemberRule,
@@ -23,6 +24,12 @@ from external.loslr_regulation_optimization.functions.utils import round_d
 from src.bilevel_reservoirs.simulators.loslr import LoslrEnv
 
 FORCING_COLUMNS = {
+    "Sim",
+    "Year",
+    "Month",
+    "QM",
+    "erieOut",
+    # actual forcing
     "ontNTS",
     "stlouisontOut",
     "desprairiesOut",
@@ -163,7 +170,7 @@ class RuleCurve(Optimizer):
         self.flow_scale = config.flow_scale
         self.releaseFunInputs = config.releaseFunInputs
         self.september_rule = septemberRule if config.september_rule else "off"
-        self.pids = config.policy_ids
+        self.pids = deque(config.policy_ids)  # CHANGED
         self.pars = config.pars
 
         # Dataset
@@ -225,124 +232,122 @@ class RuleCurve(Optimizer):
 
         return limitsOutput["ontFlow"], limitsOutput["ontRegime"]
 
+    def _update(self) -> int:
+        if not self.pids:
+            raise StopIteration("No remaining policies")
+        return self.pids.popleft()
+
     def train(self) -> dict[str, Any]:
-        results = {}
-        trajectories = {}
+        agent = Ontario(id="ont", policy_id="ont", mechanisms={})
 
-        for p in self.pids:
-            pars = self.pars[p]
-            mdp = self.env.reset(MDPState())
-            h = deque(
-                self.data["ontLevelMOQ"].iloc[self.t_0 - 48 : self.t_0], maxlen=48
+        p = self._update()
+        pars = self.pars[p]
+        mdp = self.env.reset(MDPState())
+        h = deque(self.data["ontLevelMOQ"].iloc[self.t_0 - 48 : self.t_0], maxlen=48)
+        rows = []
+
+        for i in range(self.t_0, self.t_0 + self.horizon):
+            t = mdp.t
+            data = {col: self.data[col].iat[i] for col in self.data.columns}
+            qm = data["QM"]
+            ontLevelStart = mdp.state["ontLevelBOQ"][t]
+
+            # Rule curve release
+            x = {
+                "forNTS": data["forNTS"],
+                "ontLevelBOQ": ontLevelStart,
+                "annavgLevel": np.mean(h),
+                "sfSupplyNTS": [data[f"ontNTS_QM{k}"] for k in range(1, 5)],
+            }
+            rfOutputs = releaseFunction(x, pars, **self.releaseFunInputs)
+            flow = rfOutputs["rfFlow"]
+            regime = "RF"
+
+            # Forecasted Ontario level
+            dif1 = round_d((data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6)
+            ontLevel_forecast = ontLevelStart + dif1
+
+            # September rule
+            if self.september_rule != "off":
+                t32 = t - (qm - 32)
+                qm32Flow = (
+                    mdp.actions["ont"]["flow"][t32].item()
+                    if qm > 32 and t32 >= 0
+                    else np.nan
+                )
+                qm32Level = (
+                    mdp.state["ontLevelBOQ"][t32] if qm > 32 and t32 >= 0 else np.nan
+                )
+                flow, regime = self.september_rule(
+                    qm, ontLevelStart, flow, regime, qm32Level, qm32Flow, conv=self.conv
+                )
+
+                if regime != "RF":
+                    dif1 = round_d(
+                        (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
+                    )
+                    ontLevel_forecast = round_d(ontLevelStart + dif1, 6)
+
+            # Operational constraints
+            flow, regime = self._apply_constraint(
+                data,
+                ontLevelStart,
+                ontLevel_forecast,
+                flow,
+                regime,
+                previous_flow=(
+                    mdp.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
+                ),
+                previous_ice=self.data["iceInd"].iloc[i - 1] if t > 0 else 2.0,
             )
-            rows = []
 
-            for i in range(self.t_0, self.t_0 + self.horizon):
-                t = mdp.t
-                data = self.data.iloc[i].to_dict()
-                qm = data["QM"]
-                ontLevelStart = mdp.state["ontLevelBOQ"][t]
+            # Physical forcing
+            forcing = {col: data[col] for col in FORCING_COLUMNS}
 
-                # Rule curve release
-                x = {
-                    "forNTS": data["forNTS"],
+            mdp.params.update(forcing)
+
+            # Control
+            mdp.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
+
+            # Physical transition
+            mdp = self.env.simulate(mdp)
+
+            # Stage cost
+            reward = agent.reward(mdp)
+            mdp.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
+
+            assert mdp.t == t + 1
+
+            # Update controller history
+            h.append(mdp.state["ontLevelMOQ"][mdp.t])
+
+            # Simulation outputs
+            row = data.copy()
+
+            row.update(rfOutputs)
+            row.update(
+                {
+                    "ontFlow": flow,
+                    "flowRegime": regime,
                     "ontLevelBOQ": ontLevelStart,
-                    "annavgLevel": np.mean(h),
-                    "sfSupplyNTS": [data[f"ontNTS_QM{k}"] for k in range(1, 5)],
+                    "ontLevel": (ontLevelStart + mdp.state["ontLevelBOQ"][mdp.t]) * 0.5,
                 }
-                rfOutputs = releaseFunction(x, pars, **self.releaseFunInputs)
-                flow = rfOutputs["rfFlow"]
-                regime = "RF"
+            )
+            row.update(
+                {
+                    col: mdp.state[col][mdp.t]
+                    for col in mdp.state.data
+                    if col != "ontLevelBOQ"
+                }
+            )
+            rows.append(row)
 
-                # Forecasted Ontario level
-                dif1 = round_d(
-                    (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
-                )
-                ontLevel_forecast = ontLevelStart + dif1
+        # aggregate stage costs into running cost
+        running_cost = np.stack(mdp.rewards[agent.id]).sum(axis=0)
 
-                # September rule
-                if self.september_rule != "off":
-                    t32 = t - (qm - 32)
-                    qm32Flow = (
-                        mdp.actions["ont"]["flow"][t32].item()
-                        if qm > 32 and t32 >= 0
-                        else np.nan
-                    )
-                    qm32Level = (
-                        mdp.state["ontLevelBOQ"][t32]
-                        if qm > 32 and t32 >= 0
-                        else np.nan
-                    )
-                    flow, regime = self.september_rule(
-                        qm,
-                        ontLevelStart,
-                        flow,
-                        regime,
-                        qm32Level,
-                        qm32Flow,
-                        conv=self.conv,
-                    )
-
-                    if regime != "RF":
-                        dif1 = round_d(
-                            (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
-                        )
-                        ontLevel_forecast = round_d(ontLevelStart + dif1, 6)
-
-                # Operational constraints
-                flow, regime = self._apply_constraint(
-                    data,
-                    ontLevelStart,
-                    ontLevel_forecast,
-                    flow,
-                    regime,
-                    previous_flow=(
-                        mdp.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
-                    ),
-                    previous_ice=self.data["iceInd"].iloc[i - 1] if t > 0 else 2.0,
-                )
-
-                # Physical forcing
-                forcing = {col: data[col] for col in FORCING_COLUMNS}
-
-                mdp.params.update(forcing)
-
-                # Control
-                mdp.update(
-                    actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}}
-                )
-
-                # Physical transition
-                mdp = self.env.simulate(mdp)
-
-                assert mdp.t == t + 1
-
-                # Update controller history
-                h.append(mdp.state["ontLevelMOQ"][mdp.t])
-
-                # Simulation outputs
-                row = data.copy()
-
-                row.update(rfOutputs)
-                row.update(
-                    {
-                        "ontFlow": flow,
-                        "flowRegime": regime,
-                        "ontLevelBOQ": ontLevelStart,
-                        "ontLevel": (ontLevelStart + mdp.state["ontLevelBOQ"][mdp.t])
-                        * 0.5,
-                    }
-                )
-                row.update(
-                    {
-                        col: mdp.state[col][mdp.t]
-                        for col in mdp.state.data
-                        if col != "ontLevelBOQ"
-                    }
-                )
-                rows.append(row)
-
-            results[p] = pd.DataFrame(rows)
-            trajectories[p] = mdp
-
-        return {"mdp": trajectories, "data": results}
+        return {
+            "policy_id": p,
+            "mdp": mdp,
+            "data": pd.DataFrame(rows),
+            "running_cost": running_cost,
+        }
