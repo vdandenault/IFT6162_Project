@@ -4,14 +4,7 @@ import pytest
 
 pytestmark = pytest.mark.integration
 N_STEPS = 2880
-RULE_CURVE_COLUMNS = [
-    "rfFlow",
-    "rfRegime",
-    "pprFlow",
-    "rfOutput",
-    "ontFlow",
-    "flowRegime",
-]
+RULE_CURVE_COLUMNS = ["rfFlow", "rfRegime", "pprFlow", "rfOutput", "ontFlow", "flowRegime"]
 SIMULATED_COLUMNS = [
     # Lake Ontario
     "ontLevelBOQ",

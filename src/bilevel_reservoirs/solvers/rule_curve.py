@@ -12,9 +12,7 @@ from metamarl.mechanism.base import MDPState
 from metamarl.optimizers.base import Optimizer, OptimizerConfig
 
 from bilevel_reservoirs.simulators.loslr import LoslrEnv
-from external.loslr_regulation_optimization.functions.limits.septemberRule import (
-    septemberRule,
-)
+from external.loslr_regulation_optimization.functions.limits.septemberRule import septemberRule
 from external.loslr_regulation_optimization.functions.release.ruleCurve import (
     formatDecisionVariables,
     releaseFunction,
@@ -170,9 +168,9 @@ class RuleCurve(Optimizer):
         self.data = self.data.loc[fcstNA].reset_index(drop=True)
 
         if config.drop_last_year:
-            self.data = self.data.loc[
-                self.data["Year"] < self.data["Year"].max()
-            ].reset_index(drop=True)
+            self.data = self.data.loc[self.data["Year"] < self.data["Year"].max()].reset_index(
+                drop=True
+            )
 
         self.horizon = config.env_config["horizon"]
 
@@ -227,13 +225,9 @@ class RuleCurve(Optimizer):
             if self.september_rule != "off":
                 t32 = t - (qm - 32)
                 qm32Flow = (
-                    mdp.actions["ont"]["flow"][t32].item()
-                    if qm > 32 and t32 >= 0
-                    else np.nan
+                    mdp.actions["ont"]["flow"][t32].item() if qm > 32 and t32 >= 0 else np.nan
                 )
-                qm32Level = (
-                    mdp.state["ontLevelBOQ"][t32] if qm > 32 and t32 >= 0 else np.nan
-                )
+                qm32Level = mdp.state["ontLevelBOQ"][t32] if qm > 32 and t32 >= 0 else np.nan
                 flow, regime = self.september_rule(
                     qm, ontLevelStart, flow, regime, qm32Level, qm32Flow, conv=self.conv
                 )
@@ -241,9 +235,7 @@ class RuleCurve(Optimizer):
                 if regime != "RF":
                     ontLevel_forecast = round_d(
                         ontLevelStart
-                        + round_d(
-                            (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
-                        ),
+                        + round_d((data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6),
                         6,
                     )
 
@@ -251,8 +243,7 @@ class RuleCurve(Optimizer):
             mdp.params.update(
                 {
                     col: data[col]
-                    for col in FORCING_COLUMNS
-                    | {"ontNTS_QM1", "slonFlow_QM1", "foreInd"}
+                    for col in FORCING_COLUMNS | {"ontNTS_QM1", "slonFlow_QM1", "foreInd"}
                 }
             )
             mdp.params.update(
@@ -264,9 +255,7 @@ class RuleCurve(Optimizer):
             )
 
             # Operational constraints
-            mdp = agent.mechanisms["flow"].apply(
-                mdp, flow, september_rule=self.september_rule
-            )
+            mdp = agent.mechanisms["flow"].apply(mdp, flow, september_rule=self.september_rule)
 
             # Physical transition
             mdp = self.env.simulate(mdp)
@@ -284,9 +273,7 @@ class RuleCurve(Optimizer):
                     "ontLevelBOQ": ontLevelStart,
                     "ontLevel": (ontLevelStart + mdp.state["ontLevelBOQ"][mdp.t]) * 0.5,
                     **{
-                        col: mdp.state[col][mdp.t]
-                        for col in mdp.state.data
-                        if col != "ontLevelBOQ"
+                        col: mdp.state[col][mdp.t] for col in mdp.state.data if col != "ontLevelBOQ"
                     },
                 }
             )

@@ -66,9 +66,9 @@ class MPCShooting(Optimizer):
         self.data = self.data.loc[fcstNA, :].reset_index(drop=True)
 
         if config.drop_last_year:
-            self.data = self.data.loc[
-                self.data["Year"] < self.data["Year"].max()
-            ].reset_index(drop=True)
+            self.data = self.data.loc[self.data["Year"] < self.data["Year"].max()].reset_index(
+                drop=True
+            )
 
         n_steps = len(self.data) - self.t_0
         self.horizon = config.env_config["horizon"]
@@ -88,11 +88,7 @@ class MPCShooting(Optimizer):
         return self.env.agents["ont"].mechanisms["flow"].constrain(*args, **kwargs)
 
     def _update(
-        self,
-        mdp: MDPState,
-        agent: Ontario,
-        forecasts: list[dict[str, Any]],
-        nominal: np.ndarray,
+        self, mdp: MDPState, agent: Ontario, forecasts: list[dict[str, Any]], nominal: np.ndarray
     ) -> tuple[np.ndarray, float, str]:
         def rollout(actions: np.ndarray):
             candidate = deepcopy(mdp)
@@ -104,9 +100,7 @@ class MPCShooting(Optimizer):
                 t = candidate.t
                 ontLevelStart = candidate.state["ontLevelBOQ"][t]
                 flow = float(action)
-                dif1 = round_d(
-                    (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
-                )
+                dif1 = round_d((data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6)
                 ontLevel_forecast = ontLevelStart + dif1
                 flow, regime = self._apply_constraint(
                     data,
@@ -115,9 +109,7 @@ class MPCShooting(Optimizer):
                     flow,
                     "RF",
                     previous_flow=(
-                        candidate.actions["ont"]["flow"][t - 1].item()
-                        if t > 0
-                        else 595.0
+                        candidate.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
                     ),
                     previous_ice=(candidate.params["iceInd"] if t > 0 else 2.0),
                 )
@@ -127,18 +119,14 @@ class MPCShooting(Optimizer):
                     first_regime = regime
 
                 candidate.params.update({col: data[col] for col in FORCING_COLUMNS})
-                candidate.update(
-                    actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}}
-                )
+                candidate.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
 
                 candidate = self.env.simulate(candidate)
                 reward = agent.reward(candidate)
 
                 candidate.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
 
-            running_cost = np.stack(
-                candidate.rewards[agent.id][start : candidate.t]
-            ).sum(axis=0)
+            running_cost = np.stack(candidate.rewards[agent.id][start : candidate.t]).sum(axis=0)
             cost = float(self.weights @ running_cost)
 
             return cost, first_flow, first_regime
@@ -223,11 +211,7 @@ class MPCShooting(Optimizer):
                 }
             )
             row.update(
-                {
-                    col: mdp.state[col][mdp.t]
-                    for col in mdp.state.data
-                    if col != "ontLevelBOQ"
-                }
+                {col: mdp.state[col][mdp.t] for col in mdp.state.data if col != "ontLevelBOQ"}
             )
             rows.append(row)
 

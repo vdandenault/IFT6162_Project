@@ -84,12 +84,7 @@ ROUTED_COLUMNS = {
     "troisrivieresLevel",
     "batiscanLevel",
 }
-SIMULATED_COLUMNS = [
-    "ontLevelBOQ",
-    "ontLevelEOQ",
-    "ontLevelMOQ",
-    *sorted(ROUTED_COLUMNS),
-]
+SIMULATED_COLUMNS = ["ontLevelBOQ", "ontLevelEOQ", "ontLevelMOQ", *sorted(ROUTED_COLUMNS)]
 
 
 @pytest.fixture(scope="module")
@@ -128,9 +123,7 @@ def legacy(config, data):
         **release_fun_inputs,
     )
 
-    with patch.object(
-        pd.Series, "values", property(lambda self: self.to_numpy(copy=True))
-    ):
+    with patch.object(pd.Series, "values", property(lambda self: self.to_numpy(copy=True))):
         legacy = simulation(
             data.copy(),
             release_fun_inputs,

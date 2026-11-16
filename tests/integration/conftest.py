@@ -37,9 +37,7 @@ def config():
             start_step=START_STEP,
         )
         .environment(
-            horizon=N_STEPS,
-            env=LoslrEnv,
-            env_config={"stage_init": 74.55, "mechanism_id": None},
+            horizon=N_STEPS, env=LoslrEnv, env_config={"stage_init": 74.55, "mechanism_id": None}
         )
         .agents(
             Ontario(

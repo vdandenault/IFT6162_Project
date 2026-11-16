@@ -45,11 +45,7 @@ class MPCMPPI(MPCShooting):
             raise ValueError("Invalid MPPI configuration")
 
     def _update(
-        self,
-        mdp: MDPState,
-        agent: Ontario,
-        forecasts: list[dict[str, Any]],
-        nominal: np.ndarray,
+        self, mdp: MDPState, agent: Ontario, forecasts: list[dict[str, Any]], nominal: np.ndarray
     ) -> tuple[np.ndarray, float, str]:
         def rollout(actions: np.ndarray):
             candidate = deepcopy(mdp)
@@ -62,9 +58,7 @@ class MPCMPPI(MPCShooting):
                 t = candidate.t
                 ontLevelStart = candidate.state["ontLevelBOQ"][t]
                 flow = float(action)
-                dif1 = round_d(
-                    (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
-                )
+                dif1 = round_d((data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6)
                 ontLevel_forecast = ontLevelStart + dif1
                 flow, regime = self._apply_constraint(
                     data,
@@ -73,9 +67,7 @@ class MPCMPPI(MPCShooting):
                     flow,
                     "RF",
                     previous_flow=(
-                        candidate.actions["ont"]["flow"][t - 1].item()
-                        if t > 0
-                        else 595.0
+                        candidate.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
                     ),
                     previous_ice=(candidate.params["iceInd"] if t > 0 else 2.0),
                 )
@@ -85,18 +77,14 @@ class MPCMPPI(MPCShooting):
                     first_regime = regime
 
                 candidate.params.update({col: data[col] for col in FORCING_COLUMNS})
-                candidate.update(
-                    actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}}
-                )
+                candidate.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
 
                 candidate = self.env.simulate(candidate)
                 reward = agent.reward(candidate)
 
                 candidate.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
 
-            running_cost = np.stack(
-                candidate.rewards[agent.id][start : candidate.t]
-            ).sum(axis=0)
+            running_cost = np.stack(candidate.rewards[agent.id][start : candidate.t]).sum(axis=0)
             cost = float(self.weights @ running_cost)
 
             return cost, first_flow, first_regime
@@ -119,9 +107,7 @@ class MPCMPPI(MPCShooting):
             )
             candidates = nominal + epsilon
             evaluations = [rollout(actions) for actions in candidates]
-            costs = np.asarray(
-                [evaluation[0] for evaluation in evaluations], dtype=np.float64
-            )
+            costs = np.asarray([evaluation[0] for evaluation in evaluations], dtype=np.float64)
             valid = np.isfinite(costs)
 
             if not valid.any():
@@ -135,9 +121,7 @@ class MPCMPPI(MPCShooting):
             log_weights -= np.max(log_weights)
             probabilities = np.exp(log_weights)
             probabilities /= probabilities.sum()
-            proposed = np.clip(
-                nominal + probabilities @ epsilon, self.flow_min, self.flow_max
-            )
+            proposed = np.clip(nominal + probabilities @ epsilon, self.flow_min, self.flow_max)
             proposed_cost, proposed_flow, proposed_regime = rollout(proposed)
 
             if np.isfinite(proposed_cost) and proposed_cost < best_cost:
@@ -149,9 +133,7 @@ class MPCMPPI(MPCShooting):
             best_index = np.argmin(np.where(valid, costs, np.inf))
 
             if costs[best_index] < best_cost:
-                best_actions = np.clip(
-                    candidates[best_index], self.flow_min, self.flow_max
-                )
+                best_actions = np.clip(candidates[best_index], self.flow_min, self.flow_max)
                 best_cost = costs[best_index]
                 best_flow = evaluations[best_index][1]
                 best_regime = evaluations[best_index][2]

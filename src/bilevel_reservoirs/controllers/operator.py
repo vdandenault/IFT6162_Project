@@ -15,9 +15,7 @@ from metamarl.mechanism.config import MechanismConfig
 
 from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
 
-LOSLR_ROOT = (
-    Path(__file__).resolve().parents[3] / "external" / "loslr_regulation_optimization"
-)
+LOSLR_ROOT = Path(__file__).resolve().parents[3] / "external" / "loslr_regulation_optimization"
 
 with chdir(LOSLR_ROOT):
     from external.loslr_regulation_optimization.objectiveFunctions.legacyPIs.functions import (
@@ -60,15 +58,9 @@ class Ontario(Agent):
             rewards={
                 self.id: np.asarray(
                     [
-                        upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].iloc[
-                            -1
-                        ],
-                        downstreamCoastalImpacts.runModel(data)[
-                            "downstreamCoastal"
-                        ].iloc[-1],
-                        -hydropowerProduction.runModel(data)["totalEnergyValue"].iloc[
-                            -1
-                        ],
+                        upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].iloc[-1],
+                        downstreamCoastalImpacts.runModel(data)["downstreamCoastal"].iloc[-1],
+                        -hydropowerProduction.runModel(data)["totalEnergyValue"].iloc[-1],
                         recreationalBoating.runModel(data)["totalRecBoating"].iloc[-1],
                     ],
                     dtype=np.float64,
@@ -83,9 +75,7 @@ class Ontario(Agent):
 
         with (
             pd.option_context("future.infer_string", False),
-            patch.object(
-                pd.Series, "values", property(lambda self: self.to_numpy(copy=True))
-            ),
+            patch.object(pd.Series, "values", property(lambda self: self.to_numpy(copy=True))),
             patch.object(pd.Series, "__getitem__", legacy_series_getitem),
         ):
             mm = meadowMarsh.runModel(data)
@@ -134,9 +124,7 @@ class AdjustFlow(Mechanism):
             "sfSlonFlow": data["slonFlow_QM1"],
             "slonFlow": data["stlouisontOut"],
         }
-        limits = self.constraint_fn(
-            data["QM"], ontLevel, flow, regime, x, september_rule
-        )
+        limits = self.constraint_fn(data["QM"], ontLevel, flow, regime, x, september_rule)
 
         return limits["ontFlow"], limits["ontRegime"]
 
@@ -149,17 +137,13 @@ class AdjustFlow(Mechanism):
             ontLevel=data["ontLevel_forecast"],
             flow=float(np.asarray(action).item()),
             regime=data["flowRegime"],
-            previous_flow=(
-                mdp.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
-            ),
+            previous_flow=(mdp.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0),
             previous_ice=data["iceIndPrev"],
             september_rule=september_rule,
         )
         mdp.params["flowRegime"] = regime
 
-        return mdp.update(
-            actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}}
-        )
+        return mdp.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
 
 
 @dataclass(frozen=True)

@@ -9,9 +9,7 @@ from metamarl.envs.hooks import reset, transition
 from metamarl.envs.marl_regulated import MultiAgentEnv
 from metamarl.mechanism.base import MDPState
 
-from external.loslr_regulation_optimization.functions.routing.stlaw import (
-    stLawrenceRouting,
-)
+from external.loslr_regulation_optimization.functions.routing.stlaw import stLawrenceRouting
 from external.loslr_regulation_optimization.functions.utils import round_d
 
 
@@ -43,11 +41,7 @@ class LoslrEnv(MultiAgentEnv):
         ontLevelMOQ_next = round_d(ontLevelMOQ_raw, 2)
 
         # Step slr
-        x = {
-            **params,
-            "slonFlow": params["stlouisontOut"],
-            "jetty1R": params["varennesR"],
-        }
+        x = {**params, "slonFlow": params["stlouisontOut"], "jetty1R": params["varennesR"]}
         stLawLevels = stLawrenceRouting(ontLevelMOQ_raw, flow, x)
         stlouisFlow = stLawLevels["stlouisFlow"]
         freshetIndicator = 0.0

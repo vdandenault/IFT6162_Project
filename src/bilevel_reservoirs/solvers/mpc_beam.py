@@ -18,15 +18,7 @@ class MPCBeamSearchCfg(MPCShootingCfg):
 
         self.opt_class = MPCBeamSearch
         self.beam_width: int = 12
-        self.flow_offsets: tuple[float, ...] = (
-            -140.0,
-            -70.0,
-            -35.0,
-            0.0,
-            35.0,
-            70.0,
-            140.0,
-        )
+        self.flow_offsets: tuple[float, ...] = (-140.0, -70.0, -35.0, 0.0, 35.0, 70.0, 140.0)
 
 
 class MPCBeamSearch(MPCShooting):
@@ -40,11 +32,7 @@ class MPCBeamSearch(MPCShooting):
             raise ValueError("Invalid beam width")
 
     def _update(
-        self,
-        mdp: MDPState,
-        agent: Ontario,
-        forecasts: list[dict[str, Any]],
-        nominal: np.ndarray,
+        self, mdp: MDPState, agent: Ontario, forecasts: list[dict[str, Any]], nominal: np.ndarray
     ) -> tuple[np.ndarray, float, str]:
         start = mdp.t
 
@@ -62,9 +50,7 @@ class MPCBeamSearch(MPCShooting):
                 ontLevel_forecast,
                 flow,
                 "RF",
-                previous_flow=(
-                    candidate.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
-                ),
+                previous_flow=(candidate.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0),
                 previous_ice=(candidate.params["iceInd"] if t > 0 else 2.0),
             )
 
@@ -73,27 +59,17 @@ class MPCBeamSearch(MPCShooting):
                 first_regime = regime
 
             candidate.params.update({col: data[col] for col in FORCING_COLUMNS})
-            candidate.update(
-                actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}}
-            )
+            candidate.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
 
             candidate = self.env.simulate(candidate)
             reward = agent.reward(candidate)
 
             candidate.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
 
-            running_cost = np.stack(
-                candidate.rewards[agent.id][start : candidate.t]
-            ).sum(axis=0)
+            running_cost = np.stack(candidate.rewards[agent.id][start : candidate.t]).sum(axis=0)
             cost = float(self.weights @ running_cost)
 
-            return (
-                cost,
-                (*actions, float(action)),
-                candidate,
-                first_flow,
-                first_regime,
-            )
+            return (cost, (*actions, float(action)), candidate, first_flow, first_regime)
 
         initial = (0.0, (), mdp, None, None)
         nominal = np.clip(nominal, self.flow_min, self.flow_max)
@@ -105,9 +81,7 @@ class MPCBeamSearch(MPCShooting):
             for path in paths:
                 state = path[2]
                 t = state.t
-                previous_flow = (
-                    state.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
-                )
+                previous_flow = state.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
                 requests = np.unique(
                     np.clip(
                         np.concatenate(
@@ -129,9 +103,7 @@ class MPCBeamSearch(MPCShooting):
                         continue
 
                     candidate_state = candidate[2]
-                    flow = candidate_state.actions["ont"]["flow"][
-                        candidate_state.t - 1
-                    ].item()
+                    flow = candidate_state.actions["ont"]["flow"][candidate_state.t - 1].item()
 
                     if flow in executed:
                         continue
