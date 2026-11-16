@@ -11,8 +11,7 @@ import toml
 from metamarl.mechanism.base import MDPState
 from metamarl.optimizers.base import Optimizer, OptimizerConfig
 
-from bilevel_reservoirs.controllers.operator import Ontario
-from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
+from bilevel_reservoirs.simulators.loslr import LoslrEnv
 from external.loslr_regulation_optimization.functions.limits.septemberRule import (
     septemberRule,
 )
@@ -21,7 +20,6 @@ from external.loslr_regulation_optimization.functions.release.ruleCurve import (
     releaseFunction,
 )
 from external.loslr_regulation_optimization.functions.utils import round_d
-from src.bilevel_reservoirs.simulators.loslr import LoslrEnv
 
 FORCING_COLUMNS = {
     "Sim",
@@ -29,7 +27,6 @@ FORCING_COLUMNS = {
     "Month",
     "QM",
     "erieOut",
-    # actual forcing
     "ontNTS",
     "stlouisontOut",
     "desprairiesOut",
@@ -58,16 +55,12 @@ FORCING_COLUMNS = {
 
 
 class ForecastSkill(StrEnum):
-    """forecast skill: 12-month status quo AR(1) [sqAR], linear model [sqLM], perfect [0]"""
-
     sqAR = "sqAR"
     sqLM = "sqLM"
     perfect = "0"
 
 
 class ForecastLeadTime(StrEnum):
-    """forecast lead-time: 12month, 6month, 3month, 1month"""
-
     annual = "12month"
     biannual = "6month"
     quarterly = "3month"
@@ -75,8 +68,6 @@ class ForecastLeadTime(StrEnum):
 
 
 class Trace(StrEnum):
-    """Trace to simulate"""
-
     Y1900_2008 = "1900_2008"
     Y1900_2020 = "1900_2020"
     Y1961_2020 = "1961_2020"
@@ -118,12 +109,9 @@ class RuleCurveCfg(OptimizerConfig):
         if self.start_step < 48:
             raise ValueError("Rule curve requires 48 previous quarter-months")
 
-        # Load baseline configuration
         cfg = toml.load(self.data_path / "baseline" / "config.toml")
         self.releaseFunInputs = cfg["releaseFunction"]
         self.dvName = cfg["decisionVariables"]["dvName"]
-
-        # Dataset
         self.input_path = (
             self.data_path
             / "input"
@@ -131,14 +119,11 @@ class RuleCurveCfg(OptimizerConfig):
             / self.trace
             / f"{self.forecast_lead_time}_{self.forecast_skill}.txt"
         )
-
-        # Policy IDs
         self.policy_ids = [id] if isinstance(id, int) else list(id)
 
         if not self.policy_ids:
             raise ValueError("At least one policy ID is required")
 
-        # Policy parameters
         policies = pd.read_csv(
             self.data_path / "baseline" / "satisficingPolicies.csv", index_col="ID"
         )
@@ -158,6 +143,13 @@ class RuleCurveCfg(OptimizerConfig):
     def environment(self, env=LoslrEnv, **kwargs: Any) -> Self:
         return super().environment(env=env, **kwargs)
 
+    @override
+    def _env_creator(self, *, agents_cfgs=None, **kwargs):
+        if agents_cfgs is not None:
+            kwargs["agents_cfg_dict"] = agents_cfgs
+
+        return super()._env_creator(**kwargs)
+
 
 class RuleCurve(Optimizer):
     _env: LoslrEnv
@@ -170,25 +162,21 @@ class RuleCurve(Optimizer):
         self.flow_scale = config.flow_scale
         self.releaseFunInputs = config.releaseFunInputs
         self.september_rule = septemberRule if config.september_rule else "off"
-        self.pids = deque(config.policy_ids)  # CHANGED
+        self.pids = deque(config.policy_ids)
         self.pars = config.pars
-
-        # Dataset
         self.data = pd.read_table(config.input_path)
         fcstNA = self.data["forNTS"].notna()
         fcstNA.iloc[: self.t_0] = True
-        self.data = self.data.loc[fcstNA, :].reset_index(drop=True)
+        self.data = self.data.loc[fcstNA].reset_index(drop=True)
 
         if config.drop_last_year:
             self.data = self.data.loc[
                 self.data["Year"] < self.data["Year"].max()
             ].reset_index(drop=True)
 
-        # Simulation horizon
-        n_steps = len(self.data) - self.t_0
         self.horizon = config.env_config["horizon"]
 
-        if not 0 < self.horizon <= n_steps:
+        if not 0 < self.horizon <= len(self.data) - self.t_0:
             raise ValueError("Invalid simulation horizon")
 
     @property
@@ -199,39 +187,6 @@ class RuleCurve(Optimizer):
     def env(self, value: LoslrEnv) -> None:
         self._env = value
 
-    def _apply_constraint(
-        self,
-        data: dict[str, Any],
-        ontLevelStart: float,
-        ontLevel: float,
-        flow: float,
-        regime: str,
-        previous_flow: float,
-        previous_ice: float,
-    ) -> tuple[float, str]:
-        x = {
-            "QM": data["QM"],
-            "iceInd": data["iceInd"],
-            "iceIndPrev": previous_ice,
-            "ontFlowPrev": previous_flow,
-            "obsontNTS": data["ontNTS"],
-            "sfSupplyNTS": data["ontNTS_QM1"],
-            "ontLevelStart": ontLevelStart,
-            "kingLevelStart": ontLevelStart - 0.03,
-            "ptclaireR": data["ptclaireR"],
-            "longsaultR": data["longsaultR"],
-            "saundershwR": data["saundershwR"],
-            "saunderstwR": data["saunderstwR"],
-            "foreInd": data["foreInd"],
-            "sfSlonFlow": data["slonFlow_QM1"],
-            "slonFlow": data["stlouisontOut"],
-        }
-        limitsOutput = planLimits(
-            data["QM"], ontLevel, flow, regime, x, self.september_rule
-        )
-
-        return limitsOutput["ontFlow"], limitsOutput["ontRegime"]
-
     def _update(self) -> int:
         if not self.pids:
             raise StopIteration("No remaining policies")
@@ -239,9 +194,8 @@ class RuleCurve(Optimizer):
         return self.pids.popleft()
 
     def train(self) -> dict[str, Any]:
-        agent = Ontario(id="ont", policy_id="ont", mechanisms={})
+        agent = self.env.agents["ont"]
         p = self._update()
-        pars = self.pars[p]
         mdp = self.env.reset(MDPState())
         h = deque(self.data["ontLevelMOQ"].iloc[self.t_0 - 48 : self.t_0], maxlen=48)
         rows = []
@@ -253,19 +207,21 @@ class RuleCurve(Optimizer):
             ontLevelStart = mdp.state["ontLevelBOQ"][t]
 
             # Rule curve release
-            x = {
-                "forNTS": data["forNTS"],
-                "ontLevelBOQ": ontLevelStart,
-                "annavgLevel": np.mean(h),
-                "sfSupplyNTS": [data[f"ontNTS_QM{k}"] for k in range(1, 5)],
-            }
-            rfOutputs = releaseFunction(x, pars, **self.releaseFunInputs)
+            rfOutputs = releaseFunction(
+                {
+                    "forNTS": data["forNTS"],
+                    "ontLevelBOQ": ontLevelStart,
+                    "annavgLevel": np.mean(h),
+                    "sfSupplyNTS": [data[f"ontNTS_QM{k}"] for k in range(1, 5)],
+                },
+                self.pars[p],
+                **self.releaseFunInputs,
+            )
             flow = rfOutputs["rfFlow"]
             regime = "RF"
-
-            # Forecasted Ontario level
-            dif1 = round_d((data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6)
-            ontLevel_forecast = ontLevelStart + dif1
+            ontLevel_forecast = ontLevelStart + round_d(
+                (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
+            )
 
             # September rule
             if self.september_rule != "off":
@@ -283,71 +239,61 @@ class RuleCurve(Optimizer):
                 )
 
                 if regime != "RF":
-                    dif1 = round_d(
-                        (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
+                    ontLevel_forecast = round_d(
+                        ontLevelStart
+                        + round_d(
+                            (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
+                        ),
+                        6,
                     )
-                    ontLevel_forecast = round_d(ontLevelStart + dif1, 6)
 
-            # Operational constraints
-            flow, regime = self._apply_constraint(
-                data,
-                ontLevelStart,
-                ontLevel_forecast,
-                flow,
-                regime,
-                previous_flow=(
-                    mdp.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
-                ),
-                previous_ice=self.data["iceInd"].iloc[i - 1] if t > 0 else 2.0,
+            # Forcing and constraint inputs
+            mdp.params.update(
+                {
+                    col: data[col]
+                    for col in FORCING_COLUMNS
+                    | {"ontNTS_QM1", "slonFlow_QM1", "foreInd"}
+                }
+            )
+            mdp.params.update(
+                {
+                    "ontLevel_forecast": ontLevel_forecast,
+                    "flowRegime": regime,
+                    "iceIndPrev": self.data["iceInd"].iloc[i - 1] if t > 0 else 2.0,
+                }
             )
 
-            # Physical forcing
-            forcing = {col: data[col] for col in FORCING_COLUMNS}
-
-            mdp.params.update(forcing)
-
-            # Control
-            mdp.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
+            # Operational constraints
+            mdp = agent.mechanisms["flow"].apply(
+                mdp, flow, september_rule=self.september_rule
+            )
 
             # Physical transition
             mdp = self.env.simulate(mdp)
 
             # Stage cost
-            reward = agent.reward(mdp)
-
-            mdp.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
+            mdp.update(t=t, rewards={agent.id: agent.reward(mdp).rewards[agent.id][0]})
             assert mdp.t == t + 1
-
-            # Update controller history
             h.append(mdp.state["ontLevelMOQ"][mdp.t])
-
-            # Simulation outputs
-            row = data.copy()
-
-            row.update(rfOutputs)
-            row.update(
+            rows.append(
                 {
-                    "ontFlow": flow,
-                    "flowRegime": regime,
+                    **data,
+                    **rfOutputs,
+                    "ontFlow": mdp.actions["ont"]["flow"][t].item(),
+                    "flowRegime": mdp.params["flowRegime"],
                     "ontLevelBOQ": ontLevelStart,
                     "ontLevel": (ontLevelStart + mdp.state["ontLevelBOQ"][mdp.t]) * 0.5,
+                    **{
+                        col: mdp.state[col][mdp.t]
+                        for col in mdp.state.data
+                        if col != "ontLevelBOQ"
+                    },
                 }
             )
-            row.update(
-                {
-                    col: mdp.state[col][mdp.t]
-                    for col in mdp.state.data
-                    if col != "ontLevelBOQ"
-                }
-            )
-            rows.append(row)
-
-        # aggregate stage costs into running cost
-        running_cost = np.stack(mdp.rewards[agent.id]).sum(axis=0)
 
         return {
             "policy_id": p,
             "mdp": mdp,
             "data": pd.DataFrame(rows),
-            "running_cost": running_cost,
+            "running_cost": np.stack(mdp.rewards[agent.id]).sum(axis=0),
         }

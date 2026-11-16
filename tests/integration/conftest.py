@@ -3,7 +3,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from gymnasium.spaces import Box
 
+from bilevel_reservoirs.controllers.operator import AdjustFlowConfig
+from bilevel_reservoirs.controllers.operator import OntarioConfig as Ontario
 from bilevel_reservoirs.simulators.loslr import LoslrEnv
 from bilevel_reservoirs.solvers.rule_curve import (
     ForecastLeadTime,
@@ -11,6 +14,7 @@ from bilevel_reservoirs.solvers.rule_curve import (
     RuleCurveCfg,
     Trace,
 )
+from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
 
 DATA_PATH = Path(__file__).resolve().parents[2] / "data"
 POLICY_ID = 0
@@ -35,11 +39,19 @@ def config():
         .environment(
             horizon=N_STEPS,
             env=LoslrEnv,
-            env_config={
-                "stage_init": 74.55,
-                "mechanism_id": None,
-                "agents_cfg_dict": {},
-            },
+            env_config={"stage_init": 74.55, "mechanism_id": None},
+        )
+        .agents(
+            Ontario(
+                id="ont",
+                policy_id="ont",
+                mechanisms=AdjustFlowConfig(
+                    id="flow",
+                    acts_on=("ont", "flow"),
+                    action_space=Box(0.0, np.inf, shape=(1,), dtype=np.float64),
+                    constraint_fn=planLimits,
+                ),
+            )
         )
     )
 

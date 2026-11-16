@@ -1,21 +1,26 @@
+from __future__ import annotations
+
+from collections.abc import Callable
 from contextlib import chdir
+from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-from metamarl.agents.base import Agent
+from metamarl.agents.base import Agent, AgentConfig
 from metamarl.mechanism.base import MDPState, Mechanism
+from metamarl.mechanism.config import MechanismConfig
 
-# Legacy repository root
+from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
+
 LOSLR_ROOT = (
     Path(__file__).resolve().parents[3] / "external" / "loslr_regulation_optimization"
 )
 
-# Legacy modules load lookup tables using relative paths.
 with chdir(LOSLR_ROOT):
     from external.loslr_regulation_optimization.objectiveFunctions.legacyPIs.functions import (
-        commercialNavigation,
         downstreamCoastalImpacts,
         hydropowerProduction,
         meadowMarsh,
@@ -24,15 +29,6 @@ with chdir(LOSLR_ROOT):
         upstreamCoastalImpacts,
     )
 
-PI_MODELS = [
-    upstreamCoastalImpacts,
-    downstreamCoastalImpacts,
-    commercialNavigation,
-    hydropowerProduction,
-    meadowMarsh,
-    muskratLodgeViability,
-    recreationalBoating,
-]
 original_series_getitem = pd.Series.__getitem__
 
 
@@ -49,9 +45,6 @@ def legacy_series_getitem(self, key):
 
 
 class Ontario(Agent):
-    def observation(self, mdp: MDPState) -> MDPState:
-        pass
-
     def reward(self, mdp: MDPState) -> MDPState:
         t = mdp.t
         data = {
@@ -62,22 +55,29 @@ class Ontario(Agent):
                 [(mdp.state["ontLevelBOQ"][t - 1] + mdp.state["ontLevelBOQ"][t]) * 0.5]
             ),
         }
-        costs = np.asarray(
-            [
-                upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].iloc[-1],
-                downstreamCoastalImpacts.runModel(data)["downstreamCoastal"].iloc[-1],
-                -hydropowerProduction.runModel(data)["totalEnergyValue"].iloc[-1],
-                recreationalBoating.runModel(data)["totalRecBoating"].iloc[-1],
-            ],
-            dtype=np.float64,
-        )
 
-        return MDPState(rewards={self.id: costs})
+        return MDPState(
+            rewards={
+                self.id: np.asarray(
+                    [
+                        upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].iloc[
+                            -1
+                        ],
+                        downstreamCoastalImpacts.runModel(data)[
+                            "downstreamCoastal"
+                        ].iloc[-1],
+                        -hydropowerProduction.runModel(data)["totalEnergyValue"].iloc[
+                            -1
+                        ],
+                        recreationalBoating.runModel(data)["totalRecBoating"].iloc[-1],
+                    ],
+                    dtype=np.float64,
+                )
+            }
+        )
 
     def terminal_cost(self, mdp: MDPState) -> np.ndarray:
         """Ecological objectives requiring trajectory history."""
-
-        # TODO : this is an issue for MPC !!!
 
         data = {k: np.asarray(v) for k, v in mdp.state.data.items()}
 
@@ -100,18 +100,79 @@ class Ontario(Agent):
         )
 
 
-class AdjustCrest(Mechanism):
-    # CHANGED: accept decoded action explicitly
-    def apply(self, mdp: MDPState, action) -> MDPState:
+class AdjustFlow(Mechanism):
+    def __init__(self, *, constraint_fn: Callable = planLimits, **kwargs):
+        super().__init__(**kwargs)
+
+        self.constraint_fn = constraint_fn
+
+    def constrain(
+        self,
+        data: dict,
+        ontLevelStart: float,
+        ontLevel: float,
+        flow: float,
+        regime: str,
+        previous_flow: float,
+        previous_ice: float,
+        september_rule="off",
+    ) -> tuple[float, str]:
+        x = {
+            "QM": data["QM"],
+            "iceInd": data["iceInd"],
+            "iceIndPrev": previous_ice,
+            "ontFlowPrev": previous_flow,
+            "obsontNTS": data["ontNTS"],
+            "sfSupplyNTS": data["ontNTS_QM1"],
+            "ontLevelStart": ontLevelStart,
+            "kingLevelStart": ontLevelStart - 0.03,
+            "ptclaireR": data["ptclaireR"],
+            "longsaultR": data["longsaultR"],
+            "saundershwR": data["saundershwR"],
+            "saunderstwR": data["saunderstwR"],
+            "foreInd": data["foreInd"],
+            "sfSlonFlow": data["slonFlow_QM1"],
+            "slonFlow": data["stlouisontOut"],
+        }
+        limits = self.constraint_fn(
+            data["QM"], ontLevel, flow, regime, x, september_rule
+        )
+
+        return limits["ontFlow"], limits["ontRegime"]
+
+    def apply(self, mdp: MDPState, action, *, september_rule="off") -> MDPState:
         t = mdp.t
+        data = mdp.params
+        flow, regime = self.constrain(
+            data=data,
+            ontLevelStart=mdp.state["ontLevelBOQ"][t],
+            ontLevel=data["ontLevel_forecast"],
+            flow=float(np.asarray(action).item()),
+            regime=data["flowRegime"],
+            previous_flow=(
+                mdp.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
+            ),
+            previous_ice=data["iceIndPrev"],
+            september_rule=september_rule,
+        )
+        mdp.params["flowRegime"] = regime
 
-        # ADDED: action is currently a release, NOT
-        # an explicit physical crest elevation.
-        proposed_flow = float(np.asarray(action).item())
+        return mdp.update(
+            actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}}
+        )
 
-        # ADDED: Mechanism.apply returns a residual.
-        # MDPState.add sums this contribution into
-        # the existing state.
-        previous_value = mdp.state["proposedFlow"][t]
 
-        return MDPState(state={"proposedFlow": (proposed_flow - previous_value)})
+@dataclass(frozen=True)
+class AdjustFlowConfig(MechanismConfig):
+    mechanism_cls: ClassVar[type[Mechanism]] = AdjustFlow
+    constraint_fn: Callable = planLimits
+
+    def build(self, aid) -> AdjustFlow:
+        mechanism = super().build(aid)
+        mechanism.constraint_fn = self.constraint_fn
+
+        return mechanism
+
+
+class OntarioConfig(AgentConfig):
+    agent_cls: ClassVar[type[Agent]] = Ontario

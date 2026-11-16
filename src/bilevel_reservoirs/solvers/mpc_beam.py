@@ -155,4 +155,4 @@ class MPCBeamSearch(MPCShooting):
 
         _, actions, _, flow, regime = best
 
-        return (np.asarray(actions, dtype=np.float64), flow, regime)
+        return np.asarray(actions, dtype=np.float64), flow, regime

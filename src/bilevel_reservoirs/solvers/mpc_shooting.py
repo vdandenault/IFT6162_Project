@@ -13,11 +13,7 @@ from scipy.optimize import minimize
 
 from bilevel_reservoirs.controllers.operator import Ontario
 from bilevel_reservoirs.simulators.loslr import LoslrEnv
-from bilevel_reservoirs.solvers.rule_curve import (
-    FORCING_COLUMNS,
-    RuleCurve,
-    RuleCurveCfg,
-)
+from bilevel_reservoirs.solvers.rule_curve import FORCING_COLUMNS, RuleCurveCfg
 from external.loslr_regulation_optimization.functions.utils import round_d
 
 
@@ -50,8 +46,6 @@ class MPCShooting(Optimizer):
 
         if config.september_rule:
             raise NotImplementedError("September rule not supported")
-
-        self.september_rule = "off"
 
         if not 1 <= self.prediction_horizon <= 4:
             raise ValueError("Invalid prediction horizon")
@@ -90,7 +84,8 @@ class MPCShooting(Optimizer):
     def env(self, value: LoslrEnv) -> None:
         self._env = value
 
-    _apply_constraint = RuleCurve._apply_constraint
+    def _apply_constraint(self, *args, **kwargs) -> tuple[float, str]:
+        return self.env.agents["ont"].mechanisms["flow"].constrain(*args, **kwargs)
 
     def _update(
         self,
@@ -171,7 +166,7 @@ class MPCShooting(Optimizer):
         return actions, flow, regime
 
     def train(self) -> dict[str, Any]:
-        agent = Ontario(id="ont", policy_id="ont", mechanisms={})
+        agent = self.env.agents["ont"]
         mdp = self.env.reset(MDPState())
         rows = []
         nominal = None
