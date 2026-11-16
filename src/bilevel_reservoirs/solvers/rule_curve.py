@@ -235,11 +235,11 @@ class RuleCurve(Optimizer):
     def _update(self) -> int:
         if not self.pids:
             raise StopIteration("No remaining policies")
+
         return self.pids.popleft()
 
     def train(self) -> dict[str, Any]:
         agent = Ontario(id="ont", policy_id="ont", mechanisms={})
-
         p = self._update()
         pars = self.pars[p]
         mdp = self.env.reset(MDPState())
@@ -314,8 +314,8 @@ class RuleCurve(Optimizer):
 
             # Stage cost
             reward = agent.reward(mdp)
-            mdp.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
 
+            mdp.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
             assert mdp.t == t + 1
 
             # Update controller history

@@ -23,9 +23,6 @@ with chdir(LOSLR_ROOT):
         recreationalBoating,
         upstreamCoastalImpacts,
     )
-    from external.loslr_regulation_optimization.objectiveFunctions.legacyPIs.objectiveSimulation import (
-        objectiveSimulation,
-    )
 
 PI_MODELS = [
     upstreamCoastalImpacts,
@@ -36,7 +33,6 @@ PI_MODELS = [
     muskratLodgeViability,
     recreationalBoating,
 ]
-
 original_series_getitem = pd.Series.__getitem__
 
 
@@ -58,7 +54,6 @@ class Ontario(Agent):
 
     def reward(self, mdp: MDPState) -> MDPState:
         t = mdp.t
-
         data = {
             **{k: np.asarray([v]) for k, v in mdp.params.items()},
             **{k: np.asarray([v[t]]) for k, v in mdp.state.data.items()},
@@ -67,7 +62,6 @@ class Ontario(Agent):
                 [(mdp.state["ontLevelBOQ"][t - 1] + mdp.state["ontLevelBOQ"][t]) * 0.5]
             ),
         }
-
         costs = np.asarray(
             [
                 upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].iloc[-1],
@@ -77,10 +71,13 @@ class Ontario(Agent):
             ],
             dtype=np.float64,
         )
+
         return MDPState(rewards={self.id: costs})
 
-    def trajectory_cost(self, mdp: MDPState) -> np.ndarray:
+    def terminal_cost(self, mdp: MDPState) -> np.ndarray:
         """Ecological objectives requiring trajectory history."""
+
+        # TODO : this is an issue for MPC !!!
 
         data = {k: np.asarray(v) for k, v in mdp.state.data.items()}
 

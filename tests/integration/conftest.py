@@ -69,6 +69,7 @@ def reference_stage_costs(reference_evaluated):
 @pytest.fixture(scope="session")
 def results(config):
     solver = config.build_optimizer()
+
     return solver.train()
 
 
