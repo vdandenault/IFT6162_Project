@@ -8,7 +8,8 @@ IFT6162 project: compare Plan 2014, MPC and Stackelberg MPC for Lake Ontario–
 St. Lawrence releases with an aggregated Ottawa reservoir operator. PPO is an
 additional comparison. Lake Como remains a supported research and regression case.
 
-All application code lives under `src/reservoir_control/`. Shared PPO, SAC and
+The existing studies live under `src/reservoir_control/`. Nadine’s Ontario
+adapter and solvers live under `src/bilevel_reservoirs/`. Shared PPO, SAC and
 FQI implementations live in `controllers/`. Each system owns its physics,
 observations, operational policies and study runners under `systems/`.
 Planning and Gymnasium adapters connect those systems to the controllers.
@@ -68,6 +69,7 @@ for the next implementation phases.
 | Como benchmark inflow, demand, levels and environmental flow | `external/gym4real/gym4real/data/dam/` |
 | Como downloaded calibration sources | `results/simulator/calibration_research/sources/` |
 | Ontario historical supplies and supplied forecasts | `external/loslr_regulation_optimization/input/historic/1900_2020/` |
+| Ontario adapter parity input and fixtures | `data/input/historic/1961_2020/` and `data/baseline/` |
 | Generated trajectories, checkpoints and summaries | `results/` |
 
 The Ontario reference reads `12month_sqAR.txt`. Its SLON series represents the
@@ -86,10 +88,49 @@ uv sync --locked --group reproduction
 ```
 
 For an existing checkout, run `git submodule update --init --recursive` first.
-uv creates `.venv` using Python 3.12 and installs the project and Gym4ReaL workspace
-in editable mode. Scripts import the installed packages directly; no `sys.path` edits or shell
-activation are needed. `uv.lock` pins dependencies. Use `uv add` for changes
-and review both the project file and lockfile.
+uv creates `.venv` with Python 3.12 and installs both project packages and the
+Gym4ReaL workspace. The `reproduction` group retains the pinned numerical and
+RL dependencies used by the existing studies.
+
+Use a separate environment for the Ontario adapter. MetaMARL and the saved
+Ontario reference fixture require a different set of dependency versions.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv sync --locked --group ontario
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario pytest tests/integration tests/test_ontario_jax_physics.py
+```
+
+The `jax` group also enables the standalone physics kernel alongside the
+reproduction stack.
+
+```bash
+uv run --locked --group reproduction --group jax pytest tests/test_ontario_jax_physics.py
+```
+
+## Ontario integration and JAX
+
+Use `bilevel_reservoirs.simulators.physics.lake_step` as the JAX transition for
+adjustment-based planning. It accepts lake level in metres, a release adjustment
+in units of 10 m³/s, and net total supply in m³/s. It is usable with `jax.jit`,
+`jax.vmap` and `jax.grad` independently of MetaMARL. The simulator uses double
+precision at its scalar boundary. Set JAX x64 explicitly for numerical parity
+when calling the kernel or its derivatives directly.
+
+`LoslrEnv` exposes two action contracts. In `flow` mode, the rule curve and
+existing MPC solvers supply an already constrained total discharge, and the
+simulator uses the reference water balance and rounding. In `adjustment` mode,
+the simulator decodes the adjustment with the JAX lake transition, applies
+the native limits to total flow, and reconciles the level using the applied
+flow. The full rollout still uses Python and NumPy for routing, performance
+indicators and operating limits. The JAX gradients apply to the lake kernel.
+
+For the Ottawa integration, pass the executable **total** Ontario discharge
+in m³/s to the Ottawa follower. Convert the native flow units at that boundary.
+The next integration test should verify that the flow used by Ottawa matches
+the flow Ontario actually executes, including when an operational limit binds.
+The adjustment adapter currently reads the selected `ontNTS_QM*` column.
+Check the realized-supply and forecast inputs explicitly when connecting it to
+the coupled rollout.
 
 ## Historical Como studies
 

@@ -48,9 +48,15 @@ def test_matched_task_no_burnin():
     env.close()
 
 
-def test_failed_required_seed_suppresses_study_mean(tmp_path):
+def test_failed_required_seed_suppresses_study_mean(tmp_path, monkeypatch):
     import json
-    from reservoir_control.systems.lake_como.simulation.ppo_study import aggregate,SEEDS
+    from reservoir_control.systems.lake_como.simulation import ppo_study
+
+    reference = tmp_path / 'reference'
+    reference.mkdir()
+    (reference / 'annual.csv').write_text('arm,year,seed\nlegacy,1995,123\n')
+    monkeypatch.setattr(ppo_study, 'REFERENCE', reference)
+    aggregate, SEEDS = ppo_study.aggregate, ppo_study.SEEDS
     for seed in SEEDS:
         folder=tmp_path/f'seed{seed}';folder.mkdir()
         (folder/'training.json').write_text(json.dumps({'complete':False}))

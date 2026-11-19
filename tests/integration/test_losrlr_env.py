@@ -5,23 +5,20 @@ import numpy as np
 import pandas as pd
 import pytest
 import toml
-from metamarl.mechanism.base import MDPState
+from core.mechanism.base import MDPState
 
-from external.loslr_regulation_optimization.functions.limits.Bv7 import (
-    getPlanLimitsInputs,
-    planLimits,
-)
-from external.loslr_regulation_optimization.functions.release.ruleCurve import (
-    formatDecisionVariables,
-    getReleaseFunctionInputs,
-    releaseFunction,
-)
-from external.loslr_regulation_optimization.functions.routing.stlaw import (
-    getStLawrenceRoutingInputs,
-    stLawrenceRouting,
-)
-from external.loslr_regulation_optimization.optimizationSimulation import simulation
-from src.bilevel_reservoirs.simulators.loslr import LoslrEnv
+from bilevel_reservoirs.simulators.loslr import LoslrEnv
+from bilevel_reservoirs.simulators.native import native_reference
+
+native = native_reference()
+getPlanLimitsInputs = native.limits.getPlanLimitsInputs
+planLimits = native.limits.planLimits
+formatDecisionVariables = native.release.formatDecisionVariables
+getReleaseFunctionInputs = native.release.getReleaseFunctionInputs
+releaseFunction = native.release.releaseFunction
+getStLawrenceRoutingInputs = native.routing.getStLawrenceRoutingInputs
+stLawrenceRouting = native.routing.stLawrenceRouting
+simulation = native.simulation.simulation
 
 pytestmark = pytest.mark.integration
 DATA_PATH = Path(__file__).resolve().parents[2] / "data"
@@ -147,7 +144,7 @@ def reference():
 
 @pytest.fixture
 def env():
-    return LoslrEnv(world=None, mechanism_id=None, agents_cfg_dict={}, horizon=N_STEPS)
+    return LoslrEnv(world=None, mechanism_id=None, agents_cfg_dict={}, horizon=N_STEPS, action_mode="flow")
 
 
 def test_reference(legacy, reference):
@@ -234,3 +231,29 @@ def test_loslr_numerical_stability(env, forcing, legacy):
         check_exact=True,
         check_like=False,
     )
+
+
+def test_adjustment_mode_reconciles_jax_level_with_applied_flow(data):
+    from types import SimpleNamespace
+
+    env = LoslrEnv(world=None, mechanism_id=None, agents_cfg_dict={}, horizon=1)
+    calls = []
+
+    def constrain(params, level, proposed_level, proposed_flow, regime, **history):
+        calls.append(proposed_flow)
+        return 600.0, "test_limit"
+
+    mdp = env.reset(MDPState())
+    env.agents["ont"] = SimpleNamespace(mechanisms={"flow": SimpleNamespace(constrain=constrain)})
+    forcing = data.iloc[START_STEP].to_dict()
+    forcing["iceIndPrev"] = 2.0
+    mdp.params.update(forcing)
+    mdp.update(actions={"ont": {"adjustment": np.asarray([100.0])}})
+    mdp = env.simulate(mdp)
+
+    quarter = (int(forcing["QM"]) - 1) % 4 + 1
+    expected = 74.55 + (forcing[f"ontNTS_QM{quarter}"] - 6000.0) / 29700.0
+    assert len(calls) == 1 and calls[0] != pytest.approx(600.0)
+    assert mdp.actions["ont"]["flow"][0].item() == 600.0
+    assert mdp.state["ontLevelBOQ"][1] == pytest.approx(expected, abs=1e-10)
+    assert mdp.params["flowRegime"] == "test_limit"

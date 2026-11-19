@@ -2,6 +2,7 @@
 
 # Local environment and generated artifacts
 .venv/
+.venv-ontario/
 __pycache__/
 .ipynb_checkpoints/
 results/
@@ -53,34 +54,21 @@ htmlcov/
 
 # Local reports and generated audit output
 /reports/
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
+
+# Additional packaging output
 *.so
 .Python
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
-.eggs/
 lib/
 lib64/
 parts/
 sdist/
 var/
 wheels/
-*.egg-info/
 .installed.cfg
-*.egg
 *.env
-
-# Virtual environments
-.venv/
-venv/
-ENV/
-env/
 
 # IDEs
 .vscode/
@@ -88,17 +76,9 @@ env/
 *.swp
 *.swo
 *~
-.DS_Store
 
 # Jupyter
-.ipynb_checkpoints/
 *.ipynb
-
-# Testing
-.coverage
-.pytest_cache/
-.tox/
-htmlcov/
 
 # Experiment outputs
 experiments/
@@ -112,5 +92,4 @@ backup_*
 # Visualization outputs
 *.png
 *.jpg
-*.pdf
 *.svg

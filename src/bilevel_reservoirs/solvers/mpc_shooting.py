@@ -7,14 +7,16 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from metamarl.mechanism.base import MDPState
-from metamarl.optimizers.base import Optimizer
+from core.mechanism.base import MDPState
+from core.optimizers.base import Optimizer
 from scipy.optimize import minimize
 
 from bilevel_reservoirs.controllers.operator import Ontario
 from bilevel_reservoirs.simulators.loslr import LoslrEnv
+from bilevel_reservoirs.simulators.native import native_reference
 from bilevel_reservoirs.solvers.rule_curve import FORCING_COLUMNS, RuleCurveCfg
-from external.loslr_regulation_optimization.functions.utils import round_d
+
+round_d = native_reference().utils.round_d
 
 
 class MPCShootingCfg(RuleCurveCfg):
@@ -34,6 +36,8 @@ class MPCShooting(Optimizer):
 
     def __init__(self, config: MPCShootingCfg, **kwargs: Any) -> None:
         super().__init__(config=config, **kwargs)
+        if self.world is None:
+            self.id = type(self).__name__
 
         self.t_0 = config.start_step
         self.conv = config.conv

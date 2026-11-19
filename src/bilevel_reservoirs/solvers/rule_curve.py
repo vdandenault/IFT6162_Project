@@ -8,16 +8,16 @@ from typing import Any, Self, override
 import numpy as np
 import pandas as pd
 import toml
-from metamarl.mechanism.base import MDPState
-from metamarl.optimizers.base import Optimizer, OptimizerConfig
+from core.mechanism.base import MDPState
+from core.optimizers.base import Optimizer, OptimizerConfig
 
+from bilevel_reservoirs.simulators.native import native_reference
 from bilevel_reservoirs.simulators.loslr import LoslrEnv
-from external.loslr_regulation_optimization.functions.limits.septemberRule import septemberRule
-from external.loslr_regulation_optimization.functions.release.ruleCurve import (
-    formatDecisionVariables,
-    releaseFunction,
-)
-from external.loslr_regulation_optimization.functions.utils import round_d
+
+round_d = native_reference().utils.round_d
+septemberRule = native_reference().september.septemberRule
+formatDecisionVariables = native_reference().release.formatDecisionVariables
+releaseFunction = native_reference().release.releaseFunction
 
 FORCING_COLUMNS = {
     "Sim",
@@ -139,7 +139,10 @@ class RuleCurveCfg(OptimizerConfig):
 
     @override
     def environment(self, env=LoslrEnv, **kwargs: Any) -> Self:
-        return super().environment(env=env, **kwargs)
+        env_config = {"action_mode": "flow", **kwargs.pop("env_config", {})}
+        if env_config["action_mode"] != "flow":
+            raise ValueError("Rule curve and inherited MPC solvers require flow mode")
+        return super().environment(env=env, env_config=env_config, **kwargs)
 
     @override
     def _env_creator(self, *, agents_cfgs=None, **kwargs):
@@ -154,6 +157,8 @@ class RuleCurve(Optimizer):
 
     def __init__(self, config: RuleCurveCfg, **kwargs: Any) -> None:
         super().__init__(config=config, **kwargs)
+        if self.world is None:
+            self.id = type(self).__name__
 
         self.t_0 = config.start_step
         self.conv = config.conv

@@ -3,29 +3,31 @@ from __future__ import annotations
 from collections.abc import Callable
 from contextlib import chdir
 from dataclasses import dataclass
-from pathlib import Path
 from typing import ClassVar
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-from metamarl.agents.base import Agent, AgentConfig
-from metamarl.mechanism.base import MDPState, Mechanism
-from metamarl.mechanism.config import MechanismConfig
+from core.agents.base import Agent, AgentConfig
+from core.mechanism.base import MDPState, Mechanism
+from core.mechanism.config import MechanismConfig
 
-from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
+from bilevel_reservoirs.simulators.native import native_reference
 
-LOSLR_ROOT = Path(__file__).resolve().parents[3] / "external" / "loslr_regulation_optimization"
+planLimits = native_reference().limits.planLimits
 
-with chdir(LOSLR_ROOT):
-    from external.loslr_regulation_optimization.objectiveFunctions.legacyPIs.functions import (
-        downstreamCoastalImpacts,
-        hydropowerProduction,
-        meadowMarsh,
-        muskratLodgeViability,
-        recreationalBoating,
-        upstreamCoastalImpacts,
-    )
+def load_indicator(name: str):
+    reference = native_reference()
+    with chdir(reference.root):
+        return reference.load(f"objectiveFunctions/legacyPIs/functions/{name}.py")
+
+
+downstreamCoastalImpacts = load_indicator("downstreamCoastalImpacts")
+hydropowerProduction = load_indicator("hydropowerProduction")
+meadowMarsh = load_indicator("meadowMarsh")
+muskratLodgeViability = load_indicator("muskratLodgeViability")
+recreationalBoating = load_indicator("recreationalBoating")
+upstreamCoastalImpacts = load_indicator("upstreamCoastalImpacts")
 
 original_series_getitem = pd.Series.__getitem__
 

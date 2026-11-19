@@ -14,7 +14,9 @@ from bilevel_reservoirs.solvers.rule_curve import (
     RuleCurveCfg,
     Trace,
 )
-from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
+from bilevel_reservoirs.simulators.native import native_reference
+
+planLimits = native_reference().limits.planLimits
 
 DATA_PATH = Path(__file__).resolve().parents[2] / "data"
 POLICY_ID = 0
@@ -61,7 +63,10 @@ def reference():
 
 @pytest.fixture(scope="session")
 def reference_evaluated():
-    return pd.read_pickle(DATA_PATH / "baseline" / "output.pkl")
+    path = DATA_PATH / "baseline" / "output.pkl"
+    if not path.is_file():
+        pytest.skip("Evaluated Ontario reference output.pkl is not in the checkout")
+    return pd.read_pickle(path)
 
 
 @pytest.fixture(scope="session")

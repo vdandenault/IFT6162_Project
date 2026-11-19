@@ -4,12 +4,14 @@ from copy import deepcopy
 from typing import Any
 
 import numpy as np
-from metamarl.mechanism.base import MDPState
+from core.mechanism.base import MDPState
 
 from bilevel_reservoirs.controllers.operator import Ontario
+from bilevel_reservoirs.simulators.native import native_reference
 from bilevel_reservoirs.solvers.mpc_shooting import MPCShooting, MPCShootingCfg
 from bilevel_reservoirs.solvers.rule_curve import FORCING_COLUMNS
-from external.loslr_regulation_optimization.functions.utils import round_d
+
+round_d = native_reference().utils.round_d
 
 
 class MPCBeamSearchCfg(MPCShootingCfg):

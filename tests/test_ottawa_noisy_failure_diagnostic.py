@@ -8,6 +8,8 @@ from reservoir_control.systems.ottawa.noisy_failure_diagnostic import (
 
 
 def load(scenario,seed):
+    if not (ARCHIVE / "configuration.json").is_file():
+        pytest.skip("Archived Ottawa horizon study is not in the checkout")
     c=json.loads((ARCHIVE/'configuration.json').read_text())['original_configuration'];c['horizon']=5
     case=next(v for v in c['scenarios'] if v['id']==scenario)
     with np.load(ARCHIVE/'forecast_bank.npz',allow_pickle=False) as saved:
