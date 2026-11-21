@@ -326,7 +326,6 @@ class RuleCurve(Optimizer):
                         break
 
                     endLev_new = startLev[k] + (sfSupplyNTS[k] / 10 - release) / self.conv
-
                     ont_blv = round_d((startLev[k] + endLev_new) * 0.5, 2)
                     lastflow = release
 
@@ -348,7 +347,6 @@ class RuleCurve(Optimizer):
             # Calculate average release across the four forecasts
             flow = round_d(sum(sfFlow) / nforecasts, 0)
             regime = "RF"
-
             ontLevel_forecast = ontLevelStart + round_d(
                 (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
             )
