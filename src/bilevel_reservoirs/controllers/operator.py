@@ -55,6 +55,8 @@ class Ontario(Agent):
                 [(mdp.state["ontLevelBOQ"][t - 1] + mdp.state["ontLevelBOQ"][t]) * 0.5]
             ),
         }
+        data["Month"] = np.asarray([int(mdp.params["Month"])])
+        data["QM"] = np.asarray([int(mdp.params["QM"])])
 
         return MDPState(
             rewards={

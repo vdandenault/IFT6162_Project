@@ -1,4 +1,4 @@
-"""Nominal MPC with single direct shooting"""
+"""Nominal MPC with single direct shooting."""
 
 from __future__ import annotations
 
@@ -26,8 +26,10 @@ class MPCShootingCfg(RuleCurveCfg):
         self.opt_class = MPCShooting
         self.prediction_horizon: int = 4
         self.weights: np.ndarray = np.ones(4, dtype=np.float64)
-        self.flow_min: float = 0.0
-        self.flow_max: float = 1150.0
+
+        # TODO: review bounds; apply to adjustments, not total flow.
+        self.adjustment_min: float = -700.0
+        self.adjustment_max: float = 700.0
         self.maxiter: int = 20
 
 
@@ -44,15 +46,18 @@ class MPCShooting(Optimizer):
         self.flow_scale = config.flow_scale
         self.prediction_horizon = config.prediction_horizon
         self.weights = np.asarray(config.weights, dtype=np.float64)
-        self.flow_min = config.flow_min
-        self.flow_max = config.flow_max
+        self.adjustment_min = config.adjustment_min
+        self.adjustment_max = config.adjustment_max
         self.maxiter = config.maxiter
 
         if config.september_rule:
             raise NotImplementedError("September rule not supported")
 
-        if not 1 <= self.prediction_horizon <= 4:
+        if self.prediction_horizon < 1:
             raise ValueError("Invalid prediction horizon")
+
+        if self.adjustment_min >= self.adjustment_max:
+            raise ValueError("Invalid adjustment bounds")
 
         if self.weights.shape != (4,):
             raise ValueError("Expected four objective weights")
@@ -88,74 +93,56 @@ class MPCShooting(Optimizer):
     def env(self, value: LoslrEnv) -> None:
         self._env = value
 
-    def _apply_constraint(self, *args, **kwargs) -> tuple[float, str]:
-        return self.env.agents["ont"].mechanisms["flow"].constrain(*args, **kwargs)
-
     def _update(
         self, mdp: MDPState, agent: Ontario, forecasts: list[dict[str, Any]], nominal: np.ndarray
-    ) -> tuple[np.ndarray, float, str]:
-        def rollout(actions: np.ndarray):
+    ) -> np.ndarray:
+        def rollout(adjustments: np.ndarray) -> float:
             candidate = deepcopy(mdp)
             start = candidate.t
-            first_flow = None
-            first_regime = None
 
-            for action, data in zip(actions, forecasts, strict=True):
-                t = candidate.t
-                ontLevelStart = candidate.state["ontLevelBOQ"][t]
-                flow = float(action)
-                dif1 = round_d((data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6)
-                ontLevel_forecast = ontLevelStart + dif1
-                flow, regime = self._apply_constraint(
-                    data,
-                    ontLevelStart,
-                    ontLevel_forecast,
-                    flow,
-                    "RF",
-                    previous_flow=(
-                        candidate.actions["ont"]["flow"][t - 1].item() if t > 0 else 595.0
-                    ),
-                    previous_ice=(candidate.params["iceInd"] if t > 0 else 2.0),
-                )
+            try:
+                for u_t, data in zip(adjustments, forecasts, strict=True):
+                    t = candidate.t
 
-                if t == start:
-                    first_flow = flow
-                    first_regime = regime
+                    candidate.params.update(data)
+                    candidate.update(
+                        actions={"ont": {"adjustment": np.asarray([u_t], dtype=np.float64)}}
+                    )
 
-                candidate.params.update({col: data[col] for col in FORCING_COLUMNS})
-                candidate.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
+                    # Environment handles cubic, discharge,
+                    # constraints, and routing.
+                    candidate = self.env.simulate(candidate)
+                    reward = agent.reward(candidate)
 
-                candidate = self.env.simulate(candidate)
-                reward = agent.reward(candidate)
+                    candidate.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
 
-                candidate.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
+                l_c = np.stack(candidate.rewards[agent.id][start : candidate.t]).sum(axis=0)
+                cost = float(self.weights @ l_c)
 
-            running_cost = np.stack(candidate.rewards[agent.id][start : candidate.t]).sum(axis=0)
-            cost = float(self.weights @ running_cost)
-
-            return cost, first_flow, first_regime
+                return cost if np.isfinite(cost) else np.inf
+            except (ValueError, FloatingPointError, OverflowError):
+                # Invalid hydraulic candidate is infeasible.
+                return np.inf
 
         result = minimize(
-            lambda actions: rollout(actions)[0],
+            rollout,
             x0=nominal,
             method="Powell",
-            bounds=[(self.flow_min, self.flow_max) for _ in nominal],
+            bounds=[(self.adjustment_min, self.adjustment_max) for _ in nominal],
             options={"maxiter": self.maxiter, "xtol": 1.0},
         )
-        actions = np.clip(result.x, self.flow_min, self.flow_max)
-        cost, flow, regime = rollout(actions)
-        nominal_cost, nominal_flow, nominal_regime = rollout(nominal)
+        adjustments = np.clip(result.x, self.adjustment_min, self.adjustment_max)
+        cost = rollout(adjustments)
+        nominal_cost = rollout(nominal)
 
         if np.isfinite(nominal_cost) and (not np.isfinite(cost) or nominal_cost < cost):
-            actions = nominal.copy()
+            adjustments = nominal.copy()
             cost = nominal_cost
-            flow = nominal_flow
-            regime = nominal_regime
 
         if not np.isfinite(cost):
             raise RuntimeError("MPC failed to find a finite solution")
 
-        return actions, flow, regime
+        return adjustments
 
     def train(self) -> dict[str, Any]:
         agent = self.env.agents["ont"]
@@ -168,35 +155,37 @@ class MPCShooting(Optimizer):
             data = {col: self.data[col].iat[i] for col in self.data.columns}
             ontLevelStart = mdp.state["ontLevelBOQ"][t]
             horizon = min(self.prediction_horizon, self.horizon - t)
-            forecasts = []
 
-            for k in range(horizon):
-                forecast = {col: data[col] for col in FORCING_COLUMNS}
+            # CHANGED: each dataset row is one quarter-month.
+            # No separate forecast-lead indexing.
+            forecasts = [self.data.iloc[i + j].to_dict() for j in range(horizon)]
 
-                for col in ("Sim", "Year", "Month", "QM"):
-                    forecast[col] = self.data[col].iat[i + k]
+            # CHANGED: supply previous ice for each forecast step.
+            for j, forecast in enumerate(forecasts):
+                idx = i + j
+                forecast["iceIndPrev"] = float(self.data["iceInd"].iat[idx - 1]) if idx > 0 else 2.0
 
-                forecast.update(
-                    {
-                        "ontNTS": data[f"ontNTS_QM{k + 1}"],
-                        "ontNTS_QM1": data[f"ontNTS_QM{k + 1}"],
-                        "stlouisontOut": data["slonFlow_QM1"],
-                        "slonFlow_QM1": data["slonFlow_QM1"],
-                        "foreInd": data["foreInd"],
-                    }
-                )
-                forecasts.append(forecast)
-
+            # TODO: zero adjustment is the initial guess.
             if nominal is None:
-                nominal = np.full(horizon, 595.0, dtype=np.float64)
+                nominal = np.zeros(horizon, dtype=np.float64)
             else:
                 nominal = np.concatenate([nominal[1:], nominal[-1:]])[:horizon]
 
-            nominal, flow, regime = self._update(mdp, agent, forecasts, nominal)
-            forcing = {col: data[col] for col in FORCING_COLUMNS}
+            # Optimize adjustments directly.
+            nominal = self._update(mdp, agent, forecasts, nominal)
 
-            mdp.params.update(forcing)
-            mdp.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
+            # Receding-horizon control:
+            # apply only the first adjustment.
+            u_t = float(nominal[0])
+
+            # CHANGED: pass complete current forcing row.
+            # Includes foreInd, slonFlow_QM1, and NTS columns.
+            mdp.params.update(data)
+
+            # CHANGED: previous quarter-month ice.
+            mdp.params["iceIndPrev"] = float(self.data["iceInd"].iat[i - 1]) if i > 0 else 2.0
+
+            mdp.update(actions={"ont": {"adjustment": np.asarray([u_t], dtype=np.float64)}})
 
             mdp = self.env.simulate(mdp)
             reward = agent.reward(mdp)
@@ -204,12 +193,16 @@ class MPCShooting(Optimizer):
             mdp.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
             assert mdp.t == t + 1
 
+            # Read actual discharge from the environment.
+            flow = float(mdp.state["ontFlow"][mdp.t])
+            regime = mdp.params["flowRegime"]
             row = data.copy()
 
             row.update(
                 {
                     "ontFlow": flow,
                     "flowRegime": regime,
+                    "controlAdjustment": u_t,
                     "ontLevelBOQ": ontLevelStart,
                     "ontLevel": (ontLevelStart + mdp.state["ontLevelBOQ"][mdp.t]) * 0.5,
                 }

@@ -93,3 +93,6 @@ backup_*
 *.png
 *.jpg
 *.svg
+
+# Wandb
+wandb/
