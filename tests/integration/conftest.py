@@ -44,8 +44,8 @@ def config():
                 id="ont",
                 policy_id="ont",
                 mechanisms=AdjustFlowConfig(
-                    id="flow",
-                    acts_on=("ont", "flow"),
+                    id="adjustment",
+                    acts_on=("ont", "adjustment"),
                     action_space=Box(0.0, np.inf, shape=(1,), dtype=np.float64),
                     constraint_fn=planLimits,
                 ),

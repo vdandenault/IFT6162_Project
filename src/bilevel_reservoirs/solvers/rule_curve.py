@@ -15,8 +15,8 @@ from bilevel_reservoirs.simulators.loslr import LoslrEnv
 from external.loslr_regulation_optimization.functions.limits.septemberRule import septemberRule
 from external.loslr_regulation_optimization.functions.release.ruleCurve import (
     formatDecisionVariables,
-    releaseFunction,
 )
+from external.loslr_regulation_optimization.functions.routing.stlaw import stLawrenceRouting
 from external.loslr_regulation_optimization.functions.utils import round_d
 
 FORCING_COLUMNS = {
@@ -49,6 +49,12 @@ FORCING_COLUMNS = {
     "stpierreR",
     "sorelR",
     "varennesR",
+    "ontNTS_QM1",
+    "ontNTS_QM2",
+    "ontNTS_QM3",
+    "ontNTS_QM4",
+    "foreInd",
+    "slonFlow_QM1",
 }
 
 
@@ -191,6 +197,48 @@ class RuleCurve(Optimizer):
 
         return self.pids.popleft()
 
+    def _simulate(self, mdp: MDPState) -> MDPState:
+        t = mdp.t
+        state = mdp.state
+        params = mdp.params
+
+        # TODO : control applied with step fucntion
+        flow = mdp.actions["ont"]["flow"][t].item()
+
+        # step lo
+        ontLevelBOQ_next = state["ontLevelBOQ"][t] + round_d(  # h_next
+            (params["ontNTS"] / 10 - flow) / 2970, 6
+        )
+        ontLevelEOQ_next = round_d(ontLevelBOQ_next, 2)
+        ontLevelMOQ_raw = (ontLevelBOQ_next + state["ontLevelBOQ"][t]) * 0.5  # h_mean
+        ontLevelMOQ_next = round_d(ontLevelMOQ_raw, 2)
+
+        # Step slr
+        x = {**params, "slonFlow": params["stlouisontOut"], "jetty1R": params["varennesR"]}
+        stLawLevels = stLawrenceRouting(ontLevelMOQ_raw, flow, x)
+        stlouisFlow = stLawLevels["stlouisFlow"]
+        freshetIndicator = 0.0
+
+        if t > 0:
+            freshetIndicator = state["freshetIndicator"][t]
+            previous_flow = state["stlouisFlow"][t]
+
+            if np.isfinite(previous_flow):
+                if stlouisFlow > 1.5 * previous_flow:
+                    freshetIndicator = 1.0
+                elif stlouisFlow < 0.9 * previous_flow:
+                    freshetIndicator = 0.0
+
+        return mdp.advance(
+            state={
+                "ontLevelBOQ": ontLevelBOQ_next,
+                "ontLevelEOQ": ontLevelEOQ_next,
+                "ontLevelMOQ": ontLevelMOQ_next,
+                "freshetIndicator": freshetIndicator,
+                **stLawLevels,
+            }
+        )
+
     def train(self) -> dict[str, Any]:
         agent = self.env.agents["ont"]
         p = self._update()
@@ -204,19 +252,103 @@ class RuleCurve(Optimizer):
             qm = data["QM"]
             ontLevelStart = mdp.state["ontLevelBOQ"][t]
 
-            # Rule curve release
-            rfOutputs = releaseFunction(
-                {
-                    "forNTS": data["forNTS"],
-                    "ontLevelBOQ": ontLevelStart,
-                    "annavgLevel": np.mean(h),
-                    "sfSupplyNTS": [data[f"ontNTS_QM{k}"] for k in range(1, 5)],
-                },
-                self.pars[p],
-                **self.releaseFunInputs,
-            )
-            flow = rfOutputs["rfFlow"]
+            # Release Function
+            # extract hydrologic variables from input dictionary
+            lfSupply = data["forNTS"]
+            ontLevelBOQ = mdp.state["ontLevelBOQ"][t]
+            annavgLevel = np.mean(h)
+            sfSupplyNTS = [data[f"ontNTS_QM{k}"] for k in range(1, 5)]
+
+            # simplified formulation to determine if wet and confident
+            wet = self.pars[p]["wetIndicatorThreshold"]
+            low99limit = lfSupply - self.pars[p]["wetConfidenceThreshold"]
+            lfInd = np.nan
+            lfCon = np.nan
+
+            # if the supply index is greater than the wet threshold
+            if lfSupply > wet:
+                lfInd = 1
+
+                # if lower confidence interval is greater than the wet threshold
+                if low99limit >= wet:
+                    lfCon = 3
+
+            # else:
+            #     lfInd = np.nan
+            #     lfCon = np.nan
+
+            # -------------------------------------------------------------------------
+            # rule curve [short forecast and balance subroutine]
+            # -------------------------------------------------------------------------
+
+            # calculate rule curve release for each forecasted quarter-month (1 - 4)
+            nforecasts = 4
+            startLev = []
+
+            startLev.append(ontLevelBOQ)
+
+            sfFlow = []
+
+            for k in range(nforecasts):
+                # set constants and indicators
+                slope = 55.5823
+                adj = 0.0014 * (2010 - 1985)
+                H_0 = 69.474 + adj
+                lastflow = 0
+                ont_blv = startLev[k]
+
+                # The actual rule_curve policy
+                for _ in range(10):
+                    preproj = slope * (ont_blv - H_0) ** 1.5
+
+                    if lfSupply >= 7011.0:
+                        if lfInd == 1 and lfCon == 3:
+                            c1 = self.pars[p]["C1*"]
+                            regime = "RCW*"
+                        else:
+                            c1 = self.pars[p]["C1"]
+                            regime = "RCW"
+
+                        p1 = self.pars[p]["P1"]
+                        rc = c1 * ((lfSupply - 7011.0) / (8552.0 - 7011.0)) ** p1
+                        signed_rc = rc
+                    else:
+                        c2 = self.pars[p]["C2"]
+                        p2 = self.pars[p]["P2"]
+                        regime = "RCD"
+                        rc = c2 * ((7011.0 - lfSupply) / (7011.0 - 5717.0)) ** p2
+                        signed_rc = -rc
+
+                    # Preserve legacy release rounding and convergence
+                    release = round_d(preproj + signed_rc, 0)
+
+                    if abs(release - lastflow) <= 0.0001:
+                        break
+
+                    endLev_new = startLev[k] + (sfSupplyNTS[k] / 10 - release) / self.conv
+
+                    ont_blv = round_d((startLev[k] + endLev_new) * 0.5, 2)
+                    lastflow = release
+
+                # try to keep ontario level up in dry periods
+                if annavgLevel <= self.pars[p]["dryLevelThreshold"]:
+                    release = release + self.pars[p]["dryFlowAdjustment"]
+                    regime = regime + "-"
+
+                sfFlow.append(release)
+
+                # compute water level change using forecasted supply and flow
+                dif1 = round_d((sfSupplyNTS[k] / 10 - release) / self.conv, 6)
+                endLev1 = round_d(startLev[k] + dif1, 6)
+
+                # Update initial conditions for next forecast
+                if k < list(range(nforecasts))[-1]:
+                    startLev.append(endLev1)
+
+            # Calculate average release across the four forecasts
+            flow = round_d(sum(sfFlow) / nforecasts, 0)
             regime = "RF"
+
             ontLevel_forecast = ontLevelStart + round_d(
                 (data["ontNTS_QM1"] / self.flow_scale - flow) / self.conv, 6
             )
@@ -255,10 +387,12 @@ class RuleCurve(Optimizer):
             )
 
             # Operational constraints
-            mdp = agent.mechanisms["flow"].apply(mdp, flow, september_rule=self.september_rule)
+            mdp = agent.mechanisms["adjustment"].apply(
+                mdp, flow, september_rule=self.september_rule
+            )
 
             # Physical transition
-            mdp = self.env.simulate(mdp)
+            mdp = self._simulate(mdp)
 
             # Stage cost
             mdp.update(t=t, rewards={agent.id: agent.reward(mdp).rewards[agent.id][0]})
@@ -267,7 +401,6 @@ class RuleCurve(Optimizer):
             rows.append(
                 {
                     **data,
-                    **rfOutputs,
                     "ontFlow": mdp.actions["ont"]["flow"][t].item(),
                     "flowRegime": mdp.params["flowRegime"],
                     "ontLevelBOQ": ontLevelStart,
