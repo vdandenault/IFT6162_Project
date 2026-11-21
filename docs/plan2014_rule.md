@@ -282,7 +282,7 @@ $$
 h_{t+1}^{\mathrm{FE}}=h_t+\alpha\left[N_t-Q(h_t,u_t)\right].
 $$
 
-**Implicit midpoint (Newton iteration).** Evaluating the discharge at the mean stage requires solving $F_t(z)=0$, where
+**Implicit midpoint (Newton-Kantorovich).** Evaluating the discharge at the mean stage requires solving $F_t(z)=0$, where
 
 $$
 \begin{aligned}
