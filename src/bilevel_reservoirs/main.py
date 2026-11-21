@@ -1,4 +1,8 @@
-"""Compare the saved Plan2014 baseline, refactored RuleCurve, and MPC shooting in W&B."""
+"""Compare pkl 2014 with RuleCurve refactor and three MPC solvers.
+
+Numerical results are saved under experiments/; interactive plots use MetaMARL's
+W&B reporting backend. No plot images are written locally.
+"""
 
 from __future__ import annotations
 
@@ -15,10 +19,12 @@ from metamarl.metrics.logger import MetricLogger
 from metamarl.metrics.schemas import MetricSchema
 from metamarl.reporting.query import Query
 from metamarl.reporting.wandb import WandbConfig
-from pydantic import Field
+from pydantic import Field, create_model
 
 from bilevel_reservoirs.controllers.operator import AdjustFlowConfig, OntarioConfig
 from bilevel_reservoirs.simulators.loslr import LoslrEnv
+from bilevel_reservoirs.solvers.mpc_beam import MPCBeamSearchCfg
+from bilevel_reservoirs.solvers.mpc_mppi import MPCMPPICfg
 from bilevel_reservoirs.solvers.mpc_shooting import MPCShootingCfg
 from bilevel_reservoirs.solvers.rule_curve import (
     ForecastLeadTime,
@@ -29,14 +35,22 @@ from bilevel_reservoirs.solvers.rule_curve import (
 from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
 
 DATA_PATH = Path("data")
+OUTPUT_PATH = Path("experiments") / "mpc_shooting"
 WANDB_PROJECT = "bilevel_reservoirs"
 POLICY_ID = 0
 START_STEP = 48
 N_STEPS = 48
 PREDICTION_HORIZON = 4
-MAXITER = 20
+SHOOTING_MAXITER = 20
+
 DATE_COLUMNS = ["Sim", "Year", "Month", "QM"]
-RUNS = ("baseline_pkl", "rule_curve", "mpc")
+METHODS = {
+    "pkl": "pkl baseline",
+    "rule_curve": "RuleCurve",
+    "mpc_shooting": "MPC shooting",
+    "mpc_beam": "MPC beam search",
+    "mpc_mppi": "MPC MPPI",
+}
 COST_COLUMNS = ("upstreamCoastal", "downstreamCoastal", "negativeEnergyValue", "totalRecBoating")
 COST_KEYS = (
     "upstream_coastal",
@@ -53,84 +67,26 @@ COST_TITLES = (
 SERIES = {"reduce": ReduceProtocol.SERIES}
 LOG = logging.getLogger(__name__)
 
-
-class ComparisonMetrics(MetricSchema):
-    """Time-series metrics consumed by W&B query reporter."""
-
-    step: int | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_flow: float | None = Field(default=None, json_schema_extra=SERIES)
-    rule_curve_flow: float | None = Field(default=None, json_schema_extra=SERIES)
-    mpc_flow: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_level: float | None = Field(default=None, json_schema_extra=SERIES)
-    rule_curve_level: float | None = Field(default=None, json_schema_extra=SERIES)
-    mpc_level: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_pointe_claire: float | None = Field(default=None, json_schema_extra=SERIES)
-    rule_curve_pointe_claire: float | None = Field(default=None, json_schema_extra=SERIES)
-    mpc_pointe_claire: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_weighted_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    rule_curve_weighted_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    mpc_weighted_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_weighted_cumulative: float | None = Field(default=None, json_schema_extra=SERIES)
-    rule_curve_weighted_cumulative: float | None = Field(default=None, json_schema_extra=SERIES)
-    mpc_weighted_cumulative: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_upstream_coastal_stage: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_upstream_coastal_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    mpc_upstream_coastal_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_upstream_coastal_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_upstream_coastal_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    mpc_upstream_coastal_cumulative: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_downstream_coastal_stage: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_downstream_coastal_stage: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    mpc_downstream_coastal_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_downstream_coastal_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_downstream_coastal_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    mpc_downstream_coastal_cumulative: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_negative_energy_value_stage: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_negative_energy_value_stage: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    mpc_negative_energy_value_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_negative_energy_value_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_negative_energy_value_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    mpc_negative_energy_value_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    baseline_pkl_recreational_boating_stage: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_recreational_boating_stage: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    mpc_recreational_boating_stage: float | None = Field(default=None, json_schema_extra=SERIES)
-    baseline_pkl_recreational_boating_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    rule_curve_recreational_boating_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
-    mpc_recreational_boating_cumulative: float | None = Field(
-        default=None, json_schema_extra=SERIES
-    )
+# A flat MetricSchema lets MetaMARL's Query select all five methods in one plot.
+# Generate the repetitive Pydantic fields rather than declaring 65 by hand.
+METRIC_KEYS = (
+    "flow",
+    "level",
+    "pointe_claire",
+    "weighted_stage",
+    "weighted_cumulative",
+    *(f"{key}_{kind}" for key in COST_KEYS for kind in ("stage", "cumulative")),
+)
+ComparisonMetrics = create_model(
+    "ComparisonMetrics",
+    __base__=MetricSchema,
+    step=(int | None, Field(default=None, json_schema_extra=SERIES)),
+    **{
+        f"{method}_{metric}": (float | None, Field(default=None, json_schema_extra=SERIES))
+        for method in METHODS
+        for metric in METRIC_KEYS
+    },
+)
 
 
 def make_agent(mechanism_id: str) -> OntarioConfig:
@@ -146,80 +102,75 @@ def make_agent(mechanism_id: str) -> OntarioConfig:
     )
 
 
-def load_baseline_pkl() -> tuple[pd.DataFrame, np.ndarray]:
+def load_pkl() -> tuple[pd.DataFrame, np.ndarray]:
     baseline = DATA_PATH / "baseline"
     data_all = pd.read_pickle(baseline / "legacy_outSim.pkl").reset_index(drop=True)
     costs_all = pd.read_pickle(baseline / "output.pkl").reset_index(drop=True)
 
     if len(data_all) != len(costs_all) or len(data_all) < N_STEPS:
-        raise ValueError("baseline_pkl trajectory and costs must have equal, sufficient lengths")
+        raise ValueError("pkl trajectory and costs must have equal, sufficient lengths")
 
     data = data_all.iloc[:N_STEPS].copy()
-    costs = costs_all.iloc[:N_STEPS]
+    evaluated = costs_all.iloc[:N_STEPS]
     stage_costs = np.column_stack(
         (
-            costs["upstreamCoastal"],
-            costs["downstreamCoastal"],
-            -costs["totalEnergyValue"],
-            costs["totalRecBoating"],
+            evaluated["upstreamCoastal"],
+            evaluated["downstreamCoastal"],
+            -evaluated["totalEnergyValue"],
+            evaluated["totalRecBoating"],
         )
     ).astype(np.float64)
 
-    if not np.isfinite(stage_costs).all():
-        raise ValueError("baseline_pkl stage costs contain non-finite values")
+    if stage_costs.shape != (N_STEPS, len(COST_KEYS)) or not np.isfinite(stage_costs).all():
+        raise ValueError("pkl stage costs have an invalid shape or values")
 
-    LOG.info("Loaded %d baseline_pkl baseline steps", N_STEPS)
-
+    LOG.info("Loaded %d pkl baseline steps", N_STEPS)
     return data, stage_costs
 
 
-def run_solver(
-    name: str, config: Any, baseline_pkl: pd.DataFrame
-) -> tuple[pd.DataFrame, np.ndarray, float]:
+def run_solver(name: str, config: Any, pkl: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray, float]:
     solver = config.build_optimizer()
     expected = solver.data.iloc[START_STEP : START_STEP + N_STEPS][DATE_COLUMNS]
-
     pd.testing.assert_frame_equal(
-        baseline_pkl[DATE_COLUMNS].reset_index(drop=True),
-        expected.reset_index(drop=True),
-        check_dtype=False,
+        pkl[DATE_COLUMNS].reset_index(drop=True), expected.reset_index(drop=True), check_dtype=False
     )
-    LOG.info("Starting %s", name)
 
+    LOG.info("Starting %s", name)
     started = perf_counter()
     result = solver.train()
     elapsed = perf_counter() - started
+
     data = result["data"].reset_index(drop=True)
     mdp = result["mdp"]
-    costs = np.stack(mdp.rewards["ont"]).astype(np.float64)
+    stage_costs = np.stack(mdp.rewards["ont"]).astype(np.float64)
+    total_cost = np.asarray(result["running_cost"], dtype=np.float64)
 
-    if mdp.t != N_STEPS or len(data) != N_STEPS or costs.shape != (N_STEPS, 4):
+    if mdp.t != N_STEPS or len(data) != N_STEPS or stage_costs.shape != (N_STEPS, len(COST_KEYS)):
         raise ValueError(f"{name} returned an unexpected horizon or stage-cost shape")
-
-    if not np.isfinite(costs).all():
+    if not np.isfinite(stage_costs).all():
         raise ValueError(f"{name} returned non-finite stage costs")
 
-    np.testing.assert_array_equal(result["running_cost"], costs.sum(axis=0))
+    np.testing.assert_array_equal(total_cost, stage_costs.sum(axis=0))
     pd.testing.assert_frame_equal(
-        baseline_pkl[DATE_COLUMNS].reset_index(drop=True),
+        pkl[DATE_COLUMNS].reset_index(drop=True),
         data[DATE_COLUMNS].reset_index(drop=True),
         check_dtype=False,
     )
-    LOG.info("%s finished in %.2f s; cost vector: %s", name, elapsed, costs.sum(axis=0))
-
-    return data, costs, elapsed
+    LOG.info("%s finished in %.2f s; cost vector: %s", name, elapsed, total_cost)
+    return data, stage_costs, elapsed
 
 
 def build_trajectory(
     data: dict[str, pd.DataFrame], costs: dict[str, np.ndarray], weights: np.ndarray
 ) -> pd.DataFrame:
     trajectory = pd.DataFrame({"step": np.arange(1, N_STEPS + 1)})
-
-    for name in RUNS:
+    for name in METHODS:
         frame = data[name]
         stage = costs[name]
         weighted = stage @ weights
-        trajectory[f"{name}_flow"] = frame["ontFlow"].to_numpy() * 10
+
+        # LOSLR stores releases in tens of m³/s.
+        trajectory[f"{name}_flow"] = frame["ontFlow"].to_numpy() * 10.0
         trajectory[f"{name}_level"] = frame["ontLevelMOQ"].to_numpy()
         trajectory[f"{name}_pointe_claire"] = frame["ptclaireLevel"].to_numpy()
         trajectory[f"{name}_weighted_stage"] = weighted
@@ -233,29 +184,25 @@ def build_trajectory(
 
 
 def report_to_wandb(trajectory: pd.DataFrame) -> None:
-    """Publish interactive Plotly queries through MetaMARL; do not save figures."""
-
+    """Report interactive Plotly figures with MetaMARL; save no local images."""
     metric_logger = MetricLogger.from_schema(ComparisonMetrics)
-
     for row in trajectory.to_dict(orient="records"):
         metric_logger.push_data(ComparisonMetrics(**row))
 
     config = WandbConfig(project=WANDB_PROJECT)
     config.world = "loslr"
     config.outer_iters = N_STEPS
-    reporter = config.build(label=f"rulecurve-vs-shooting-h{PREDICTION_HORIZON}")
+    reporter = config.build(label=f"mpc-comparison-h{PREDICTION_HORIZON}")
     reporter.schema = ComparisonMetrics
 
     def add_plot(title: str, metric: str, unit: str) -> None:
-        fields = tuple((f"{name}_{metric}",) for name in RUNS)
-
         reporter.add_query(
             Query(
                 title=title,
                 x=("step",),
-                y=fields,
-                legend_labels=("baseline_pkl", "RuleCurve", "MPC shooting"),
-                plot_modes=("lines",) * len(RUNS),
+                y=tuple((f"{name}_{metric}",) for name in METHODS),
+                legend_labels=tuple(METHODS.values()),
+                plot_modes=("lines",) * len(METHODS),
                 x_label="Quarter-month step",
                 y_label=unit,
             )
@@ -268,36 +215,53 @@ def report_to_wandb(trajectory: pd.DataFrame) -> None:
     add_plot("Weighted cumulative cost", "weighted_cumulative", "Weighted cumulative cost")
 
     for key, title in zip(COST_KEYS, COST_TITLES, strict=True):
-        add_plot(f"{title} — stage", f"{key}_stage", "Cost per quarter-month ($)")
+        add_plot(f"{title} — stage", f"{key}_stage", "Quarter-month cost ($)")
         add_plot(f"{title} — cumulative", f"{key}_cumulative", "Cumulative cost ($)")
 
     try:
         reporter.report(metric_logger.peek())
-        LOG.info("Published MetaMARL interactive plots to W&B project %s", WANDB_PROJECT)
+        LOG.info("Reported five-method comparison to W&B project %s", WANDB_PROJECT)
     finally:
         reporter.close()
 
 
-def log_comparison(
+def build_summary(
     data: dict[str, pd.DataFrame],
     costs: dict[str, np.ndarray],
     runtimes: dict[str, float],
     weights: np.ndarray,
-) -> None:
-    totals = {name: costs[name].sum(axis=0) for name in RUNS}
+) -> pd.DataFrame:
+    totals = {name: costs[name].sum(axis=0) for name in METHODS}
     summary = pd.DataFrame(totals, index=COST_COLUMNS)
-    summary.loc["weightedObjective"] = {name: float(weights @ totals[name]) for name in RUNS}
+    summary.loc["weightedObjective"] = {name: float(weights @ totals[name]) for name in METHODS}
     summary.loc["runtimeSeconds"] = runtimes
     summary.loc["finalOntarioLevel"] = {
-        name: float(data[name]["ontLevelEOQ"].iloc[-1]) for name in RUNS
+        name: float(data[name]["ontLevelEOQ"].iloc[-1]) for name in METHODS
     }
-    summary.loc["maxOntarioLevel"] = {name: float(data[name]["ontLevelEOQ"].max()) for name in RUNS}
+    summary.loc["maxOntarioLevel"] = {
+        name: float(data[name]["ontLevelEOQ"].max()) for name in METHODS
+    }
     summary.loc["maxPointeClaireLevel"] = {
-        name: float(data[name]["ptclaireLevel"].max()) for name in RUNS
+        name: float(data[name]["ptclaireLevel"].max()) for name in METHODS
     }
-    summary["MPC - baseline_pkl"] = summary["mpc"] - summary["baseline_pkl"]
+    objective_rows = [*COST_COLUMNS, "weightedObjective"]
+    for name in METHODS:
+        if name in ("pkl", "rule_curve"):
+            continue
+        for baseline in ("pkl", "rule_curve"):
+            summary[f"{name}_minus_{baseline}"] = summary[name] - summary[baseline]
+            baseline_cost = summary.loc[objective_rows, baseline].to_numpy(dtype=float)
+            candidate_cost = summary.loc[objective_rows, name].to_numpy(dtype=float)
+            summary[f"{name}_improvement_vs_{baseline}_pct"] = np.nan
+            summary.loc[objective_rows, f"{name}_improvement_vs_{baseline}_pct"] = np.divide(
+                100.0 * (baseline_cost - candidate_cost),
+                np.abs(baseline_cost),
+                out=np.full_like(baseline_cost, np.nan),
+                where=baseline_cost != 0,
+            )
 
-    LOG.info("Experiment summary:\n%s", summary.to_string(float_format=lambda x: f"{x:,.4f}"))
+    LOG.info("Performance summary:\n%s", summary.to_string(float_format=lambda x: f"{x:,.4f}"))
+    return summary
 
 
 def main() -> None:
@@ -305,9 +269,8 @@ def main() -> None:
         level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
 
-    baseline_pkl_data, baseline_pkl_costs = load_baseline_pkl()
-    weights = 1.0 / np.maximum(np.mean(np.abs(baseline_pkl_costs), axis=0), 1.0)
-
+    pkl_data, pkl_costs = load_pkl()
+    weights = 1.0 / np.maximum(np.mean(np.abs(pkl_costs), axis=0), 1.0)
     LOG.info("Objective weights: %s", weights)
 
     training = dict(
@@ -323,24 +286,43 @@ def main() -> None:
     environment = dict(
         horizon=N_STEPS, env=LoslrEnv, env_config={"stage_init": 74.55, "mechanism_id": None}
     )
-    rule_curve_config = (
-        RuleCurveCfg()
-        .training(**training)
-        .environment(**environment)
-        .agents(make_agent("adjustment"))
-    )
-    mpc_config = (
-        MPCShootingCfg()
-        .training(
-            **training, prediction_horizon=PREDICTION_HORIZON, weights=weights, maxiter=MAXITER
-        )
-        .environment(**environment)
-        .agents(make_agent("flow"))
-    )
-    rule_curve_data, rule_curve_costs, rule_curve_runtime = run_solver(
-        "RuleCurve", rule_curve_config, baseline_pkl_data
-    )
-    compared_columns = [
+    mpc_training = dict(training, prediction_horizon=PREDICTION_HORIZON, weights=weights)
+
+    configs = {
+        "rule_curve": (
+            RuleCurveCfg()
+            .training(**training)
+            .environment(**environment)
+            .agents(make_agent("adjustment"))
+        ),
+        "mpc_shooting": (
+            MPCShootingCfg()
+            .training(**mpc_training, maxiter=SHOOTING_MAXITER)
+            .environment(**environment)
+            .agents(make_agent("flow"))
+        ),
+        "mpc_beam": (
+            MPCBeamSearchCfg()
+            .training(**mpc_training)
+            .environment(**environment)
+            .agents(make_agent("flow"))
+        ),
+        "mpc_mppi": (
+            MPCMPPICfg()
+            .training(**mpc_training)
+            .environment(**environment)
+            .agents(make_agent("flow"))
+        ),
+    }
+
+    data = {"pkl": pkl_data}
+    costs = {"pkl": pkl_costs}
+    runtimes = {"pkl": np.nan}
+
+    for key, config in configs.items():
+        data[key], costs[key], runtimes[key] = run_solver(METHODS[key], config, pkl_data)
+
+    checked = [
         "ontFlow",
         "flowRegime",
         "ontLevelBOQ",
@@ -348,24 +330,31 @@ def main() -> None:
         "ontLevelMOQ",
         "ptclaireLevel",
     ]
-
-    if baseline_pkl_data[compared_columns].equals(rule_curve_data[compared_columns]):
-        LOG.info("Refactored RuleCurve matches the saved baseline on selected columns")
+    if data["rule_curve"][checked].equals(data["pkl"][checked]):
+        LOG.info("RuleCurve exactly matches selected pkl baseline columns")
     else:
-        LOG.warning("RuleCurve differs from the saved baseline on selected columns")
+        LOG.warning("RuleCurve differs from the pkl baseline in selected columns")
 
     LOG.warning(
-        "RuleCurve currently uses its legacy linear _simulate(), whereas MPC uses "
-        "the cubic LoslrEnv; differences do not isolate the controller alone."
+        "RuleCurve uses its legacy linear transition, while MPC optimizers use "
+        "LoslrEnv; comparisons may reflect dynamics differences, not only controllers."
     )
 
-    mpc_data, mpc_costs, mpc_runtime = run_solver("MPC shooting", mpc_config, baseline_pkl_data)
-    data = {"baseline_pkl": baseline_pkl_data, "rule_curve": rule_curve_data, "mpc": mpc_data}
-    costs = {"baseline_pkl": baseline_pkl_costs, "rule_curve": rule_curve_costs, "mpc": mpc_costs}
-    runtimes = {"baseline_pkl": np.nan, "rule_curve": rule_curve_runtime, "mpc": mpc_runtime}
+    summary = build_summary(data, costs, runtimes, weights)
+    trajectory = build_trajectory(data, costs, weights)
+    stages = pd.DataFrame(
+        {f"{name}_{key}": costs[name][:, i] for name in METHODS for i, key in enumerate(COST_KEYS)}
+    )
 
-    log_comparison(data, costs, runtimes, weights)
-    report_to_wandb(build_trajectory(data, costs, weights))
+    OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+    for name, frame in data.items():
+        frame.to_csv(OUTPUT_PATH / f"{name}.csv", index=False)
+    summary.to_csv(OUTPUT_PATH / "comparison.csv")
+    trajectory.to_csv(OUTPUT_PATH / "trajectory.csv", index=False)
+    stages.to_csv(OUTPUT_PATH / "stage_costs.csv", index=False)
+    LOG.info("Saved numerical results to %s", OUTPUT_PATH)
+
+    report_to_wandb(trajectory)
 
 
 if __name__ == "__main__":
