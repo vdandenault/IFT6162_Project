@@ -12,6 +12,7 @@ from core.mechanism.base import MDPState
 from gymnasium.spaces import Box
 
 from reservoir_control.evaluation.provenance import digest
+from reservoir_control.systems.loslr.data import FORCING_COLUMNS
 from reservoir_control.systems.loslr.operator import (
     ONTARIO_COST_COMPONENTS,
     AdjustFlow,
@@ -19,7 +20,6 @@ from reservoir_control.systems.loslr.operator import (
 )
 from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
 from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
-from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS
 from reservoir_control.systems.ottawa.follower_problem import (
     CONFIG,
     load_follower_config,

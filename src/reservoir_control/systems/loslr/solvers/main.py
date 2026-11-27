@@ -357,11 +357,6 @@ def main() -> None:
     else:
         LOG.warning("RuleCurve differs from the saved baseline on selected columns")
 
-    LOG.warning(
-        "RuleCurve currently uses its legacy linear _simulate(), whereas MPC uses "
-        "the cubic LoslrEnv; differences do not isolate the controller alone."
-    )
-
     mpc_data, mpc_costs, mpc_runtime = run_solver("MPC shooting", mpc_config, baseline_pkl_data)
     data = {"baseline_pkl": baseline_pkl_data, "rule_curve": rule_curve_data, "mpc": mpc_data}
     costs = {"baseline_pkl": baseline_pkl_costs, "rule_curve": rule_curve_costs, "mpc": mpc_costs}

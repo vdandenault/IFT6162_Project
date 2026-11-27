@@ -23,6 +23,45 @@ BALANCE_CONVERSION = 2970.0
 PERIODS_PER_YEAR = 48
 
 
+FORCING_COLUMNS = {
+    "Sim",
+    "Year",
+    "Month",
+    "QM",
+    "erieOut",
+    "ontNTS",
+    "stlouisontOut",
+    "desprairiesOut",
+    "richelieuOut",
+    "stfrancoisOut",
+    "stmauriceOut",
+    "iceInd",
+    "tidalInd",
+    "ogdensburgR",
+    "cardinalR",
+    "iroquoishwR",
+    "saundershwR",
+    "iroquoistwR",
+    "morrisburgR",
+    "longsaultR",
+    "saunderstwR",
+    "cornwallR",
+    "summerstownR",
+    "ptclaireR",
+    "batiscanR",
+    "threeriversR",
+    "stpierreR",
+    "sorelR",
+    "varennesR",
+    "ontNTS_QM1",
+    "ontNTS_QM2",
+    "ontNTS_QM3",
+    "ontNTS_QM4",
+    "foreInd",
+    "slonFlow_QM1",
+}
+
+
 def trace_path(data_root: Path, name: Path) -> Path:
     """Prefer a project's CSV input, then resolve legacy tab-separated traces."""
     local = data_root / "input" / name
