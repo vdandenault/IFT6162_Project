@@ -11,6 +11,6 @@ def verify_sources(hashes: Mapping[str, str]) -> None:
     for name, expected in hashes.items():
         path = Path(name)
         if not path.is_file():
-            raise ValueError(f'Frozen source is missing: {path}')
+            raise ValueError(f"Frozen source is missing: {path}")
         if digest(path) != expected:
-            raise ValueError(f'Frozen source changed: {path}')
+            raise ValueError(f"Frozen source changed: {path}")

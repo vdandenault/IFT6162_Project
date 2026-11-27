@@ -22,7 +22,9 @@ stLawrenceRouting = native_reference().routing.stLawrenceRouting
 
 
 class LoslrEnv(MultiAgentEnv):
-    def __init__(self, *, stage_init: float = 74.55, action_mode: str = "adjustment", **kwargs: Any):
+    def __init__(
+        self, *, stage_init: float = 74.55, action_mode: str = "adjustment", **kwargs: Any
+    ):
         super().__init__(**kwargs)
 
         if action_mode not in {"flow", "adjustment"}:

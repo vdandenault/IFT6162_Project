@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from gymnasium.spaces import Box
 
+from reservoir_control.systems.loslr.native import native_reference
 from reservoir_control.systems.loslr.operator import AdjustFlowConfig
 from reservoir_control.systems.loslr.operator import OntarioConfig as Ontario
 from reservoir_control.systems.loslr.simulator import LoslrEnv
@@ -14,7 +15,6 @@ from reservoir_control.systems.loslr.solvers.rule_curve import (
     RuleCurveCfg,
     Trace,
 )
-from reservoir_control.systems.loslr.native import native_reference
 
 planLimits = native_reference().limits.planLimits
 

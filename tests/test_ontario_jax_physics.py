@@ -3,7 +3,7 @@ import pytest
 
 jax = pytest.importorskip("jax")
 
-from reservoir_control.systems.loslr.physics import (
+from reservoir_control.systems.loslr.physics import (  # noqa: E402
     CONVERSION,
     DATUM,
     FLOW_SCALE,

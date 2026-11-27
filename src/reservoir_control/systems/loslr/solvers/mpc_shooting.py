@@ -10,10 +10,10 @@ from core.optimizers.base import Optimizer
 from scipy.optimize import minimize
 
 from reservoir_control.systems.loslr.data import read_trace
+from reservoir_control.systems.loslr.native import native_reference
 from reservoir_control.systems.loslr.operator import Ontario
 from reservoir_control.systems.loslr.simulator import LoslrEnv
-from reservoir_control.systems.loslr.native import native_reference
-from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS, RuleCurveCfg
+from reservoir_control.systems.loslr.solvers.rule_curve import RuleCurveCfg
 
 round_d = native_reference().utils.round_d
 
@@ -108,8 +108,6 @@ class MPCShooting(Optimizer):
                         actions={"ont": {"adjustment": np.asarray([u_t], dtype=np.float64)}}
                     )
 
-                    # Environment handles cubic, discharge,
-                    # constraints, and routing.
                     candidate = self.env.simulate(candidate)
                     reward = agent.reward(candidate)
 
@@ -120,8 +118,7 @@ class MPCShooting(Optimizer):
 
                 return cost if np.isfinite(cost) else np.inf
             except (ValueError, FloatingPointError, OverflowError):
-                # Invalid hydraulic candidate is infeasible.
-                return np.inf
+                return np.inf # Invalid hydraulic candidate is infeasible.
 
         result = minimize(
             rollout,
@@ -155,33 +152,22 @@ class MPCShooting(Optimizer):
             ontLevelStart = mdp.state["ontLevelBOQ"][t]
             horizon = min(self.prediction_horizon, self.horizon - t)
 
-            # CHANGED: each dataset row is one quarter-month.
-            # No separate forecast-lead indexing.
             forecasts = [self.data.iloc[i + j].to_dict() for j in range(horizon)]
 
-            # CHANGED: supply previous ice for each forecast step.
             for j, forecast in enumerate(forecasts):
                 idx = i + j
                 forecast["iceIndPrev"] = float(self.data["iceInd"].iat[idx - 1]) if idx > 0 else 2.0
 
-            # TODO: zero adjustment is the initial guess.
             if nominal is None:
                 nominal = np.zeros(horizon, dtype=np.float64)
             else:
                 nominal = np.concatenate([nominal[1:], nominal[-1:]])[:horizon]
 
-            # Optimize adjustments directly.
             nominal = self._update(mdp, agent, forecasts, nominal)
 
-            # Receding-horizon control:
-            # apply only the first adjustment.
             u_t = float(nominal[0])
-
-            # CHANGED: pass complete current forcing row.
-            # Includes foreInd, slonFlow_QM1, and NTS columns.
             mdp.params.update(data)
 
-            # CHANGED: previous quarter-month ice.
             mdp.params["iceIndPrev"] = float(self.data["iceInd"].iat[i - 1]) if i > 0 else 2.0
 
             mdp.update(actions={"ont": {"adjustment": np.asarray([u_t], dtype=np.float64)}})
@@ -192,7 +178,6 @@ class MPCShooting(Optimizer):
             mdp.update(t=t, rewards={agent.id: reward.rewards[agent.id][0]})
             assert mdp.t == t + 1
 
-            # Read actual discharge from the environment.
             flow = float(mdp.state["ontFlow"][mdp.t])
             regime = mdp.params["flowRegime"]
             row = data.copy()

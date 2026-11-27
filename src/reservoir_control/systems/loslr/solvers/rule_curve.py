@@ -19,6 +19,7 @@ round_d = native_reference().utils.round_d
 septemberRule = native_reference().september.septemberRule
 formatDecisionVariables = native_reference().release.formatDecisionVariables
 releaseFunction = native_reference().release.releaseFunction
+stLawrenceRouting = native_reference().routing.stLawrenceRouting
 
 FORCING_COLUMNS = {
     "Sim",
@@ -118,7 +119,11 @@ class RuleCurveCfg(OptimizerConfig):
             cfg = tomllib.load(config)
         self.releaseFunInputs = cfg["releaseFunction"]
         self.dvName = cfg["decisionVariables"]["dvName"]
-        trace_name = Path(cfg["experimentalDesign"]["trace"]) / self.trace / f"{self.forecast_lead_time}_{self.forecast_skill}"
+        trace_name = (
+            Path(cfg["experimentalDesign"]["trace"])
+            / self.trace
+            / f"{self.forecast_lead_time}_{self.forecast_skill}"
+        )
         self.input_path = trace_path(self.data_path, trace_name)
         self.policy_ids = [id] if isinstance(id, int) else list(id)
 

@@ -49,7 +49,9 @@ def read_policies(data_root: Path) -> pd.DataFrame:
 def quarter_start(year, qm):
     month, quarter = divmod(qm - 1, 4)
     # Legacy IJC quarter-month day boundaries (Plan 1958-A, section II).
-    return pd.Timestamp(year, month + 1, (1, 8, 15, 22)[quarter] if month == 1 else (1, 9, 16, 24)[quarter])
+    return pd.Timestamp(
+        year, month + 1, (1, 8, 15, 22)[quarter] if month == 1 else (1, 9, 16, 24)[quarter]
+    )
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,7 @@ class SupplyForecast:
 @dataclass(frozen=True)
 class Forcing:
     """Realized physical inputs are separate from the policy's forecast object."""
+
     nts_m3_s: float
     slon_m3_s: float
     forecast: SupplyForecast
@@ -84,9 +87,13 @@ def baseline_parameters(reference: NativeReference) -> dict[str, float]:
     return {
         "wetIndicatorThreshold": original["lfWetThreshold"],
         "wetConfidenceThreshold": original["lf99Conf"],
-        "C1": original["C1"], "C1*": original["C1"] + original["addC1"],
-        "P1": original["P1"], "C2": original["C2"], "P2": original["P2"],
-        "dryLevelThreshold": original["adjLevel"], "dryFlowAdjustment": original["adjFlow"],
+        "C1": original["C1"],
+        "C1*": original["C1"] + original["addC1"],
+        "P1": original["P1"],
+        "C2": original["C2"],
+        "P2": original["P2"],
+        "dryLevelThreshold": original["adjLevel"],
+        "dryFlowAdjustment": original["adjFlow"],
     }
 
 
@@ -112,22 +119,36 @@ def load_inputs(reference: NativeReference, last_year: int | None = None) -> pd.
 def forcing_from_row(row: Mapping) -> Forcing:
     forecast = SupplyForecast(
         tuple(float(row[f"ontNTS_QM{k}"]) for k in range(1, 5)),
-        float(row["forNTS"]), float(row["slonFlow_QM1"]),
+        float(row["forNTS"]),
+        float(row["slonFlow_QM1"]),
     )
-    metadata = {key: float(value) for key, value in row.items()
-                if isinstance(value, (int, float, np.number))}
-    return Forcing(float(row["ontNTS"]), float(row["stlouisontOut"]), forecast,
-                   int(row["iceInd"]), metadata, bool(row["foreInd"] == 1))
+    metadata = {
+        key: float(value)
+        for key, value in row.items()
+        if isinstance(value, (int, float, np.number))
+    }
+    return Forcing(
+        float(row["ontNTS"]),
+        float(row["stlouisontOut"]),
+        forecast,
+        int(row["iceInd"]),
+        metadata,
+        bool(row["foreInd"] == 1),
+    )
 
 
 def input_audit(frame: pd.DataFrame) -> dict:
     scored = frame.iloc[48:]
     return {
-        "rows": len(frame), "initialization_year": int(frame.Year.iloc[0]),
+        "rows": len(frame),
+        "initialization_year": int(frame.Year.iloc[0]),
         "simulation_years": [int(scored.Year.min()), int(scored.Year.max())],
         "periods_per_year": 48,
         "foreInd_counts": {str(k): int(v) for k, v in scored.foreInd.value_counts().items()},
-        "limit_information_dependencies": {"M_limit": "Uses realized SLON even when foreInd=1", "F_limit": "Uses forecast SLON when foreInd=1, otherwise realized SLON"},
+        "limit_information_dependencies": {
+            "M_limit": "Uses realized SLON even when foreInd=1",
+            "F_limit": "Uses forecast SLON when foreInd=1, otherwise realized SLON",
+        },
         "forecast_causality": "Supplied forecast parity only; full-record fitting and issuance audit pending",
         "ontario_flow_native_units": "10 m3/s",
         "supply_and_slon_native_units": "m3/s",

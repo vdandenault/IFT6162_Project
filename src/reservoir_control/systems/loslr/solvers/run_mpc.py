@@ -22,12 +22,22 @@ def main():
         description="Run the merged Lake Ontario simulator with shooting, beam or MPPI MPC."
     )
     parser.add_argument("--solver", choices=SOLVERS, default="shooting")
-    parser.add_argument("--lookahead", type=int, choices=range(1, 5), default=4,
-                        help="Prediction window in quarter-months (default: 4)")
-    parser.add_argument("--steps", type=int, default=12,
-                        help="Number of simulated quarter-months (default: 12)")
-    parser.add_argument("--start-step", type=int, default=48,
-                        help="Zero-based row in the historical input (default: 48)")
+    parser.add_argument(
+        "--lookahead",
+        type=int,
+        choices=range(1, 5),
+        default=4,
+        help="Prediction window in quarter-months (default: 4)",
+    )
+    parser.add_argument(
+        "--steps", type=int, default=12, help="Number of simulated quarter-months (default: 12)"
+    )
+    parser.add_argument(
+        "--start-step",
+        type=int,
+        default=48,
+        help="Zero-based row in the historical input (default: 48)",
+    )
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -38,9 +48,7 @@ def main():
         parser.error("--output must be a fresh directory")
 
     config = SOLVERS[args.solver]().training(
-        data_path=args.data_dir,
-        start_step=args.start_step,
-        prediction_horizon=args.lookahead,
+        data_path=args.data_dir, start_step=args.start_step, prediction_horizon=args.lookahead
     )
     config.environment(horizon=args.steps, env_config={"mechanism_id": None})
     config.agents(

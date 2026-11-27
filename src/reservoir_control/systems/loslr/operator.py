@@ -16,6 +16,7 @@ from reservoir_control.systems.loslr.native import native_reference
 
 planLimits = native_reference().limits.planLimits
 
+
 def load_indicator(name: str):
     reference = native_reference()
     with chdir(reference.root):
@@ -45,18 +46,23 @@ def legacy_series_getitem(self, key):
 
 
 ONTARIO_COST_COMPONENTS = (
-    "upstream_coastal", "downstream_coastal", "negative_energy_value", "recreational_boating",
+    "upstream_coastal",
+    "downstream_coastal",
+    "negative_energy_value",
+    "recreational_boating",
 )
 
 
 def ontario_stage_costs(data):
     """Evaluate the four Ontario stage indicators in their native units."""
-    return np.column_stack((
-        upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].to_numpy(),
-        downstreamCoastalImpacts.runModel(data)["downstreamCoastal"].to_numpy(),
-        -hydropowerProduction.runModel(data)["totalEnergyValue"].to_numpy(),
-        recreationalBoating.runModel(data)["totalRecBoating"].to_numpy(),
-    )).astype(np.float64)
+    return np.column_stack(
+        (
+            upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].to_numpy(),
+            downstreamCoastalImpacts.runModel(data)["downstreamCoastal"].to_numpy(),
+            -hydropowerProduction.runModel(data)["totalEnergyValue"].to_numpy(),
+            recreationalBoating.runModel(data)["totalRecBoating"].to_numpy(),
+        )
+    ).astype(np.float64)
 
 
 class Ontario(Agent):

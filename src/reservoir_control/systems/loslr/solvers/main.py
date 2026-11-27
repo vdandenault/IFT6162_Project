@@ -15,6 +15,7 @@ from metamarl.reporting.query import Query
 from metamarl.reporting.wandb import WandbConfig
 from pydantic import Field
 
+from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
 from reservoir_control.systems.loslr.operator import AdjustFlowConfig, OntarioConfig
 from reservoir_control.systems.loslr.simulator import LoslrEnv
 from reservoir_control.systems.loslr.solvers.mpc_shooting import MPCShootingCfg
@@ -24,7 +25,6 @@ from reservoir_control.systems.loslr.solvers.rule_curve import (
     RuleCurveCfg,
     Trace,
 )
-from external.loslr_regulation_optimization.functions.limits.Bv7 import planLimits
 
 DATA_PATH = Path("data")
 WANDB_PROJECT = "bilevel_reservoirs"
@@ -148,7 +148,9 @@ def load_baseline_pkl() -> tuple[pd.DataFrame, np.ndarray]:
     baseline = DATA_PATH / "baseline"
     trajectory, costs_path = (baseline / name for name in ("legacy_outSim.pkl", "output.pkl"))
     if not trajectory.is_file() or not costs_path.is_file():
-        raise FileNotFoundError("The optional legacy comparison requires both local baseline pickles")
+        raise FileNotFoundError(
+            "The optional legacy comparison requires both local baseline pickles"
+        )
     data_all = pd.read_pickle(trajectory).reset_index(drop=True)
     costs_all = pd.read_pickle(costs_path).reset_index(drop=True)
 

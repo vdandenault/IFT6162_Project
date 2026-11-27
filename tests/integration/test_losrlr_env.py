@@ -8,8 +8,8 @@ import pytest
 from core.mechanism.base import MDPState
 
 from reservoir_control.systems.loslr.data import read_policies, read_trace, trace_path
-from reservoir_control.systems.loslr.simulator import LoslrEnv
 from reservoir_control.systems.loslr.native import native_reference
+from reservoir_control.systems.loslr.simulator import LoslrEnv
 
 native = native_reference()
 getPlanLimitsInputs = native.limits.getPlanLimitsInputs
@@ -116,9 +116,7 @@ def legacy(config, data):
     decision_variables = config["decisionVariables"]
     release_fun_inputs = config["releaseFunction"]
     pars = formatDecisionVariables(
-        read_policies(DATA_PATH)
-        .loc[POLICY_ID, decision_variables["dvName"]]
-        .tolist(),
+        read_policies(DATA_PATH).loc[POLICY_ID, decision_variables["dvName"]].tolist(),
         **release_fun_inputs,
     )
 
@@ -141,7 +139,9 @@ def legacy(config, data):
 
 @pytest.fixture
 def env():
-    return LoslrEnv(world=None, mechanism_id=None, agents_cfg_dict={}, horizon=N_STEPS, action_mode="flow")
+    return LoslrEnv(
+        world=None, mechanism_id=None, agents_cfg_dict={}, horizon=N_STEPS, action_mode="flow"
+    )
 
 
 def test_reference(legacy, reference):

@@ -71,11 +71,7 @@ class AggregateStorageModel:
         return None if lower > upper else (lower, upper)
 
     def transition(
-        self,
-        state: OttawaState,
-        action: float,
-        forcing: OttawaForcing,
-        time: DecisionTime,
+        self, state: OttawaState, action: float, forcing: OttawaForcing, time: DecisionTime
     ) -> Transition[OttawaState]:
         """Advance a feasible release in m³/s without mutating the supplied state."""
         _finite("release_m3_s", action)
@@ -95,8 +91,7 @@ class AggregateStorageModel:
                 "release_m3": release_volume,
                 "release_m3_s": action,
                 "balance_error_m3": (
-                    following.storage_m3 - state.storage_m3
-                    - inflow_volume + release_volume
+                    following.storage_m3 - state.storage_m3 - inflow_volume + release_volume
                 ),
             },
             info={"calibrated": False, "routing_included": False},

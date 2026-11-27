@@ -6,8 +6,8 @@ from typing import Any
 import numpy as np
 from core.mechanism.base import MDPState
 
-from reservoir_control.systems.loslr.operator import Ontario
 from reservoir_control.systems.loslr.native import native_reference
+from reservoir_control.systems.loslr.operator import Ontario
 from reservoir_control.systems.loslr.solvers.mpc_shooting import MPCShooting, MPCShootingCfg
 from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS
 

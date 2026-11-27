@@ -19,8 +19,10 @@ def summarize(frame, settings):
     result = {}
     for (year, policy), rows in frame.groupby(["year", "policy"]):
         metrics = {"periods": len(rows)}
-        for name, cap in (("ontario_end_m", settings.ontario_max_m),
-                          ("pointe_claire_m", settings.pointe_claire_max_m)):
+        for name, cap in (
+            ("ontario_end_m", settings.ontario_max_m),
+            ("pointe_claire_m", settings.pointe_claire_max_m),
+        ):
             excess = (rows[name] - cap).clip(lower=0)
             metrics[name] = {
                 "peak_m": float(rows[name].max()),
@@ -30,12 +32,18 @@ def summarize(frame, settings):
         metrics["mean_release_m3_s"] = float(rows.release_m3_s.mean())
         metrics["mean_abs_release_change_m3_s"] = float(rows.release_change_m3_s.mean())
         metrics["ontario_end_of_year_m"] = float(rows.ontario_end_m.iloc[-1])
-        metrics["nts_forecast_mae_m3_s"] = float((rows.forecast_nts_m3_s - rows.realized_nts_m3_s).abs().mean())
-        metrics["slon_forecast_mae_m3_s"] = float((rows.forecast_slon_m3_s - rows.realized_slon_m3_s).abs().mean())
+        metrics["nts_forecast_mae_m3_s"] = float(
+            (rows.forecast_nts_m3_s - rows.realized_nts_m3_s).abs().mean()
+        )
+        metrics["slon_forecast_mae_m3_s"] = float(
+            (rows.forecast_slon_m3_s - rows.realized_slon_m3_s).abs().mean()
+        )
         if policy == "mpc":
             metrics["mean_tracking_cost"] = float(rows.tracking_cost.mean())
             metrics["mean_terminal_cost"] = float(rows.terminal_cost.mean())
-            metrics["plans_without_feasible_candidate"] = int((~rows.plan_feasible.astype(bool)).sum())
+            metrics["plans_without_feasible_candidate"] = int(
+                (~rows.plan_feasible.astype(bool)).sum()
+            )
             metrics["median_plan_seconds"] = float(rows.plan_seconds.median())
             metrics["max_predicted_excess_m"] = float(rows.predicted_max_excess_m.max())
             metrics["pointe_claire_forecast_mae_m"] = float(
@@ -50,7 +58,7 @@ def compare(reference, frame, years, settings):
     baseline = CausalOntarioSession(model, frame)
     rule = Plan2014(reference)
     controller = RecedingHorizonSearch(
-        OntarioPlanningAdapter(model, settings), beam_width=settings.beam_width,
+        OntarioPlanningAdapter(model, settings), beam_width=settings.beam_width
     )
     records = []
 
@@ -65,14 +73,21 @@ def compare(reference, frame, years, settings):
             for _ in range(48):
                 decision, time = session.information()
                 previous_release = session.state.previous_release_m3_s
-                row = {"year": time.year, "quarter_month": time.period, "policy": policy,
-                       "ontario_start_m": session.state.level_m}
+                row = {
+                    "year": time.year,
+                    "quarter_month": time.period,
+                    "policy": policy,
+                    "ontario_start_m": session.state.level_m,
+                }
                 if policy == "mpc":
                     started = perf_counter()
                     plan = controller.plan(session.state, decision, time)
-                    row.update(plan_seconds=perf_counter() - started, plan_feasible=plan.feasible,
-                               predicted_max_excess_m=plan.max_excess_m,
-                               predicted_pointe_claire_m=plan.steps[0].pointe_claire_m)
+                    row.update(
+                        plan_seconds=perf_counter() - started,
+                        plan_feasible=plan.feasible,
+                        predicted_max_excess_m=plan.max_excess_m,
+                        predicted_pointe_claire_m=plan.steps[0].pointe_claire_m,
+                    )
                     row.update(tracking_cost=plan.tracking_cost, terminal_cost=plan.terminal_cost)
                     excesses = []
                     for lead, step in enumerate(plan.steps, start=1):
@@ -135,8 +150,21 @@ def main():
         "trace_sha256": sha256(trace),
         "implementation_sha256": {
             name: sha256(Path(__file__).with_name(name))
-            for name in ("mpc.py", "planning.py", "model.py", "causal.py", "adapter.py", "data.py", "native.py")
-        } | {"controllers/mpc/receding_horizon.py": sha256(Path(__file__).parents[2] / "controllers/mpc/receding_horizon.py")},
+            for name in (
+                "mpc.py",
+                "planning.py",
+                "model.py",
+                "causal.py",
+                "adapter.py",
+                "data.py",
+                "native.py",
+            )
+        }
+        | {
+            "controllers/mpc/receding_horizon.py": sha256(
+                Path(__file__).parents[2] / "controllers/mpc/receding_horizon.py"
+            )
+        },
         "results": summarize(rows, settings),
     }
     (args.output / "summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")

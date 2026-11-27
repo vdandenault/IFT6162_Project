@@ -22,7 +22,9 @@ class CausalOntarioSession(OntarioSession):
     def reset(self):
         super().reset()
         if len(self._frame) <= 96:
-            raise ValueError("Causal replay needs an initialization year, warmup year and scored periods")
+            raise ValueError(
+                "Causal replay needs an initialization year, warmup year and scored periods"
+            )
         policy = Plan2014(self.model.reference)
         for _ in range(48):
             decision, time = self.information()
@@ -33,7 +35,7 @@ class CausalOntarioSession(OntarioSession):
         if self.done:
             raise RuntimeError("Replay is complete")
         previous = self._frame.iloc[self.index - 1]
-        recent = self._frame.iloc[self.index - 48:self.index]
+        recent = self._frame.iloc[self.index - 48 : self.index]
         forecast = SupplyForecast(
             (float(previous.ontNTS),) * 4,
             float(recent.ontNTS.mean()),
@@ -52,7 +54,10 @@ class CausalOntarioSession(OntarioSession):
     def step(self, action):
         decision, time = self.information()
         result = self.model.transition(
-            self.state, action, forcing_from_row(self._frame.iloc[self.index]), time,
+            self.state,
+            action,
+            forcing_from_row(self._frame.iloc[self.index]),
+            time,
             decision=decision,
         )
         self.state = result.state
@@ -68,16 +73,19 @@ def replay(reference, frame):
         decision, time = session.information()
         action = policy.action(session.state, decision.forecast, time)
         result = session.step(action)
-        rows.append({
-            "Year": time.year, "QM": time.period,
-            "ontLevel": result.metrics["ontario_level_mean_m"],
-            "ptclaireLevel": result.metrics["pointe_claire_level_m"],
-            "ontFlow": result.metrics["executed_release_m3_s"] / 10,
-            "flowRegime": result.info["flow_regime"],
-            "forecast_nts_m3_s": decision.forecast.nts_m3_s[0],
-            "forecast_slon_m3_s": decision.forecast.slon_m3_s,
-            "forecast_annual_nts_m3_s": decision.forecast.annual_nts_m3_s,
-        })
+        rows.append(
+            {
+                "Year": time.year,
+                "QM": time.period,
+                "ontLevel": result.metrics["ontario_level_mean_m"],
+                "ptclaireLevel": result.metrics["pointe_claire_level_m"],
+                "ontFlow": result.metrics["executed_release_m3_s"] / 10,
+                "flowRegime": result.info["flow_regime"],
+                "forecast_nts_m3_s": decision.forecast.nts_m3_s[0],
+                "forecast_slon_m3_s": decision.forecast.slon_m3_s,
+                "forecast_annual_nts_m3_s": decision.forecast.annual_nts_m3_s,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -96,15 +104,17 @@ def main():
     native = adapter_trace(reference, frame)
     original = archived_glrrm_comparison(reference, native)
     archive = pd.read_csv(reference.root / original["reference"])
-    aligned = frame.iloc[48:].merge(archive, on=["Year", "QM"], suffixes=("_python", "_archive"),
-                           validate="one_to_one")
+    aligned = frame.iloc[48:].merge(
+        archive, on=["Year", "QM"], suffixes=("_python", "_archive"), validate="one_to_one"
+    )
     columns = ["ontNTS", "stlouisontOut", "iceInd", "ptclaireR", "foreInd", "forNTS"]
     differences = {
         name: int(((aligned[f"{name}_python"] - aligned[f"{name}_archive"]).abs() > 1e-8).sum())
         for name in columns
     }
-    outputs = native.merge(archive, on=["Year", "QM"], suffixes=("_python", "_archive"),
-                           validate="one_to_one")
+    outputs = native.merge(
+        archive, on=["Year", "QM"], suffixes=("_python", "_archive"), validate="one_to_one"
+    )
     largest_gap = outputs.loc[(outputs.ontFlow_python - outputs.ontFlow_archive).abs().idxmax()]
     substituted = frame.copy()
     annual = archive.set_index(["Year", "QM"]).forNTS
@@ -118,7 +128,8 @@ def main():
         "input_difference_counts": differences,
         "native_comparison": original,
         "largest_release_gap": {
-            "year": int(largest_gap.Year), "quarter_month": int(largest_gap.QM),
+            "year": int(largest_gap.Year),
+            "quarter_month": int(largest_gap.QM),
             "python_regime": largest_gap.flowRegime_python,
             "archive_regime": largest_gap.flowRegime_archive,
             "python_m3_s": float(largest_gap.ontFlow_python * 10),
@@ -135,7 +146,14 @@ def main():
         "upstream": reference.provenance(),
         "implementation_sha256": {
             name: sha256(Path(__file__).with_name(name))
-            for name in ("causal.py", "model.py", "adapter.py", "baseline.py", "data.py", "native.py")
+            for name in (
+                "causal.py",
+                "model.py",
+                "adapter.py",
+                "baseline.py",
+                "data.py",
+                "native.py",
+            )
         },
     }
     args.output.mkdir(parents=True, exist_ok=True)

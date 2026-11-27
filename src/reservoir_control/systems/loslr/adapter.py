@@ -11,15 +11,13 @@ def decision_time(row, index: int) -> DecisionTime:
     # A fixed nominal 365-day reporting duration is useful metadata, not a replacement for native
     # balance conversion. Do not interpret it as resolved daily hydrology.
     year = int(row["Year"])
-    return DecisionTime(index, year, int(row["QM"]),
-                        365.0 * 86400.0 / 48)
+    return DecisionTime(index, year, int(row["QM"]), 365.0 * 86400.0 / 48)
 
 
 def initial_state(frame: pd.DataFrame) -> OntarioState:
     if len(frame) < 49:
         raise ValueError("Reference initialization requires 48 preceding input rows")
-    return OntarioState(74.55, 5950.0, 2,
-                        tuple(float(x) for x in frame.ontLevelMOQ.iloc[:48]))
+    return OntarioState(74.55, 5950.0, 2, tuple(float(x) for x in frame.ontLevelMOQ.iloc[:48]))
 
 
 class OntarioSession:
@@ -53,8 +51,9 @@ class OntarioSession:
         if self.done:
             raise RuntimeError("Replay is complete; reset before stepping again")
         row = self._frame.iloc[self.index]
-        result = self.model.transition(self.state, action, forcing_from_row(row),
-                                       decision_time(row, self.index - 48))
+        result = self.model.transition(
+            self.state, action, forcing_from_row(row), decision_time(row, self.index - 48)
+        )
         self.state = result.state
         self.index += 1
         return result

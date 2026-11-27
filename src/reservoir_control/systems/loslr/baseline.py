@@ -20,7 +20,7 @@ from reservoir_control.systems.loslr.native import UPSTREAM_COMMIT, NativeRefere
 # Independent native imports execute in a child interpreter whose working
 # directory is the upstream checkout. Its legacy cwd/import behavior cannot
 # mutate the application interpreter. No native code is copied into this repo.
-_NATIVE_WORKER = r'''
+_NATIVE_WORKER = r"""
 import importlib, json, sys, tomllib, warnings
 from pathlib import Path
 import pandas as pd
@@ -53,7 +53,7 @@ try:
 except Exception as error:
  pi_status={"complete":False,"failure_type":type(error).__name__,"failure":str(error)}
 (out/"performance_indicators.json").write_text(json.dumps(pi_status,indent=2,allow_nan=False)+"\n")
-'''
+"""
 
 
 def adapter_trace(reference: NativeReference, frame: pd.DataFrame) -> pd.DataFrame:
@@ -66,20 +66,23 @@ def adapter_trace(reference: NativeReference, frame: pd.DataFrame) -> pd.DataFra
         action = policy.action(state, forecast, time)
         transition = session.step(action)
         route = transition.info["native_routing"]
-        rows.append({
-            "Year": time.year, "QM": time.period,
-            "ontLevelBOQ": state.level_m,
-            "ontLevelEOQ": transition.metrics["ontario_level_end_m"],
-            "ontLevelMOQ": transition.state.mean_level_history_m[-1],
-            "ontLevel": transition.metrics["ontario_level_mean_m"],
-            "ontFlow": transition.metrics["executed_release_m3_s"] / 10,
-            "flowRegime": transition.info["flow_regime"],
-            "rfFlow": action.rulecurve_flow_m3_s / 10,
-            "rfRegime": action.rulecurve_regime,
-            "pprFlow": action.preproject_flow_m3_s / 10,
-            "rfOutput": action.rulecurve_adjustment_native,
-            **route,
-        })
+        rows.append(
+            {
+                "Year": time.year,
+                "QM": time.period,
+                "ontLevelBOQ": state.level_m,
+                "ontLevelEOQ": transition.metrics["ontario_level_end_m"],
+                "ontLevelMOQ": transition.state.mean_level_history_m[-1],
+                "ontLevel": transition.metrics["ontario_level_mean_m"],
+                "ontFlow": transition.metrics["executed_release_m3_s"] / 10,
+                "flowRegime": transition.info["flow_regime"],
+                "rfFlow": action.rulecurve_flow_m3_s / 10,
+                "rfRegime": action.rulecurve_regime,
+                "pprFlow": action.preproject_flow_m3_s / 10,
+                "rfOutput": action.rulecurve_adjustment_native,
+                **route,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -96,9 +99,13 @@ def compare_traces(native: pd.DataFrame, adapted: pd.DataFrame) -> dict:
             if not np.isfinite(left).all() or not np.isfinite(right).all():
                 raise ValueError(f"Nonfinite comparison column {name}")
             errors[name] = float(np.max(np.abs(left - right)))
-    return {"complete": all(v <= 1e-10 for v in errors.values()) and not any(mismatches.values()),
-            "decisions": len(adapted), "absolute_tolerance": 1e-10,
-            "max_absolute_errors_native_units": errors, "regime_mismatches": mismatches}
+    return {
+        "complete": all(v <= 1e-10 for v in errors.values()) and not any(mismatches.values()),
+        "decisions": len(adapted),
+        "absolute_tolerance": 1e-10,
+        "max_absolute_errors_native_units": errors,
+        "regime_mismatches": mismatches,
+    }
 
 
 def event_summary(frame: pd.DataFrame, years: list[int]) -> dict:
@@ -122,10 +129,14 @@ def archived_glrrm_comparison(reference: NativeReference, native: pd.DataFrame) 
     relative = "output/data/baseline/Plan2014_GLRRM/simulation/historic/1900_2020/sim.csv"
     reference.verify_file(relative)
     archived = pd.read_csv(reference.root / relative)
-    joined = native.merge(archived, on=["Year", "QM"], suffixes=("_python", "_glrrm"), validate="one_to_one")
+    joined = native.merge(
+        archived, on=["Year", "QM"], suffixes=("_python", "_glrrm"), validate="one_to_one"
+    )
     differences = {}
     for name in ("ontFlow", "ontLevel", "ptclaireLevel"):
-        differences[name] = float(np.max(np.abs(joined[name + "_python"] - joined[name + "_glrrm"])))
+        differences[name] = float(
+            np.max(np.abs(joined[name + "_python"] - joined[name + "_glrrm"]))
+        )
     event_peaks = {}
     for year in (1995, 2017, 2019):
         selected = joined.loc[joined.Year == year]
@@ -137,22 +148,37 @@ def archived_glrrm_comparison(reference: NativeReference, native: pd.DataFrame) 
             "python_pointe_claire_peak_m": float(selected.ptclaireLevel_python.max()),
             "archived_glrrm_pointe_claire_peak_m": float(selected.ptclaireLevel_glrrm.max()),
         }
-    return {"reference": relative, "reference_sha256": sha256(reference.root / relative),
-            "matched_periods": len(joined), "max_absolute_differences_native_units": differences,
-            "event_peaks": event_peaks,
-            "status": "Not numerically identical. Version/rounding/limit and forcing differences require investigation before published Plan2014 equivalence claims."}
+    return {
+        "reference": relative,
+        "reference_sha256": sha256(reference.root / relative),
+        "matched_periods": len(joined),
+        "max_absolute_differences_native_units": differences,
+        "event_peaks": event_peaks,
+        "status": "Not numerically identical. Version/rounding/limit and forcing differences require investigation before published Plan2014 equivalence claims.",
+    }
 
 
 def study_recipe(path: Path) -> dict:
     recipe = load_settings(path, "native_baseline")
-    fixed = {"schema_version": 1, "system": "loslr", "controller": "plan2014_reference",
-             "upstream_commit": UPSTREAM_COMMIT,
-             "input": "input/historic/1900_2020/12month_sqAR.txt",
-             "coefficient_source": "output/data/baseline/Plan2014_GLRRM/config.toml",
-             "release": "ruleCurve", "limits": "Bv7", "routing": "stlaw",
-             "september_rule": "on", "training_enabled": False,
-             "initialization": {"level_m": 74.55, "previous_release_m3_s": 5950.0,
-                                "previous_ice": 2, "history_periods": 48}}
+    fixed = {
+        "schema_version": 1,
+        "system": "loslr",
+        "controller": "plan2014_reference",
+        "upstream_commit": UPSTREAM_COMMIT,
+        "input": "input/historic/1900_2020/12month_sqAR.txt",
+        "coefficient_source": "output/data/baseline/Plan2014_GLRRM/config.toml",
+        "release": "ruleCurve",
+        "limits": "Bv7",
+        "routing": "stlaw",
+        "september_rule": "on",
+        "training_enabled": False,
+        "initialization": {
+            "level_m": 74.55,
+            "previous_release_m3_s": 5950.0,
+            "previous_ice": 2,
+            "history_periods": 48,
+        },
+    }
     for key, expected in fixed.items():
         if recipe.get(key) != expected:
             raise ValueError(f"Unsupported reference recipe {key}: expected {expected!r}")
@@ -163,8 +189,12 @@ def study_recipe(path: Path) -> dict:
     return recipe
 
 
-def run(output: Path, checkout: Path | None = None, last_year: int | None = None,
-        config: Path | None = None) -> dict:
+def run(
+    output: Path,
+    checkout: Path | None = None,
+    last_year: int | None = None,
+    config: Path | None = None,
+) -> dict:
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"Refusing to overwrite existing baseline artifacts: {output}")
     config = config or ONTARIO_CONFIG
@@ -174,11 +204,19 @@ def run(output: Path, checkout: Path | None = None, last_year: int | None = None
     frame = load_inputs(reference, last_year)
     provenance = reference.provenance()
     output.mkdir(parents=True, exist_ok=True)
-    settings = {"output": str(output.resolve()), "input": str(reference.root / recipe["input"]),
-                "config": str(reference.root / recipe["coefficient_source"]),
-                "parameters": baseline_parameters(reference), "last_year": last_year}
-    child = subprocess.run([sys.executable, "-c", _NATIVE_WORKER, json.dumps(settings)],
-                           cwd=reference.root, text=True, capture_output=True)
+    settings = {
+        "output": str(output.resolve()),
+        "input": str(reference.root / recipe["input"]),
+        "config": str(reference.root / recipe["coefficient_source"]),
+        "parameters": baseline_parameters(reference),
+        "last_year": last_year,
+    }
+    child = subprocess.run(
+        [sys.executable, "-c", _NATIVE_WORKER, json.dumps(settings)],
+        cwd=reference.root,
+        text=True,
+        capture_output=True,
+    )
     (output / "native_stdout.log").write_text(child.stdout)
     (output / "native_stderr.log").write_text(child.stderr)
     if child.returncode:
@@ -188,30 +226,47 @@ def run(output: Path, checkout: Path | None = None, last_year: int | None = None
     native = pd.read_csv(output / "native_trace.csv").iloc[48:].reset_index(drop=True)
     parity = compare_traces(native, adapted)
     pi = json.loads((output / "performance_indicators.json").read_text())
-    summary = {"adapter_parity": parity, "input_audit": input_audit(frame),
-               "parameters": settings["parameters"],
-               "events": event_summary(native, [y for y in recipe["event_years"] if y <= last_year]),
-               "performance_indicators": pi,
-               "status": "Software parity only; not independent hydraulic validation or causal forecast validation",
-               "archived_glrrm_comparison": archived_glrrm_comparison(reference, native),
-               "study_recipe": recipe, "resolved_last_year": last_year,
-               "reporting_duration_seconds": 365.0 * 86400.0 / 48,
-               "reporting_duration_status": "Fixed nominal reporting convention; not inferred physical duration or a replacement for native balance 2970",
-               "training_run": False, "defaults_changed": False}
+    summary = {
+        "adapter_parity": parity,
+        "input_audit": input_audit(frame),
+        "parameters": settings["parameters"],
+        "events": event_summary(native, [y for y in recipe["event_years"] if y <= last_year]),
+        "performance_indicators": pi,
+        "status": "Software parity only; not independent hydraulic validation or causal forecast validation",
+        "archived_glrrm_comparison": archived_glrrm_comparison(reference, native),
+        "study_recipe": recipe,
+        "resolved_last_year": last_year,
+        "reporting_duration_seconds": 365.0 * 86400.0 / 48,
+        "reporting_duration_status": "Fixed nominal reporting convention; not inferred physical duration or a replacement for native balance 2970",
+        "training_run": False,
+        "defaults_changed": False,
+    }
     (output / "summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
-    own_files = sorted([*Path(__file__).parent.glob("*.py"),
-                        Path(__file__).resolve().parents[2] / "core/contracts.py"])
-    manifest = {"upstream": provenance, "python": platform.python_version(),
-                "numpy": np.__version__, "pandas": pd.__version__,
-                "source_hashes": {str(p.relative_to(Path(__file__).resolve().parents[4])): sha256(p) for p in own_files},
-                "study_config_hash": sha256(config),
-                "native_worker_sha256": hashlib.sha256(_NATIVE_WORKER.encode()).hexdigest(),
-                "output_hashes": {p.name: sha256(p) for p in sorted(output.iterdir()) if p.is_file()}}
+    own_files = sorted(
+        [
+            *Path(__file__).parent.glob("*.py"),
+            Path(__file__).resolve().parents[2] / "core/contracts.py",
+        ]
+    )
+    manifest = {
+        "upstream": provenance,
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "pandas": pd.__version__,
+        "source_hashes": {
+            str(p.relative_to(Path(__file__).resolve().parents[4])): sha256(p) for p in own_files
+        },
+        "study_config_hash": sha256(config),
+        "native_worker_sha256": hashlib.sha256(_NATIVE_WORKER.encode()).hexdigest(),
+        "output_hashes": {p.name: sha256(p) for p in sorted(output.iterdir()) if p.is_file()},
+    }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     if not parity["complete"]:
         raise RuntimeError(f"Adapter parity failed; inspect {output / 'summary.json'}")
     if not pi["complete"]:
-        raise RuntimeError(f"Native performance indicators failed; inspect {output / 'performance_indicators.json'}")
+        raise RuntimeError(
+            f"Native performance indicators failed; inspect {output / 'performance_indicators.json'}"
+        )
     return summary
 
 
@@ -221,17 +276,27 @@ def main() -> None:
     )
     parser.add_argument("--output", type=Path, default=Path("results/loslr/native_baseline_v1"))
     parser.add_argument("--checkout", type=Path)
-    parser.add_argument("--last-year", type=int, help="Optional 1900..2020 override of recipe endpoint")
-    parser.add_argument("--config", type=Path, help="Validated reference recipe; algorithm variants require new runner support")
+    parser.add_argument(
+        "--last-year", type=int, help="Optional 1900..2020 override of recipe endpoint"
+    )
+    parser.add_argument(
+        "--config",
+        type=Path,
+        help="Validated reference recipe; algorithm variants require new runner support",
+    )
     args = parser.parse_args()
     summary = run(args.output, args.checkout, args.last_year, args.config)
-    json.dump({
-        "output": str(args.output),
-        "parity": summary["adapter_parity"]["complete"],
-        "decisions": summary["adapter_parity"]["decisions"],
-        "performance_indicators_complete": summary["performance_indicators"]["complete"],
-        "events": summary["events"],
-    }, sys.stdout, indent=2)
+    json.dump(
+        {
+            "output": str(args.output),
+            "parity": summary["adapter_parity"]["complete"],
+            "decisions": summary["adapter_parity"]["decisions"],
+            "performance_indicators_complete": summary["performance_indicators"]["complete"],
+            "events": summary["events"],
+        },
+        sys.stdout,
+        indent=2,
+    )
     sys.stdout.write("\n")
 
 

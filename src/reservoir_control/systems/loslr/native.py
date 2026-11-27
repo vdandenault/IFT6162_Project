@@ -50,9 +50,24 @@ class NativeReference:
             raise ValueError(f"LOS LR revision {revision} does not match {UPSTREAM_COMMIT}")
         # The native worker also imports performance indicators and their data.
         # Reject changed tracked implementation/data throughout these paths.
-        check = subprocess.run(["git", "-C", str(self.root), "diff", "--quiet", "HEAD", "--",
-                                "functions", "optimizationSimulation.py", "objectiveFunctions",
-                                BASELINE_CONFIG, INPUT_FILE, LEGACY_INPUT_FILE, POLICIES_FILE])
+        check = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.root),
+                "diff",
+                "--quiet",
+                "HEAD",
+                "--",
+                "functions",
+                "optimizationSimulation.py",
+                "objectiveFunctions",
+                BASELINE_CONFIG,
+                INPUT_FILE,
+                LEGACY_INPUT_FILE,
+                POLICIES_FILE,
+            ]
+        )
         if check.returncode:
             raise ValueError("Native checkout has modified tracked implementation or inputs")
         self._modules: dict[str, ModuleType] = {}
@@ -99,8 +114,10 @@ class NativeReference:
         return source
 
     def provenance(self) -> dict:
-        verified = {p: hashlib.sha256(self.verify_file(p)).hexdigest()
-                    for p in (*self._modules, BASELINE_CONFIG, INPUT_FILE)}
+        verified = {
+            p: hashlib.sha256(self.verify_file(p)).hexdigest()
+            for p in (*self._modules, BASELINE_CONFIG, INPUT_FILE)
+        }
         pi_files = subprocess.check_output(
             ["git", "-C", str(self.root), "ls-files", "objectiveFunctions/legacyPIs"], text=True
         ).splitlines()

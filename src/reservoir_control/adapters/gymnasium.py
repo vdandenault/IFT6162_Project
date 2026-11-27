@@ -1,9 +1,10 @@
 import gymnasium as gym
+
 from reservoir_control.core import EnvironmentSession
 
 
 class GymnasiumAdapter(gym.Env):
-    metadata = {'render_modes': []}
+    metadata = {"render_modes": []}
 
     def __init__(self, session: EnvironmentSession, *, action_space, observation_space):
         super().__init__()
@@ -20,11 +21,16 @@ class GymnasiumAdapter(gym.Env):
 
     def step(self, action):
         if self._needs_reset:
-            raise RuntimeError('Reset before stepping a new or completed episode')
+            raise RuntimeError("Reset before stepping a new or completed episode")
         result = self.session.step(action)
         self._needs_reset = bool(result.terminated or result.truncated)
-        return (result.observation, float(result.reward), bool(result.terminated),
-                bool(result.truncated), dict(result.info))
+        return (
+            result.observation,
+            float(result.reward),
+            bool(result.terminated),
+            bool(result.truncated),
+            dict(result.info),
+        )
 
     def close(self):
         self._needs_reset = True

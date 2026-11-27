@@ -8,19 +8,25 @@ LICENCE = "https://eccc-msc.github.io/open-data/licence/readme_en/"
 
 
 def extract(payload, station):
-    if any(x.get('rel') == 'next' for x in payload.get('links', [])):
-        raise ValueError('Incomplete API page; do not mistake a partial response for full coverage')
-    features = payload.get('features', [])
-    records = [f['properties'] for f in features]
-    if not records or any(r['STATION_NUMBER'] != station for r in records):
-        raise ValueError('Station filter did not return the requested station')
-    dates = [r['DATE'] for r in records]
-    if len(set(dates)) != len(dates): raise ValueError('Duplicate source daily records require investigation')
-    return pd.DataFrame(records).sort_values('DATE').reset_index(drop=True)
+    if any(x.get("rel") == "next" for x in payload.get("links", [])):
+        raise ValueError("Incomplete API page; do not mistake a partial response for full coverage")
+    features = payload.get("features", [])
+    records = [f["properties"] for f in features]
+    if not records or any(r["STATION_NUMBER"] != station for r in records):
+        raise ValueError("Station filter did not return the requested station")
+    dates = [r["DATE"] for r in records]
+    if len(set(dates)) != len(dates):
+        raise ValueError("Duplicate source daily records require investigation")
+    return pd.DataFrame(records).sort_values("DATE").reset_index(drop=True)
 
 
 def address(collection, station, **params):
-    return ROOT + collection + "/items?" + urlencode({"STATION_NUMBER": station, "f": "json", **params})
+    return (
+        ROOT
+        + collection
+        + "/items?"
+        + urlencode({"STATION_NUMBER": station, "f": "json", **params})
+    )
 
 
 def fetch(url):

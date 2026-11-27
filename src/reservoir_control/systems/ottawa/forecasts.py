@@ -1,15 +1,17 @@
 import numpy as np
 
 
-def inflow_forecast(mode, realized_past, initial_estimate, horizon, rng, sigma, *, perfect_values=None):
-    if mode == 'perfect':
+def inflow_forecast(
+    mode, realized_past, initial_estimate, horizon, rng, sigma, *, perfect_values=None
+):
+    if mode == "perfect":
         if perfect_values is None or len(perfect_values) != horizon:
-            raise ValueError('Explicit perfect-forecast values required')
+            raise ValueError("Explicit perfect-forecast values required")
         return np.asarray(perfect_values, float).copy()
-    if mode != 'noisy':
-        raise ValueError('Unknown forecast mode')
+    if mode != "noisy":
+        raise ValueError("Unknown forecast mode")
     last = float(realized_past[-1]) if len(realized_past) else initial_estimate
-    return np.full(horizon, last) + rng.normal(0., sigma, horizon)
+    return np.full(horizon, last) + rng.normal(0.0, sigma, horizon)
 
 
 def forecast_bank(realized, mode, seed, initial_estimate, sigma, maximum_horizon=12):
@@ -22,12 +24,17 @@ def forecast_bank(realized, mode, seed, initial_estimate, sigma, maximum_horizon
     rng = np.random.default_rng(seed)
     for k in range(len(realized)):
         horizon = min(maximum_horizon, len(realized) - k)
-        if mode == 'noisy':
+        if mode == "noisy":
             row = inflow_forecast(mode, realized[:k], initial_estimate, maximum_horizon, rng, sigma)
         else:
             row = inflow_forecast(
-                mode, [], initial_estimate, horizon, rng, sigma,
-                perfect_values=realized[k:k + horizon],
+                mode,
+                [],
+                initial_estimate,
+                horizon,
+                rng,
+                sigma,
+                perfect_values=realized[k : k + horizon],
             )
         bank[k, :horizon] = row[:horizon]
     bank.flags.writeable = False
@@ -42,7 +49,7 @@ def recession_bank(observed, persistence, *, jump_minimum_m3_s=None):
     decay = 1.0 - np.exp2(-np.arange(bank.shape[1]))
     for decision in range(2, len(observed)):
         last = observed[decision - 1]
-        earlier = observed[max(0, decision - 4):decision - 1]
+        earlier = observed[max(0, decision - 4) : decision - 1]
         if jump_minimum_m3_s is not None and last - max(earlier) < jump_minimum_m3_s:
             continue
         departure = max(0.0, last - float(np.median(earlier)))
