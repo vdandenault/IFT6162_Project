@@ -42,10 +42,25 @@ original tab-separated inputs and policy table.
 
 ## Controllers
 
+Both MPC variants plan over the next few quarter-months, execute the first
+release, and replan from the next state. They share a finite search over
+Ontario release schedules and the same Ottawa feasibility checks.
+[Course book: Receding-Horizon Control](https://pierrelucbacon.com/rlbook/receding-horizon-control/)
+
 - **Filtered Plan 2014** is the operator baseline. It proposes Ontario releases using the rule curve.
-- **External-ranked MPC** scores Ontario schedules using one fixed Ottawa release forecast.
-- **Stackelberg MPC** scores each Ontario schedule using Ottawa’s optimized response to that schedule.
-- **PPO** learns a release adjustment to the Plan 2014 proposal. Its reward is negative operating cost, with an extra penalty for stopping early.
+- **External-ranked MPC** treats Ottawa releases as a fixed forecast when
+  scoring Ontario schedules. It takes the highest-ranked schedule whose
+  optimized Ottawa response passes the shared checks.
+- **Stackelberg MPC** models Ontario as the leader and Ottawa as the follower.
+  For each eligible Ontario schedule, it solves Ottawa’s constrained
+  release problem and uses that best response in Ontario’s score. The
+  leader’s search is limited to the schedules generated at each decision.
+  [Stackelberg commitment and best response](https://users.cs.duke.edu/~conitzer/commitEC06.pdf)
+- **PPO** learns a release adjustment to the Plan 2014 proposal. Its reward
+  is negative operating cost, with an extra penalty for stopping early.
+  [Course book: Policy Gradients and Actor-Critic](https://pierrelucbacon.com/rlbook/policy-gradients/)
+
+[Shared MPC implementation](src/reservoir_control/experiments/coupled_planning.py)
 
 ## Results
 
