@@ -43,4 +43,4 @@ spotlights:
     content: "The anticipating controller asks how the Ottawa operator would respond to each candidate plan. Lake Ontario then announces its choice. In both experiments, the same modeled Ottawa operator responds to the chosen plan."
     style: "method reverse"
     strategy: "anticipating"
-    next: { id: "technology", label: "Project technology" }
+    next: { id: "replay", label: "Flood-year results" }

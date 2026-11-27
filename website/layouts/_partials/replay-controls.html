@@ -1,0 +1,19 @@
+<form class="case-controls" data-replay-controls aria-label="{{ .label }} replay controls">
+  <div class="replay-controls">
+    <fieldset><legend>Flood spring</legend><div class="choices">
+      <label><input type="radio" name="year" value="2017" checked><span>2017</span></label>
+      <label><input type="radio" name="year" value="2019"><span>2019</span></label>
+    </div></fieldset>
+    <fieldset><legend>Compare with filtered Plan 2014</legend><div class="choices">
+      <label><input type="radio" name="policy" value="ordinary" checked><span>Ordinary MPC</span></label>
+      <label><input type="radio" name="policy" value="anticipating"><span>Anticipating MPC</span></label>
+    </div></fieldset>
+  </div>
+  {{ if .timeline }}
+    <div class="timeline">
+      <button type="button" data-play aria-pressed="false">Play</button>
+      <label for="quarter-{{ .id }}">Quarter-month <output for="quarter-{{ .id }}"></output></label>
+      <input type="range" name="quarter" id="quarter-{{ .id }}" min="1" max="48" value="13" step="1">
+    </div>
+  {{ end }}
+</form>

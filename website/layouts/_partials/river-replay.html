@@ -1,0 +1,31 @@
+{{ $lake := eq .id "lake-ontario" }}
+{{ $fields := slice
+  (dict "field" "lake_ontario_release_m3_s" "title" "Lake Ontario release" "unit" "m³/s")
+  (dict "field" "lake_ontario_level_m" "title" "Lake Ontario level" "unit" "m") }}
+{{ if not $lake }}
+  {{ $fields = slice
+    (dict "field" "ottawa_release_m3_s" "title" "Ottawa reservoir release" "unit" "m³/s")
+    (dict "field" "lake_st_louis_level_m" "title" "Lake St. Louis at Pointe-Claire" "unit" "m") }}
+{{ end }}
+<section class="river-replay" id="{{ .id }}-replay" tabindex="-1" aria-labelledby="{{ .id }}-replay-title">
+  <h3 id="{{ .id }}-replay-title">{{ if $lake }}Follow the Lake Ontario release{{ else }}Follow the water downstream{{ end }}</h3>
+  <p>{{ if $lake }}Choose a flood year and a controller. Read the release alongside the resulting lake level. Shading marks April through June. Your choices carry downriver.{{ else }}Compare Ottawa’s release with the level at Pointe-Claire one step later. Moving the slider here moves the Lake Ontario plots to the same quarter-month.{{ end }}</p>
+  <p class="replay-status" role="status">Loading trajectories…</p>
+  <noscript><p><a href="{{ "replay.json" | relURL }}">Open the trajectory data</a> or enable JavaScript for playback.</p></noscript>
+  <div data-replay-panel hidden>
+    {{ partial "replay-controls.html" (dict "id" .id "label" .label "timeline" true) }}
+    <div class="charts">
+      {{ range $fields }}
+        <figure class="chart" data-field="{{ .field }}" data-unit="{{ .unit }}">
+          <figcaption><h4>{{ .title }}</h4><span>{{ .unit }}</span></figcaption>
+          <svg class="plot" role="img" aria-label="{{ .title }} in {{ .unit }}"></svg>
+          <p class="chart-values"></p>
+        </figure>
+      {{ end }}
+    </div>
+    <p class="threshold-note"><span class="limit-key" aria-hidden="true"></span>
+      {{ if $lake }}The dotted line marks 75.50 m IGLD 1985. Exceeding it adds a flood cost to the Lake Ontario objective.
+      {{ else }}The Pointe-Claire target ranges from 22.10 to 22.48 m IGLD 1985. Each policy’s beginning Lake Ontario level selects its tier. Dotted lines show the applicable targets. The modeled Ottawa operator enforces a downstream flow ceiling.{{ end }}
+    </p>
+  </div>
+</section>

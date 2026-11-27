@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explore how Lake Ontario releases and the Ottawa River interact in the 2017 and 2019 modeled flood springs.">
   <title>{{ site.Title }} · Flood-year replay</title>
-  {{ $styles := slice (resources.Get "css/theme.css") (resources.Get "css/site.css") (resources.Get "css/map.css") (resources.Get "css/rivers.css") | resources.Concat "css/site.css" | fingerprint }}
+  {{ $styles := slice (resources.Get "css/theme.css") (resources.Get "css/site.css") (resources.Get "css/map.css") (resources.Get "css/rivers.css") (resources.Get "css/replay.css") (resources.Get "css/spring.css") | resources.Concat "css/site.css" | fingerprint }}
   <link rel="stylesheet" href="{{ $styles.RelPermalink }}">
   {{ $figures := resources.Get "js/river-figures.js" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
   <script defer src="{{ $figures.RelPermalink }}"></script>
+  {{ $replay := resources.Get "js/replay.js" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
+  <script defer src="{{ $replay.RelPermalink }}"></script>
   <link rel="icon" href="data:,">
 </head>
 <body>
@@ -19,6 +21,7 @@
       <div class="nav-links">
         <a href="#overview">The problem</a>
         <a href="#ordinary-mpc">Controllers</a>
+        <a href="#replay">Results</a>
       </div>
     </nav>
   </header>
@@ -28,6 +31,7 @@
       {{ partial "overview.html" . }}
       {{ range hugo.Data.story.spotlights }}{{ partial "spotlight.html" . }}{{ end }}
     </div>
+    {{ partial "replay.html" . }}
     {{ partial "technology.html" . }}
   </main>
   <footer class="site-footer">

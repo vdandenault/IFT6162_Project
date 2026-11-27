@@ -1,0 +1,127 @@
+.spring-overview {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: clamp(1.5rem, 4vw, 4rem);
+}
+
+.spring-comparison {
+  min-width: 0;
+  padding: clamp(.95rem, 2.2vw, 1.85rem);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+}
+
+.spring-comparison h3 {
+  font: 400 clamp(1.85rem, 2.8vw, 2.6rem)/1.12 var(--serif);
+  letter-spacing: -.03em;
+}
+
+.spring-comparison figcaption p, .impact-title {
+  margin-top: .6rem;
+  font-size: .91rem;
+}
+
+.exposure-table {
+  table-layout: fixed;
+}
+
+.exposure-table caption {
+  margin-top: 1rem;
+}
+
+.exposure-table :is(td, th) {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.exposure-table td, .exposure-table th {
+  font-size: clamp(.8rem, 1.4vw, .94rem);
+}
+
+.exposure-table small {
+  display: block;
+  color: var(--muted);
+  font-size: .79rem;
+}
+
+.exposure-table meter {
+  display: block;
+  width: 100%;
+  height: .36rem;
+  margin-block: .16rem .25rem;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: var(--chart-grid);
+
+  --bar-color: var(--controller);
+}
+
+.exposure-table meter.plan2014 {
+  --bar-color: var(--baseline);
+}
+
+.exposure-table meter::-webkit-meter-bar {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: var(--chart-grid);
+}
+
+.exposure-table meter::-webkit-meter-optimum-value {
+  background: var(--bar-color);
+}
+
+.exposure-table meter::-moz-meter-bar {
+  background: var(--bar-color);
+}
+
+.spring-impacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .45rem;
+  margin: .5rem 0 0;
+}
+
+.spring-impacts dt {
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.spring-comparison .check-link {
+  display: inline-block;
+  margin-top: .9rem;
+  font-size: .85rem;
+}
+
+.spring-impacts dd {
+  margin: .15rem 0 0;
+  font-size: .88rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (width <= 55rem) {
+  .spring-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (width <= 26rem) {
+  .spring-impacts {
+    grid-template-columns: 1fr;
+  }
+
+  .spring-impacts div {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    align-items: baseline;
+  }
+
+  .spring-impacts dd {
+    margin: 0;
+  }
+}

@@ -1,0 +1,46 @@
+{{ $run := transform.Unmarshal (os.ReadFile "static/replay.json") }}
+<section class="replay" id="replay" tabindex="-1" data-source="{{ "replay.json" | relURL }}" aria-labelledby="replay-title">
+  <div class="container">
+    <div class="spring-overview">
+      <div>
+        <header class="replay-heading">
+          <p class="eyebrow">Model outcomes</p>
+          <h2 id="replay-title">What changed in the flood springs?</h2>
+          <p>Choose a spring to compare all three policies at both shorelines. The detailed table below compares your selected MPC with filtered Plan 2014 for flooding, hydropower, boating and Ottawa storage.</p>
+        </header>
+        <div data-replay-panel hidden>
+          {{ partial "replay-controls.html" (dict "id" "results" "label" "Results" "timeline" false) }}
+        </div>
+      </div>
+      {{ partial "spring-comparison.html" $run }}
+    </div>
+    <p class="replay-status" role="status">Loading modeled outcomes…</p>
+    <noscript><p><a href="{{ "replay.json" | relURL }}">Open the recorded outcomes</a> or enable JavaScript to compare them.</p></noscript>
+    <div data-replay-panel hidden>
+      <p class="scenario-note" id="scenario-note"></p>
+      <section class="results" aria-labelledby="results-title">
+        <div>
+          <h3 id="results-title">Compared with Plan 2014</h3>
+          <p id="finding"></p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption id="metrics-caption"></caption>
+            <thead><tr><th scope="col">Measure</th><th scope="col">Plan 2014</th><th scope="col" id="selected-name"></th></tr></thead>
+            <tbody id="spring-metrics"></tbody>
+            <tbody id="annual-metrics"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <details class="verification" id="verification" open>
+      <summary>How we checked the numbers</summary>
+      <p>We reproduced three complete runs for each year at coupled-study revision <a href="https://github.com/vdandenault/IFT6162_Project/tree/{{ $run.revision }}">{{ substr $run.revision 0 7 }}</a>. We matched the initial state, inflows and issued forecasts across controllers and checked all 48 executed quarter-months in each run. The baseline applies the simulator’s safety filter to the Plan 2014 release proposal.</p>
+      <p>Spring covers quarter-months 13–24. Flood exposure sums the positive difference between each level and its study threshold over those twelve periods. We checked annual exposure, cost, hydropower value and final Ottawa storage against the saved run summaries. Building counts are peak modeled estimates across the indicator sites in each region.</p>
+      <p>For the opening finding we paired ordinary and anticipating MPC by year and quarter-month and compared the executed Lake Ontario releases in m³/s at each date. The website reads the saved results from Python. Changing the year selects a different disturbance scenario, and playback advances through the recorded closed-loop responses.</p>
+      <p>These two development scenarios use synthetic Ottawa inflow and routing. The comparison here describes the flood years 2017 and 2019. The team reports a separate comparison on 18 other years in the <a href="https://github.com/vdandenault/IFT6162_Project/blob/{{ $run.revision }}/README.md">study results</a>.</p>
+      <p><a href="{{ "replay.json" | relURL }}">View the plotted data and source revision</a></p>
+    </details>
+    {{ partial "next-section.html" (dict "id" "technology" "label" "Project technology") }}
+  </div>
+</section>

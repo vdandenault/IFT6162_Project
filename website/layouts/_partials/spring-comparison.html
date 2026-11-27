@@ -1,0 +1,58 @@
+{{ $policies := slice (slice "plan2014" "Filtered Plan 2014") (slice "ordinary" "Ordinary MPC") (slice "anticipating" "Anticipating MPC") }}
+{{ $sites := slice (slice "lake_ontario" "Lake Ontario") (slice "lake_st_louis" "Lake St. Louis") }}
+{{/* Keep every exposure bar on one scale, including when the year changes. */}}
+{{ $maxExposure := 1.0 }}
+{{ range .years }}{{ range .policies }}
+  {{ $maxExposure = math.Max $maxExposure (math.Max .spring.lake_ontario_exposure_m_qm .spring.lake_st_louis_exposure_m_qm) }}
+{{ end }}{{ end }}
+<figure class="spring-comparison" aria-labelledby="spring-title">
+  <figcaption>
+    <h3 id="spring-title">Spring flood exposure</h3>
+    <p>Bars add up the height above each shoreline’s flood threshold over April–June, in m·quarter-months. Peak levels are in metres (IGLD 1985).</p>
+  </figcaption>
+  {{ range $year, $case := .years }}
+    <div class="spring-year" data-flood-year="{{ $year }}">
+      <table class="exposure-table">
+        <caption>April–June {{ $year }} · {{ index (dict "steady" "steady" "seasonal_wet" "seasonally wet") $case.design }} synthetic Ottawa inflow</caption>
+        <thead><tr><th scope="col">Policy</th>{{ range $sites }}<th scope="col">{{ index . 1 }}</th>{{ end }}</tr></thead>
+        <tbody>
+          {{ range $policies }}
+            {{ $key := index . 0 }}
+            {{ $spring := (index $case.policies $key).spring }}
+            <tr><th scope="row">{{ if eq $key "plan2014" }}<a href="#plan-2014">{{ index . 1 }}</a>{{ else }}{{ index . 1 }}{{ end }}</th>
+              {{ range $sites }}
+                {{ $site := index . 0 }}
+                {{ $exposure := index $spring (printf "%s_exposure_m_qm" $site) }}
+                {{ $peak := index $spring (printf "%s_peak_m" $site) }}
+                <td><strong>{{ printf "%.3f" $exposure }}</strong>
+                  <meter class="{{ $key }}" min="0" max="{{ math.Ceil $maxExposure }}" value="{{ $exposure }}" aria-hidden="true"></meter>
+                  <small>Peak {{ if eq $site "lake_ontario" }}{{ printf "%.3f" $peak }}{{ else }}{{ printf "%.2f" $peak }}{{ end }} m</small>
+                </td>
+              {{ end }}
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+      {{ $base := $case.policies.plan2014 }}
+      {{ $ordinary := $case.policies.ordinary }}
+      {{ $anticipating := $case.policies.anticipating }}
+      {{ if and (eq $base.spring.lake_st_louis_periods_above 0) (eq $ordinary.spring.lake_st_louis_periods_above 0) (eq $anticipating.spring.lake_st_louis_periods_above 0) }}
+        <p class="impact-title">All three policies stayed within the Pointe-Claire target throughout spring.</p>
+      {{ end }}
+      {{ $arms := slice (slice "Ordinary MPC" $ordinary) (slice "Anticipating MPC" $anticipating) }}
+      {{ if and (eq ($ordinary.spring | jsonify) ($anticipating.spring | jsonify)) (eq $ordinary.annual_ottawa_end_storage_m3 $anticipating.annual_ottawa_end_storage_m3) }}
+        {{ $arms = slice (slice "Both MPCs" $ordinary) }}
+      {{ end }}
+      {{ range $arms }}
+        {{ $arm := index . 1 }}
+        <p class="impact-title"><strong>{{ index . 0 }}</strong> compared with filtered Plan 2014</p>
+        <dl class="spring-impacts">
+          <div><dt>Spring hydropower value</dt><dd>{{ printf "%+.2f" (div (sub $arm.spring.hydropower_value_usd $base.spring.hydropower_value_usd) 1e6) }} million USD</dd></div>
+          <div><dt>Spring boating cost</dt><dd>{{ $boating := sub $arm.spring.boating_cost_usd $base.spring.boating_cost_usd }}{{ if eq $boating 0 }}0 USD{{ else }}{{ printf "%+.0f" (div $boating 1e3) }} thousand USD{{ end }}</dd></div>
+          <div><dt>Ottawa year-end storage</dt><dd>{{ printf "%+.1f" (div (sub $arm.annual_ottawa_end_storage_m3 $base.annual_ottawa_end_storage_m3) 1e6) }} million m³</dd></div>
+        </dl>
+      {{ end }}
+    </div>
+  {{ end }}
+  <a class="check-link" href="#verification">How we checked these figures</a>
+</figure>
