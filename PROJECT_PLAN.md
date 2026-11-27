@@ -6,6 +6,202 @@ Ottawa reservoir operator as follower. PPO provides an additional learned
 comparison. Lake Como remains the completed reference case for our controller
 implementations and simulator investigations.
 
+## Delivery plan for the coupled comparison
+
+The current evidence supports two conclusions. A wider two-path search can
+recover missed schedules in closed loop, and its overall advantage over
+isolated-jump MPC is small on the synthetic holdouts so far. The sustained-rise
+audit found modeled continuations at all 16 stopped states. Substituting
+realized Ottawa forecasts reopened seven decisions under the same search and
+reserve, which leaves nine cases for one final planning diagnostic. The next
+milestone is a single comparable controller study.
+
+### 1. Freeze the MPC variants after one targeted diagnostic
+
+- [x] Budget half a day for the nine frozen states. Check the first five
+  periods of the physical witness against the planner, then test the reserve
+  and fixed fifth Ontario commitment separately and together. Repeat the
+  search under the same settings and save a rejection reason for each case.
+- [x] Allow one implementation and closed-loop validation pass for the
+  strongest supported change. If the fifth commitment is binding, use a
+  declared causal fifth Ontario forecast and give the same fifth-lead policy
+  to both MPC arms. If the diagnostic is inconclusive or the change trades
+  completions for realized violations, freeze the existing reference and
+  report the failed cases.
+- [x] Select one external-ranked MPC and one response-aware MPC for the main
+  comparison. Lock forecasts, horizons, candidate eligibility, reserve,
+  fallback rules, and the evaluation contract before opening reserved years.
+  Keep the two-path controller as a separate sensitivity result unless it
+  earns a place in the main comparison under the same checks.
+
+### 2. Run a bounded PPO comparison alongside MPC
+
+The existing five-seed Ontario PPO pilot ran for 4,096 decisions per seed in
+the earlier responsive-follower simulator. That experiment established the
+training pipeline. A stronger comparison needs the same coupled physics,
+Ottawa response, and outcomes as the final MPC study.
+
+- [x] Verify the Gymnasium adapter uses the final paired execution contract.
+  Give PPO the same decision-time information and native release projection.
+  Define and log rejected requests, hard-limit violations, and incomplete
+  episodes explicitly. If a common feasibility filter mediates actions, apply
+  it consistently and report its interventions separately from PPO's requests.
+- [x] Smoke-test one training seed, then run one declared budget across the
+  five existing seeds on training years only. Freeze the budget after the
+  smoke test and before evaluating development results. Retain the final
+  checkpoint and the learning curve for each seed. Keep the existing
+  chronological split and shared operating cost.
+- [x] Evaluate the final checkpoints on the development cases. Record whether
+  PPO finishes runs that MPC stops, and whether that comes with changes in
+  upstream or downstream exposure, Ottawa storage, or native projection
+  frequency. Use this as the single PPO comparison for the project.
+
+### 3. Run the paired evaluation and write the result
+
+- [x] Freeze a common case manifest covering the original chronological
+  protocol, the 2017 and 2019 spring development cases, and the separately
+  labeled synthetic Ottawa uncertainty cases. Include Plan 2014 as the
+  operational reference, external-ranked MPC, response-aware MPC, and PPO.
+  If a run ends early, report the stop and compare horizon costs only on
+  pairs that complete their full windows.
+- [x] Report completion and physical violations first, then Ontario shoreline
+  and Lake St. Louis flooding, Ottawa storage and service, energy, and solver
+  time. Preserve water in transit at each endpoint. Show per-seed PPO
+  variability and the upstream/downstream trade-offs in 2017 and 2019.
+- [x] Update [RESULTS.md](RESULTS.md) and the visual replay with a common
+  comparison. State which gains come from the follower response and which
+  come from search or feasibility safeguards. Document the synthetic Ottawa
+  assumptions and keep physical calibration as a separate workstream.
+
+Work toward one results package in roughly five focused work blocks. Spend the
+first on the frozen diagnostic and the evaluation contract, the next two on
+the single MPC revision and PPO pilot/training setup, the fourth on paired
+rollouts, and the last on the written results and replay. PPO training can run
+while the frozen MPC comparison is evaluated on development cases.
+
+The delivery study is complete. The diagnostic attributed most of the
+nine rejections to the reserve on the tested forecasts. The reserve-fallback
+sensitivity completed 18/36 versus 7/36 for the guarded wider two-path arm,
+with no recorded physical violations. It remains a separate sensitivity.
+The main comparison used the common hard follower and fixed fifth lead.
+All four approaches completed the same 15 of 18 reserved annual cases.
+PPO did not open any of the common stops, and Stackelberg and external
+ranking gave the same operating cost. The common filter stopped all
+synthetic stress runs. See [RESULTS.md](RESULTS.md) for the scored
+comparison and replay.
+
+### Shared recovery follow-up
+
+- [x] Audit the stopped flood and stress decisions, then compare reserve-only,
+  wider-profile, and proactive recovery through all four controllers.
+  Wider recovery completes 2017 and 2019 with zero recorded violations.
+- [x] Retrain five PPO seeds under the filtered profiles contract for the
+  same 16,384-decision budget. The new checkpoints do not beat external MPC
+  on the two flood years or average operating cost on annual replays.
+- [x] Test the causal peak storage check on new hydrographs and noise seeds.
+  Confirmation stress improves external MPC completion from 4/36 to 15/36
+  and removes realized storage violations. Its operating cost is lower
+  than filtered Plan 2014 on all 14 joint completions. External and
+  Stackelberg costs match. Use external-ranked MPC as the research
+  reference and keep the peak-protected recovery opt-in.
+  See `results/loslr/final_shared_recovery_report_verified/report.md`.
+- [x] Check whether anticipating Ottawa's response changes Ontario's schedule
+  across three storage scales and three routing delays. The selected
+  schedule agrees in all 150 eligible frozen comparisons. Keep external-ranked
+  MPC with peak protection as the research reference and report the complete
+  2017 and 2019 replays. See [sensitivity results](RESULTS.md#ottawa-storage-and-routing-sensitivity).
+- [x] Screen downstream-sensitive states across the flood years, annual replays
+  and synthetic confirmation windows. Anticipation changes predicted
+  Pointe-Claire levels while preserving zero forecast exceedance and the
+  same winning schedule. Package the final four-controller comparison.
+  See [downstream diagnostic](RESULTS.md#anticipating-ottawa-near-the-downstream-limit).
+
+### Follow-up controller experiments
+
+The peak-protected four-controller comparison is the reference snapshot.
+Use a new run directory and keep 2017, 2019 and the 18 reported annual
+replays as fixed reference cases.
+
+- [x] Assess observed Ottawa flows and routing. HYDAT covers the older
+  Britannia–Carillon benchmark and supplies stage checks in both flood
+  years. SLON provides the existing quarter-month aggregate comparator.
+- [x] Benchmark daily Carillon persistence, Carillon history, and
+  history plus Britannia on 1992–1994. Carillon history lowers average MAE
+  across all tested leads. Britannia has mixed effects, including higher
+  one-day MAE at high flow.
+- [x] Benchmark quarter-month SLON at one to four leads, with the latest
+  completed period available or delayed by one period. Seasonal history
+  improves MAE across both latency cases. High-flow underprediction persists.
+- [x] Use the 1987–1993 historical overlap for a downstream stage timing
+  check. Same-day Carillon flow improves stage agreement with Pointe-Claire,
+  while tested lag variants give no timing improvement that transfers.
+  Physical routing and absolute flood-stage validation remain open.
+- [x] Adopt the research rule for replacing the reference. Require lower
+  total Lake St. Louis exposure, zero added Ontario exposure in every
+  matched year, preserved completion, and no added physical violations.
+  Report positive upstream trade-offs as sensitivities. The archived
+  half-margin candidate fails the agreed rule at both data delays.
+- [x] Test earlier release timing against standalone persistence MPC.
+  Hindsight finds feasible improvements in 25 of 28 development cases
+  with downstream exceedance. The causal forecast and four-period
+  search recover no exposure benefit. Identify a stronger early warning
+  signal on independent data before reopening this strategy.
+- [x] Test an earlier high-SLON onset warning using observed Britannia
+  flow. The gauge adds no onset recall over SLON history on the reserved
+  years. Only three of 12 reachable hindsight shifts coincide with onset.
+- [x] Forecast Pointe-Claire headroom under the issued Ontario plan and
+  score local opportunities on the reserved years. The fitted alert
+  reduces false alarms but misses more opportunities than the seasonal
+  alert. Keep the existing search.
+- [x] Obtain downstream flow and stage observations and compare stage
+  under observed flows. The 2021–2025 benchmark adds 197 complete
+  quarter-months, including three above the study threshold.
+- [x] Check daily reach travel and the Prairies branch proxy using
+  observed discharge. Development favors same-day inputs and the
+  paired branch adjustment adds no benefit. Held-out near-threshold
+  stage errors remain large enough to affect release decisions.
+  Keep the frozen controller comparison for the handoff. Reopen
+  routing calibration when matched Carillon and outlet flows or a
+  validated hydraulic routing model are available.
+- [x] Run an offline Ontario replay for persistence versus seasonal
+  history using historical aggregate SLON as the realized forcing.
+  Hold supply forecasts, constraints, costs, and candidate search fixed.
+  All 160 runs complete. Seasonal history worsens aggregate downstream
+  exposure in every cohort under both availability settings.
+- [x] Compare the two SLON forecast paths at the same inherited states
+  where realized downstream exposure rose. Identify which lead and
+  limit influenced the first action. The immediate forecast swap explains
+  5.565 of 6.390 metre-periods of gross increase across the selected decisions.
+- [x] Calibrate a one-sided lead-one SLON forecast bound by latency on
+  training data. Screen it over full development years with the same MPC
+  settings. The half-margin candidate passed development and reduced
+  reserved-year downstream exposure, but exceeded the upstream allowance
+  at both delays. Keep persistence as the reference and close this
+  forecast-margin search on the current split.
+- [ ] Test one MPC change at a time. First compare causal supply forecasts
+  at the existing horizons with objective and constraints fixed. Extend
+  planning only once usable forecasts for the additional leads are
+  available. Declare the evaluation windows and report completion, both
+  flood exposures, operating cost and computation time on matched cases.
+- [x] Audit archived PPO interventions and probe fixed flood-year states.
+  Nine distinct requests selected the same first release at 29/90 states.
+- [x] Enumerate fixed-state PPO menus on development trajectories. Only
+  35 of 900 sampled states had one eligible first release. Direct menu
+  selection adds a reachable choice at 10 states, so a new training run
+  based on action availability alone is low priority.
+- [x] Measure PPO probability across reachable releases. The most probable
+  executed release differs from the deterministic choice at 379 of 860
+  sampled development states with multiple reachable releases.
+- [x] Compare deterministic PPO with the most probable executed release
+  using the same checkpoints. Modal execution raises cost and leaves
+  reported flood exposure unchanged, so keep deterministic execution.
+- [x] Compare 16,384 and 32,768 PPO decisions under the same peak-protected
+  training contract using five seeds. Mean cost rises on the 19 common
+  complete development years, four seeds worsen, and one later rollout
+  stops. Retain the frozen PPO comparison and close the duration sweep.
+
+See [Ottawa and PPO audit results](RESULTS.md#observed-ottawa-benchmark-and-ppo-filter-audit).
+
 ## Current status
 
 - [x] Diagnose the H=4 delayed follower failure using independent full-experiment
@@ -53,6 +249,200 @@ releases, with a small downstream severity reduction and an upstream severity
 increase. The finite search finds no schedule meeting both forecast caps on
 20 decisions in 2017 and 17 in 2019. Current numbers and their interpretation
 are recorded in [RESULTS.md](RESULTS.md).
+
+## Next coupled replay
+
+- [x] Use a fixed Ontario release schedule for the first replay. Ottawa plans
+  against committed total discharge in m³/s. Check each commitment against
+  Ontario's operating limits using the coupled downstream flow. If a limit
+  would change the release, record the rejected commitment and stop the replay.
+- [x] Use five quarter-months as Ottawa's study look-ahead. Ottawa reads up to
+  five releases from the fixed schedule and shortens its window at the replay
+  endpoint. The current Ontario runner generates that schedule with its four
+  available supply forecast leads.
+- [x] Run the 12-period fixed-schedule verification and inspect the first
+  conflict. With the saved Ontario H4 schedule and the synthetic delayed Ottawa
+  case, period 1 executes and balances. Before period 2 the native F limit
+  reduces the permitted Ontario flow from 6,930 to 6,220 m³/s. The replay stops
+  with both period-2 actions unexecuted and the period-1 Ottawa release still in
+  transit. See `results/loslr/fixed_ontario_ottawa_h5_verified/`.
+- [x] Establish a fixed schedule under the coupled downstream conditions.
+  Offline repair changed seven releases. A fresh replay using only the saved
+  schedule completed all 12 periods with identical traces. This is a feasibility
+  benchmark with perfect Ottawa forecasts. See
+  `results/loslr/feasible_fixed_schedule_h5_checked/`.
+- [x] Compare Ontario MPC with an external Ottawa forecast against Ontario MPC
+  that solves the Ottawa response for each candidate. Both use Ontario H4,
+  Ottawa H5 and the same fifth commitment from the verified schedule. The shared
+  grid produced the same executed releases for two periods. Both planners
+  exhausted the candidate set before period 3 because of projected native
+  limits. See `results/loslr/ottawa_response_comparison_verified/`.
+- [x] Diagnose and rerun the period-3 forecast rejection. Substituting only
+  period-4 Pointe-Claire roughness (1.229 in the replay versus 1.294 carried
+  forward in the forecast) admits 6,110 m³/s for both arms. The shared native
+  limit candidate generator extends the external arm to 12/12 periods. The
+  anticipating arm stops after two periods, with 38 candidates rejected by the
+  forecast F limit. See `results/loslr/period3_forecast_diagnostic/` and
+  `results/loslr/ottawa_response_native_limits_verified/`.
+- [x] Align Ottawa's forecast cap with Ontario's F limit for the first four
+  leads. Switching on alignment at period 3 preserved the prior state and
+  admitted 30 anticipating candidates. Both policies completed the staged
+  replay. With alignment from period 1, anticipating completed 12 periods and
+  the external arm stopped after four when its chosen schedule made Ottawa's
+  capped solve infeasible. See `results/loslr/ottawa_f_alignment_{from3,full}/`.
+- [x] Test a causal four-observation roughness mean for future leads. Its
+  mean absolute error was 0.0833 versus 0.0652 for persistence across the 30
+  available forecast and observation pairs. Completion with alignment stayed
+  12/12 for anticipating and 4/12 for external.
+- [x] Screen the externally ranked schedules for Ottawa feasibility.
+  The screened and anticipating arms both completed 12/12 periods. At period
+  5, screening skipped the top three schedules and selected the fourth.
+  Screening used 15 Ottawa candidate solves versus 393 for anticipation.
+  See `results/loslr/ottawa_external_screening/`.
+- [x] Stress both policies with the same noisy inflow forecasts and two
+  downstream-capacity settings. Both complete only seed 33 in each setting.
+  Native-limit-checked offline witnesses show a feasible continuation at
+  all eight stops, including the tight seed-11 pair when the first Ontario
+  commitment is lowered. See `results/loslr/ottawa_noisy_stress_verified/`.
+- [x] Test recovery at the failed decision. The wider candidate set alone
+  completed 2/6 cases, matching the screened baseline. Retrying with causal
+  inflow persistence completed 5/6. The tight seed-22 run exceeded the
+  Ottawa storage limit at period 6, after returning to the original forecast
+  bank. See `results/loslr/ottawa_noisy_recovery_verified/`.
+- [x] Check storage headroom during recovery for one or two periods of
+  +700 m³/s inflow. The one-period check completes 6/6 cases without
+  realized limit violations. The two-period check completes 5/6 and rejects
+  the tighter seed-11 case at its original stop. See
+  `results/loslr/ottawa_retry_storage_guard/`.
+- [x] Freeze the one-period +700 m³/s check and validate against seeds
+  101–106 in the original Ontario window and the April–June 2017 and 2019
+  windows. With the same two synthetic Ottawa scenarios, unguarded retry
+  completes 34/36 cases and guarded retry completes 32/36. Both exceed
+  Ottawa storage in the same two spring cases. The guard adds two stops
+  with feasible offline continuations. See
+  `results/loslr/ottawa_guard_holdout_{1961,2017,2019}/`.
+- [x] Apply the +700 m³/s check to the ordinary decision after a retry,
+  and compare with checking every decision. On the same evaluation cases,
+  those variants complete 32/36 and 33/36 respectively, with zero storage
+  violations. The targeted check completes 2017 seed 101 and stops 2019
+  seed 101 before its period-6 overflow. See
+  `results/loslr/ottawa_replan_guard_{1961,2017,2019}/`.
+- [x] Diagnose the 2019 seed-101 stop from its inherited state. The original
+  candidates allow at most 4.271 billion m³ of Ottawa release over the next
+  three periods, below the 4.409 billion m³ needed under the storage check.
+  An opt-in search for lower Ontario commitments in the arrival period
+  restores feasibility and completes all 12 periods in this replay. The
+  replay pairs historical Ontario inputs with synthetic Ottawa conditions.
+- [x] Evaluate the targeted arrival-period search on the frozen multi-seed
+  matrix. Completion improves from 32/36 to 34/36 with no realized storage
+  or downstream violations beyond tolerance. The search recovers seed 101 in
+  both 1961 and 2019 and is ineligible at the two remaining stops, which
+  have no preceding retry. The default stays as-is.
+  See `results/loslr/ottawa_delay_headroom_holdout_verified/report.md`.
+- [x] Diagnose the two period-6 stops without a preceding retry and test a
+  broader trigger. At the frozen state, the wider candidate set needs guarded
+  persistence in 1961 seed 102 and works with the original forecast in 2019
+  seed 103. The opt-in trigger completes both cases. For fresh seeds 107–112,
+  it completes 36/36 versus 32/36 for the after-retry trigger, with zero
+  realized storage or downstream violations beyond tolerance. This varies
+  forecast noise on the same synthetic Ottawa scenarios and Ontario windows.
+  See `results/loslr/ottawa_remaining_stops_verified/report.md` and
+  `results/loslr/ottawa_broader_headroom_validation_v1/summary.csv`.
+- [x] Compare finite-search Stackelberg MPC with the improved external-ranked
+  baseline using the same candidate eligibility and recovery rules. The added
+  native check on the baseline reproduced all 36 archived trajectories. Both
+  arms completed 36/36, with identical schedules and realized outcomes.
+  Scoring the routed best response changed at least one eligible score at
+  384 of 432 decisions, while the top schedule stayed the same at every
+  decision. Anticipation required 23,329 Ottawa candidate solves versus
+  11,034 for external ranking. This comparison holds candidate eligibility
+  fixed and isolates ranking on the tested synthetic Ottawa scenarios.
+  See `results/loslr/ottawa_response_ranking_v1/report.md`.
+- [x] Compare generic and Ottawa-guided local candidate expansions at 12
+  proposals per feasible decision. All three arms complete 6/6 saved spring
+  cases and 33/36 fresh cases. On the 33 fresh complete pairs, the guided
+  arm improves the existing scalar Ontario objective over the generic arm
+  in 10 cases and worsens it in 21, with two ties. It improves Ottawa
+  storage tracking in 25 cases. All three arms exceed Ottawa storage in
+  the same three period-6 seed-115 cases. Keep the expansions opt-in.
+  See `results/loslr/ottawa_candidate_proposals_{saved,fresh}_verified/report.md`.
+- [x] Diagnose the period-6 seed-115 overflows and compare storage guard
+  triggers on the same 36 cases. The selected Ontario schedules cap Ottawa's
+  first release at 1,500 m³/s, about 113 m³/s short. Offline schedules that
+  free capacity at the next downstream arrival complete all three windows.
+  Guarding period 5 alone leaves the period-6 storage and overflows unchanged.
+  Always-on guarding completes 36/36. Tight-headroom guarding completes
+  35/36. Both avoid the three overflows. Keep the variants opt-in while
+  testing on different hydrology and forecast seeds.
+  See `results/loslr/ottawa_storage_guard_seed115_final/report.md`.
+- [x] Validate the frozen +700 m³/s guard on three new Ottawa inflow shapes
+  and forecast seeds 119–124. Always-on guarding prevents two sustained-wet
+  overflows and passes all dry cases, but adds three stops in the sharp-peak
+  cases. All guarded stops have feasible offline continuations. Completion
+  is 39/54 for always-on and 40/54 for after-retry. Keep after-retry as the
+  common comparison baseline and always-on as a sensitivity case.
+  See `results/loslr/ottawa_storage_guard_hydrology_v1/report.md`.
+- [x] Separate the forecast tail from the reserve at the three extra
+  sharp-peak stops. Removing the reserve from the saved forecast admits
+  1, 55 and 10 schedules. Leaving the reserve in place and replacing only
+  Ottawa leads 2–5 with realized inflows offline admits 921, 572 and 311.
+  The saved tails overstate four-period inflow by 3.09–4.20 billion m³.
+  Persistence without the reserve admits at most one schedule in each case.
+  Use these cases to motivate a causal receding-inflow forecast experiment.
+  See `results/loslr/ottawa_sharp_peak_diagnostic_v1/report.md`.
+- [x] Test a causal recession forecast with the always-on +700 m³/s guard.
+  Preserve lead one and the noise draws, then decay positive departures
+  from recent inflow with a one-period half-life. Sharp-peak completion
+  improves from 3/18 to 10/18 on archived seeds and from 0/12 to 6/12
+  on fresh seeds 125–128. All three diagnosed stops complete. Both
+  forecasts complete every sustained-wet and dry case, with zero realized
+  limit violations across the comparisons. Recession increases the negative
+  forecast bias during sustained wet spells. Keep forecast defaults fixed.
+  See `results/loslr/ottawa_recession_{archived,fresh}_v1/report.md`.
+- [x] Compare persistence, recession, and recession after an isolated jump
+  under the same always-on +700 m³/s guard. On seeds 129–132 the three rules
+  complete 27/48, 30/48, and 31/48 respectively, with zero realized limit
+  violations. Isolated-jump recession retains the six sharp-peak completions
+  and recovers the one sustained-rise case completed by persistence. All
+  three rules still struggle with sustained rises even though offline
+  schedules exist from each initial state. Keep forecast defaults fixed.
+  See `results/loslr/ottawa_isolated_jump_v1/report.md`.
+- [x] Test a two-path controller with shared first Ontario and Ottawa
+  releases and branch-specific suffixes. Offline checks find a common
+  first action in all 12 archived states. With the always-on guard, the
+  causal planner completes 10/36 new cases versus 16/36 for isolated-jump
+  recession. It completes one additional sustained-rise case in aggregate
+  and seven fewer pulse cases. No realized limits are exceeded. Offline
+  checks find a common action at 11 of 12 held-out pulse branch stops.
+  Keep the two-path planner experimental.
+  See `results/loslr/ottawa_two_path_recourse_v1/report.md`.
+- [x] Compare current and wider Ontario schedule searches with and without
+  the reserve at all 12 held-out pulse stops. The four cells find 0/12
+  (current, with reserve), 4/12 (current, without), 6/12 (wider, with),
+  and 8/12 (wider, without) shared actions. The sustained forecast has
+  no feasible first-release interval among the wider candidates in the
+  remaining four stops. The wider search is eligible for a fresh online
+  evaluation with the reserve intact.
+  See `results/loslr/ottawa_two_path_factorial_v1/report.md`.
+- [x] Evaluate wider two-path search in closed loop with the reserve intact.
+  All six frozen pulse recoveries complete their windows. On the archived
+  cases, isolated-jump, original two-path, and wider two-path MPC complete
+  16/36, 10/36, and 16/36. On fresh pulse heights, durations, and noise seeds
+  they complete 6/36, 0/36, and 7/36. No realized storage or downstream
+  limits are exceeded. Relative to isolated-jump, the wider search adds
+  three fresh completions and loses two, so it remains experimental.
+  See `results/loslr/ottawa_two_path_wider_{archived,fresh}_v1/report.md`.
+- [x] Check every executed prefix of the 18 fresh sustained-rise cases.
+  All have a modeled continuation from the initial state, and all 16
+  stopped runs still have a native-limit-checked continuation from their
+  stopped state. With the reserve and search fixed, substituting realized
+  Ottawa inflows at the stopped decision opens 7 of 16 decisions offline.
+  Nine remain blocked despite full-window physical witnesses. The study
+  does not isolate the planning reserve, fixed fifth lead, or finite
+  candidate restrictions in those nine.
+  See `results/loslr/ottawa_plateau_recoverability_verified/report.md`.
+- [ ] Before comparing coupled planners at a common five-period horizon,
+  specify and validate a causal fifth Ontario forecast lead.
 
 ## Architecture and data
 

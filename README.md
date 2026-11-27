@@ -107,7 +107,540 @@ reproduction stack.
 uv run --locked --group reproduction --group jax pytest tests/test_ontario_jax_physics.py
 ```
 
+## Run the standalone MPC simulators
+
+From the repo root, run either command with a fresh output directory.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.run_mpc \
+  --solver shooting --lookahead 4 --steps 12 --output results/loslr/shooting_h4
+
+uv run --locked --group reproduction \
+  python -m reservoir_control.systems.ottawa.hard_follower_study \
+  --forecast perfect --lookahead 5 --output results/ottawa/follower_h5
+```
+
+`--lookahead` sets the number of quarter-month periods MPC plans over at each
+decision. Ontario supports 1–4 periods because the inputs provide four forecast
+leads. `--steps` sets the Ontario rollout length separately. Use `--solver beam`
+or `--solver mppi` to switch Ontario solvers. Ottawa supports 1–12 periods in the
+bundled study, with `--forecast noisy` for its noisy scenarios. If omitted, the
+Ontario look-ahead and the bundled Ottawa configuration both use four periods.
+Use the Ottawa [matched-forecast study](configs/studies/ottawa/README.md#matched-forecast-horizon-sensitivity)
+when comparing horizons under the same noisy forecasts.
+
 ## Ontario integration and JAX
+
+Run the fixed Ontario schedule through the Ottawa H5 follower using the
+delayed synthetic scenario:
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.fixed_schedule_replay \
+  --trajectory results/loslr/shooting_h4/trajectory.csv \
+  --output results/loslr/fixed_ontario_ottawa_h5_rerun
+```
+
+The replay uses perfect Ottawa inflow forecasts and a synthetic downstream
+background. It writes a joint trace, Ottawa planning inputs and a summary.
+A commitment rejected by Ontario's limits stops both actions for that period.
+
+Add `--repair-offline` to find a feasible test schedule. This starts a fresh
+replay after each change to the first rejected commitment. It saves
+`fixed_schedule.csv` and the edits in `summary.json`. Verify the result by
+passing the saved CSV as `--trajectory` in a fresh run with a new output
+directory. The schedule search uses perfect Ottawa forecasts and serves as
+an offline feasibility benchmark.
+
+Compare the Ontario planners against the same Ottawa follower and fixed
+fifth-period commitment:
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.compare_ottawa_response \
+  --trajectory results/loslr/shooting_h4/trajectory.csv \
+  --fixed-schedule results/loslr/feasible_fixed_schedule_h5/fixed_schedule.csv \
+  --output results/loslr/ottawa_response_comparison_rerun
+```
+
+The default grid varies the four Ontario commitments independently around the
+verified fixed schedule. Both planners use the same grid and native Ontario
+stage cost. The external arm assumes a 900 m³/s Ottawa release and routes it
+with the actual transit queue. The anticipating arm solves the Ottawa follower
+for each candidate. Both call the same follower at execution. The study uses
+perfect synthetic Ottawa inflow forecasts. The summary compares costs over the
+common executed prefix and the candidate log records rejected commitments.
+
+Pass `--candidates limits` to generate additional candidates by applying the
+native limits to forecast releases. Both arms use the same generation rule and
+keep the same fifth commitment. The period-3 diagnostic is available as
+`python -m bilevel_reservoirs.solvers.diagnose_ottawa_forecast --help`.
+Its substitutions use replay inputs offline to measure their effect.
+
+Combine `--candidates limits --align-f` to cap each candidate's first four
+Ottawa leads with Ontario's forecast F ceiling. Both arms execute the selected
+schedule with the capped Ottawa follower. The external arm still ranks against
+assumed arrivals. `--align-from 3` reproduces the earlier policy states and
+switches on alignment at the original rejection. `--roughness-forecast
+trailing_mean` uses the mean of up to four observations available at issue time
+for leads 2–4. Lead 1 uses the current roughness.
+
+Add `--screen-external` to include a third arm that ranks candidates using the
+external forecast, then tests them in order with the Ottawa follower. The
+summary reports a separate matched cost comparison between this arm and the
+anticipating arm, along with the number of Ottawa candidate solves.
+
+Run the paired stress test with the same inputs:
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.stress_ottawa_response \
+  --trajectory results/loslr/shooting_h4/trajectory.csv \
+  --fixed-schedule results/loslr/feasible_fixed_schedule_h5/fixed_schedule.csv \
+  --output results/loslr/ottawa_noisy_stress_rerun
+```
+
+The stress test saves the shared forecast banks, executed traces, matched
+cost components and offline feasibility witnesses. Storage advances with the
+realized inflow. The witness search uses true future inputs only after a run
+stops, and checks each witness against the native Ontario limits.
+
+Pass `--recovery` to compare the screened baseline with two variants. The
+first tests additional schedules on the original forecast after the primary
+search fails. The second also retries with the last observed Ottawa inflow
+held constant over the window. The next decision uses the original forecast
+bank again. Both variants retain the native execution checks, and the runner
+records and stops on realized storage violations.
+
+Combine `--recovery --storage-guard` to test one- and two-period storage checks
+at the persistence retry. These reserve room for an extra one forecast-noise
+standard deviation of inflow in each checked period, carrying the extra
+volume forward through the trial schedule. The next decision replans using
+its ordinary constraints and original forecast.
+
+Use `--holdout` to compare the frozen one-period +700 m³/s check with the
+unguarded retry under seeds 101–106 and a perfect-forecast control. Add
+`--historical-year 2017` or `--historical-year 2019` in place of the trajectory
+and fixed-schedule inputs to run April–June on the pinned Ontario data. These
+windows start from a causal Plan 2014 warmup. The Ontario schedule anchor uses
+the previous release and the declared synthetic flow cap. Ottawa inflows,
+routing and downstream capacities remain synthetic in all windows.
+
+Add `--replan-guard` with `--holdout` to compare applying that same storage
+check on the first ordinary decision after a retry and on every ordinary
+decision. Both variants still check the retry itself. The primary and expanded
+candidate searches use the same bound at a guarded decision.
+
+Reproduce the 2019 seed-101 stop and test a targeted recovery using the archived
+Ontario inputs and Ottawa forecasts. The recovery searches lower Ontario
+commitments for the period when the first Ottawa release arrives downstream.
+The diagnostic writes the frozen feasibility checks, candidate audit, and replay
+trace to a fresh directory.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.diagnose_replan_stop \
+  --archive results/loslr/ottawa_replan_guard_2019 \
+  --output results/loslr/ottawa_replan_stop_2019_reproduction
+```
+
+Compare the opt-in targeted search against the archived guard on the 36 noisy
+cases across the 1961, 2017 and 2019 Ontario windows. The runner uses the saved
+forecast banks and checks trajectory agreement up to the first recovery.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_delay_headroom \
+  --archive-root results/loslr \
+  --output results/loslr/ottawa_delay_headroom_holdout_reproduction
+```
+
+Diagnose the two remaining period-6 stops using the saved forecast banks,
+guarded persistence forecasts, and realized inflows for the offline checks.
+The second command compares the after-retry trigger with an opt-in trigger
+that also tries the targeted candidates when the ordinary or persistence
+search is exhausted. Both arms share the same forecasts for seeds 107–112.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.diagnose_remaining_stops \
+  --output results/loslr/ottawa_remaining_stops_reproduction
+
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.validate_delay_headroom_trigger \
+  --output results/loslr/ottawa_broader_headroom_reproduction
+```
+
+Compare external-ranked MPC with finite-search Stackelberg MPC on the 36
+saved forecast-noise cases. Both arms use the same candidate generator,
+Ottawa feasibility solve, native limit checks, and recovery rules. The
+Stackelberg arm evaluates Ontario's objective using Ottawa's routed best
+response for each eligible schedule. The report includes the check against
+the archived external-ranked trajectories and the full-window paired outcomes.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_response_ranking \
+  --baseline results/loslr/ottawa_broader_headroom_validation_v1 \
+  --output results/loslr/ottawa_response_ranking_reproduction
+```
+
+Compare the current baseline with two local candidate expansions. The generic
+and Ottawa-guided arms may each try 12 new Ontario schedules after finding a
+feasible incumbent. Both use the same ranking and feasibility checks. Run
+the saved spring cases first, then the fresh noise seeds 113–118.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_candidate_proposals \
+  --sample saved --output results/loslr/ottawa_candidate_proposals_saved_reproduction
+
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_candidate_proposals \
+  --sample fresh --output results/loslr/ottawa_candidate_proposals_fresh_reproduction
+```
+
+Reproduce the three seed-115 storage overflows and compare the after-retry,
+always-on, and tight-headroom guards on the archived 36-case matrix. The
+runner saves the period-6 feasibility witnesses and period-5-only replays.
+The offline witnesses use realized inflows. The replay controllers use the
+original archived forecasts.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_storage_guard \
+  --output results/loslr/ottawa_storage_guard_seed115_reproduction
+```
+
+Validate the frozen +700 m³/s guard against the declared early-peak,
+sustained-wet and dry Ottawa inflow shapes. The two arms share the same
+forecast bank for each year, inflow shape and seed. The runner saves
+storage outcomes and continuation checks for stopped runs.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.validate_storage_guard \
+  --output results/loslr/ottawa_storage_guard_hydrology_reproduction
+```
+
+Diagnose the three extra sharp-peak stops from that study. The runner
+reproduces the archived stops and checks the same Ontario candidates with
+and without the storage reserve. It uses realized Ottawa inflows only for
+offline first-lead, tail, and full-window substitutions.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.diagnose_sharp_peak \
+  --output results/loslr/ottawa_sharp_peak_diagnostic_reproduction
+```
+
+Test a causal recession forecast under the same always-on +700 m³/s
+guard. The recession arm keeps lead one and the saved noise draws while
+letting above-recent inflow decay in later leads. Both arms retain the
+same persistence fallback. The first command uses the archived
+comparison and the second runs both arms on fresh noise seeds.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_ottawa_recession \
+  --sample archived --output results/loslr/ottawa_recession_archived_reproduction
+
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_ottawa_recession \
+  --sample fresh --output results/loslr/ottawa_recession_fresh_reproduction
+```
+
+Compare the same two forecasts with an isolated-jump rule and a new Ottawa
+inflow case that stays high after the sharp rise. The study checks that
+the two sharp-rise cases issue identical forecasts through the first
+decision after the jump. Both forecasts with recession preserve lead one.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_ottawa_recession \
+  --sample isolated-jump --output results/loslr/ottawa_isolated_jump_reproduction
+```
+
+Check common Ontario–Ottawa first actions offline on the archived sharp-rise
+pairs and compare the causal two-path controller with isolated-jump
+recession on fresh pulse heights, durations, and noise seeds. Both online
+arms use the always-on +700 m³/s guard.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_scenario_recourse \
+  --output results/loslr/ottawa_two_path_recourse_reproduction
+```
+
+Isolate the effect of candidate coverage and the storage reserve at the
+12 saved two-path stops. The runner uses the issued forecasts and reports
+shared actions for the current and wider search, each with and without
+the extra reserve.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.diagnose_two_path_stops \
+  --output results/loslr/ottawa_two_path_factorial_reproduction
+```
+
+Compare the wider search in closed loop with isolated-jump MPC and the
+original two-path MPC. Replay the archived 36 cases, then test 36 fresh
+cases with different Ottawa peaks, high-flow durations, and noise seeds.
+All three arms retain the +700 m³/s reserve.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_scenario_recourse \
+  --sample wider-archived --output results/loslr/ottawa_two_path_wider_archived_reproduction
+
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_scenario_recourse \
+  --sample wider-fresh --output results/loslr/ottawa_two_path_wider_fresh_reproduction
+```
+
+Check sustained-rise recoverability at every executed prefix of the fresh
+wider-search cases. The offline witnesses preserve known transit and use
+realized inflows through the endpoint. A separate stopped-decision probe
+keeps the +700 m³/s reserve and swaps the issued Ottawa inputs for the
+realized plateau at that decision only.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.diagnose_plateau_recoverability \
+  --output results/loslr/ottawa_plateau_recoverability_reproduction
+```
+
+## Paired hard-follower comparison
+
+Run the nine-state diagnostic and the optional reserve-fallback sensitivity.
+The sensitivity relaxes only the forecast reserve when the guarded two-path
+search fails. The hard execution constraints still apply.
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.diagnose_final_constraints \
+  --output results/loslr/ottawa_final_constraints_reproduction
+
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_scenario_recourse \
+  --sample wider-fresh --reserve-fallback \
+  --output results/loslr/ottawa_reserve_fallback_reproduction
+```
+
+The paired study uses Plan 2014 requests, external-ranked MPC, Stackelberg
+MPC, and PPO residual requests. They share the same hard Ottawa follower,
+native limit checks, causal inputs, and operating-cost score. PPO fits on
+1901–1980 only and the runner evaluates the saved final checkpoints.
+Keep the synthetic stress windows separate from the annual comparisons.
+
+```bash
+export UV_PROJECT_ENVIRONMENT=.venv-ontario
+study_root=results/coupled_final_rerun
+uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+  --mode smoke --output "$study_root/smoke"
+for seed in 123 124 125 126 127; do
+  uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+    --mode train --seed "$seed" --output "$study_root/final_coupled_training_v1/seed_$seed"
+done
+for sample in development reserved stress; do
+  uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+    --mode "$sample" --training-root "$study_root/final_coupled_training_v1" \
+    --output "$study_root/final_coupled_${sample}_v1"
+done
+uv run --locked --group ontario python -m bilevel_reservoirs.solvers.report_final_coupled \
+  --root "$study_root" --output "$study_root/report" \
+  --playback background/ontario_coupled_final.html
+```
+
+### Shared recovery follow-up
+
+Use the frozen final PPO checkpoints to compare the common recovery choices.
+The audit records which options would reopen each stopped decision while
+preserving the original executed path. The closed-loop runs allow recovery
+and keep the realized storage and flow limits.
+
+```bash
+export UV_PROJECT_ENVIRONMENT=.venv-ontario
+train_root=results/loslr/final_coupled_training_v1
+for recovery in audit reserve profiles proactive_profiles peak_protected; do
+  uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+    --mode development --event-only --recovery "$recovery" --training-root "$train_root" \
+    --output "results/loslr/final_recovery_${recovery}_events_reproduction"
+done
+for recovery in original profiles peak_protected; do
+  uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+    --mode stress --stress-design configs/studies/ottawa/shared_recovery_final_check_v1.json \
+    --recovery "$recovery" --training-root "$train_root" \
+    --output "results/loslr/final_recovery_${recovery}_confirmation_reproduction"
+done
+uv run --locked --group ontario python -m bilevel_reservoirs.solvers.report_shared_recovery \
+  --output results/loslr/final_shared_recovery_report_reproduction
+```
+
+For the PPO execution-contract ablation, train the same five seeds with
+`--mode train --recovery profiles` and pass their output root to evaluation.
+The saved report also uses the first stress holdout defined in
+`configs/studies/ottawa/shared_recovery_holdout_v1.json`.
+
+Run the Ottawa storage and routing sensitivity using the archived peak-protected
+event and confirmation runs under `results/loslr/`. The output includes a
+side-by-side 2017 and 2019 figure and a local interactive replay.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_ottawa_ranking_sensitivity \
+  --output results/loslr/ottawa_ranking_sensitivity_rerun \
+  --playback background/ontario_peak_protected_rerun.html
+```
+
+Audit anticipation at downstream-sensitive decisions and assemble the final
+comparison from the archived peak-protected event, reserved and confirmation
+runs. Use a fresh output directory.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m bilevel_reservoirs.solvers.study_downstream_anticipation \
+  --output results/loslr/downstream_anticipation_rerun
+```
+
+Check official Ottawa station coverage and probe the shared execution
+filter on archived PPO trajectories. The coverage audit downloads HYDAT
+data from the public ECCC GeoMet endpoint. The PPO audit uses local
+peak-protected archives and replays ten flood-year episodes with their
+saved requests.
+
+```sh
+export UV_PROJECT_ENVIRONMENT=.venv-ontario
+uv run --locked --group ontario python -m reservoir_control.systems.ottawa.flow_source_audit \
+  --output results/ottawa/flow_source_audit_rerun
+uv run --locked --group ontario python -m bilevel_reservoirs.solvers.diagnose_ppo_filter \
+  --output results/loslr/ppo_filter_audit_rerun
+```
+
+Fit the daily Carillon forecast benchmark and enumerate the exact PPO
+release menu on development trajectories using the frozen checkpoints.
+
+```sh
+export UV_PROJECT_ENVIRONMENT=.venv-ontario
+uv run --locked --group ontario python -m reservoir_control.systems.ottawa.forecast_benchmark \
+  --source results/ottawa/flow_source_audit_v1/historical_daily.csv \
+  --output results/ottawa/carillon_forecast_benchmark_rerun
+uv run --locked --group ontario python -m bilevel_reservoirs.solvers.diagnose_ppo_menu \
+  --output results/loslr/ppo_development_menu_rerun
+```
+
+Benchmark quarter-month SLON forecasts with the latest completed value
+available or delayed by one period. The scores report high-flow periods
+separately and leave Ontario MPC inputs unchanged.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.loslr.slon_forecast \
+  --output results/loslr/slon_forecasts_rerun
+```
+
+Replay the same standalone Ontario MPC with persistence and seasonal-history
+SLON forecasts under both availability settings. The runner verifies its
+forecast bank against the offline benchmark and uses historical aggregate
+SLON for realized routing.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.loslr.slon_mpc_replay \
+  --benchmark results/loslr/slon_forecasts_verified_v1 \
+  --output results/loslr/slon_mpc_replay_rerun
+```
+
+Diagnose changed exposures by swapping forecasts at the same inherited
+states. The runner checks the original decisions against the archive and
+also probes lead one separately from leads two through four.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.loslr.slon_state_diagnostic \
+  --archive results/loslr/slon_mpc_replay_verified_v1 \
+  --output results/loslr/slon_state_diagnostic_rerun
+```
+
+Run the follow-up screens with the same archived forecast bank. The
+smaller-margin run automatically evaluates a frozen winner on the reserved
+years if it passes the development gate.
+
+```sh
+export UV_PROJECT_ENVIRONMENT=.venv-ontario
+uv run --locked --group ontario python -m reservoir_control.systems.loslr.slon_upper_bound_study \
+  --output results/loslr/slon_upper_bound_rerun
+uv run --locked --group ontario python -m reservoir_control.systems.loslr.slon_upper_bound_study \
+  --follow-up --output results/loslr/slon_upper_bound_followup_rerun
+uv run --locked --group ontario python -m bilevel_reservoirs.solvers.study_ppo_modal_release \
+  --output results/loslr/ppo_modal_release_rerun
+uv run --locked --group ontario python -m bilevel_reservoirs.solvers.study_ppo_duration \
+  --workers 4 --output results/loslr/ppo_duration_peak_rerun
+```
+
+Check observed downstream stage response and the exposure trade-off using the
+saved HYDAT station audit and reserved SLON replay.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.ottawa.routing_validation \
+  --output results/ottawa/routing_validation_rerun
+```
+
+Run the earlier-release hindsight search and its gated causal comparison
+using the archived Ontario replay.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.loslr.release_timing_study \
+  --output results/loslr/release_timing_rerun
+```
+
+Test early high-SLON onset alerts from observed Britannia flow. Omit
+`--raw` to retrieve the same date ranges from ECCC GeoMet in a fresh run.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.loslr.slon_warning \
+  --raw results/loslr/britannia_slon_warning_v1/raw \
+  --output results/loslr/britannia_slon_warning_rerun
+```
+
+Test early Pointe-Claire headroom alerts at the original issue-time
+Ontario releases. This scores alerts without changing the controller.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.loslr.headroom_alert \
+  --output results/loslr/pointe_claire_headroom_alert_rerun
+```
+
+Build the observed downstream headroom benchmark from Water Survey of Canada
+LaSalle discharge and Pointe-Claire stage, USGS Cornwall discharge, and the
+Canadian Hydrographic Service datum cross-check.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.ottawa.downstream_observations \
+  --output results/ottawa/downstream_gauges_v1
+```
+
+For offline reproduction, pass `--raw results/ottawa/downstream_gauges_v1/raw`
+and a fresh `--output`. The report links to the data terms and records the
+coverage and flow boundaries. Keep the CHS responses in local results.
+
+Check daily routing and near-threshold stage errors using the frozen
+downstream gauge benchmark plus HYDAT Britannia and Rivière des Prairies
+discharge. Omit `--raw` to fetch the upstream gauge responses again.
+
+```sh
+UV_PROJECT_ENVIRONMENT=.venv-ontario uv run --locked --group ontario \
+  python -m reservoir_control.systems.ottawa.reach_validation \
+  --downstream results/ottawa/downstream_gauges_verified_v1 \
+  --raw results/ottawa/reach_inputs_v1/raw \
+  --output results/ottawa/reach_validation_replay
+```
 
 Use `bilevel_reservoirs.simulators.physics.lake_step` as the JAX transition for
 adjustment-based planning. It accepts lake level in metres, a release adjustment

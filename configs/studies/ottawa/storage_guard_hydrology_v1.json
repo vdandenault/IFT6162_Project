@@ -1,0 +1,12 @@
+{
+  "description": "Declared synthetic Ottawa inflow shapes. Retain the one_period_delay case's capacities, transit and all other physical assumptions.",
+  "base_scenario": "one_period_delay",
+  "ontario_years": [1961, 2017, 2019],
+  "forecast_seeds": [119, 120, 121, 122, 123, 124],
+  "guard_stress_m3_s": 700,
+  "inflows_m3_s": {
+    "early_sharp_peak": [900, 1050, 2350, 1650, 1050, 900, 900, 900, 900, 900, 900, 900],
+    "sustained_wet_spell": [900, 950, 1150, 1550, 1750, 1800, 1750, 1650, 1500, 1200, 1000, 900],
+    "dry_spring": [800, 750, 650, 550, 450, 350, 325, 350, 425, 550, 650, 750]
+  }
+}

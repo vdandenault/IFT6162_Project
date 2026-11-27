@@ -1,0 +1,7 @@
+{
+  "flow_headroom_m3_s": 250,
+  "stage_headroom_m": 0.05,
+  "meaningful_routed_difference_m3_s": 100,
+  "maximum_triggered_cases": 4,
+  "separate_annual_years": [1995, 1997, 1998, 1999]
+}

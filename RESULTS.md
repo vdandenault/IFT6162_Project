@@ -2,6 +2,388 @@
 
 ## Ontario–St. Lawrence
 
+### Shared recovery after feasibility rejection
+
+Adding gradual Ontario release profiles to the common recovery search
+completed both the 2017 and 2019 annual cases for all four controllers.
+Reserve release alone reopened the original stopped decisions, but all
+controllers stopped again. The wider recovery also completed all 18
+previously evaluated reserved annual cases, versus 15 for the original
+filter. The peak-protected variant also completed all 18 without
+recorded violations. These annual replays reuse the same years.
+
+Broader search alone admitted a release that left too little Ottawa
+storage room in one new sustained-rise case. A separate peak-protected
+variant checks that the first action fits if the last observed high
+inflow persists for one period after a sharp rise. It retains the hard
+storage and downstream limits. The check was designed after that first
+holdout, then evaluated on different synthetic inflow shapes and noise
+seeds.
+
+| Confirmation stress controller | Completed with original filter | Completed with peak protection and wider recovery |
+|---|---:|---:|
+| Filtered Plan 2014 | 4/36 | 15/36 |
+| External-ranked MPC | 4/36 | 15/36 |
+| Stackelberg MPC | 4/36 | 15/36 |
+| PPO, five seeds | 20/180 | 69/180 |
+
+On confirmation stress, the original filter recorded eight realized
+storage violations and the peak-protected variant recorded zero.
+External-ranked MPC lowered operating cost relative to filtered Plan
+2014 in all 14 confirmation cases that both completed, averaging
+**−0.0327** in cost and **−0.0162 m·periods** of Ontario shoreline
+exposure. Pointe-Claire exposure was unchanged on those pairs.
+Stackelberg and external ranking had identical costs on all 15 common
+completions.
+
+With peak protection, both MPC arms also beat filtered Plan 2014 on
+the completed 2017 and 2019 annual cases. Costs were **7.5941 versus
+7.8465** in 2017 and **0.8359 versus 0.8547** in 2019. Retraining all
+five PPO seeds with the wider execution filter did not beat external
+MPC on either flood year or on mean operating cost across the 18 annual
+replays. The wider, peak-protected filter remains experimental because
+the Ottawa inflows, capacities and delay are synthetic.
+
+[Recovery comparison report](results/loslr/final_shared_recovery_report_verified/report.md)
+
+### Ottawa storage and routing sensitivity
+
+External-ranked MPC with peak-protected recovery is the research reference.
+At 20 archived decisions from 2017 and 2019, we varied assumed Ottawa usable
+storage from 3 to 5 billion m³ and routing delay from zero to two periods.
+Ottawa's planned first release varied across candidate schedules in 45 of
+150 ranked comparisons. Anticipation changed neither the candidate scores
+nor the winning schedule in any of the 150. The other 30 comparisons
+started above the smallest variant's storage ceiling. The closed-loop
+follow-up was conditional on finding a different winning schedule.
+
+External MPC reduced Ontario shoreline exposure from **13.4814 to 13.2766
+m·periods** in 2017 and from **3.2334 to 3.1980 m·periods** in 2019 against
+filtered Plan 2014. Both controllers had zero Lake St. Louis exposure above
+the modeled targets in these runs. Across 18 annual replays, external MPC's
+mean operating cost was 0.0045 lower and shoreline exposure was 0.0190
+m·periods higher. Ottawa inflow, storage and routing are synthetic in all
+of these comparisons.
+
+[Sensitivity report](results/loslr/ottawa_ranking_sensitivity_verified_v1/report.md) · [Flood-year comparison](results/loslr/ottawa_ranking_sensitivity_verified_v1/flood_years.png) · [Interactive replay](background/ontario_peak_protected.html)
+
+### Anticipating Ottawa near the downstream limit
+
+We reproduced 56 external MPC rollouts and audited 545 decisions near a
+downstream limit or where the controller stopped. Of the 524 decisions with
+eligible plans, 85 had both tight forecast headroom and at least 100 m³/s
+of routed Ottawa variation across eligible schedules at the same lead.
+Using the follower response changed at least one predicted Pointe-Claire
+level at 393 decisions. All 2,307 common eligible candidate evaluations
+had zero forecast exposure above the target under both Ottawa flow
+assumptions, so this cost gave both rankings the same scores and winners.
+The conditional new closed-loop trial did not trigger. The archived
+closed-loop MPC arms executed identical Ontario and Ottawa releases in
+both flood years, all 18 annual replays and all 15 joint synthetic
+confirmation completions.
+
+[Diagnostic and selection criteria](results/loslr/downstream_anticipation_verified_v1/diagnostic.md) · [Final four-controller comparison](results/loslr/downstream_anticipation_verified_v1/report.md)
+
+### Observed Ottawa benchmark and PPO filter audit
+
+HYDAT provides 2,922 overlapping daily Britannia and Carillon discharge
+values for 1987–1994. Carillon, Cornwall discharge, and the Pointe-Calumet
+and Pointe-Claire stages overlap on 2,423 dates. This supports a historical
+forecast benchmark and an empirical check of downstream stage timing.
+HYDAT has no Carillon daily values for 2017–2019. The pinned LOSLR SLON
+series can benchmark quarter-month aggregate non-Ontario flow in those
+years. Branch flow and datum evidence are still needed for interpreting
+modern flows and absolute flood elevations.
+[Source audit](results/ottawa/flow_source_audit_v1/report.md)
+
+The common filter changed PPO's executed release by at least 100 m³/s on
+474/480 flood-year decisions, 3,126/4,320 decisions in the 18 annual
+replays, and 887/1,137 executed confirmation-stress decisions. At 29 of
+90 fixed flood-year states, nine distinct PPO requests selected a single
+first release. The median state offered two distinct first releases in
+the probe. This measures the range of control available through the
+existing action interface on those trajectories.
+[PPO filter audit](results/loslr/ppo_filter_audit_v1/report.md)
+
+### Held-out Carillon forecasts and PPO development menus
+
+On 1992–1994 daily Carillon data, persistence MAE was 114.8, 196.5 and
+317.3 m³/s at one, three and seven days. A model using Carillon history
+reduced those errors to 112.8, 191.7 and 299.6 m³/s. Adding Britannia
+improved overall one-day MAE to 110.2 m³/s but increased one-day high-flow
+MAE from 260.5 to 297.5 m³/s relative to Carillon history alone. Britannia
+reduced high-flow MAE at three and seven days, with substantial
+underprediction still present. These forecasts assume daily means are
+available after the labeled day ends. They provide an older daily reference
+for Carillon flow, separate from the modern quarter-month SLON series.
+[Forecast report](results/ottawa/carillon_forecast_benchmark_final_v1/report.md)
+
+All 100 frozen PPO development episodes completed with peak protection.
+At the 900 sampled states, the full eligible menu had a median of five
+first releases. Only 35 states had a single eligible release. The current
+continuous proposal range could reach every eligible release at 890 states.
+The nine-point proposal grid sampled a median of three releases, so
+it understated the choices available through the actual interface.
+[Development menu audit](results/loslr/ppo_development_menu_v1/report.md)
+
+### Causal quarter-month SLON forecasts
+
+On the pinned LOSLR aggregate non-Ontario flow series, seasonal history
+had lower MAE than both persistence and a seasonal mean in every tested
+cohort, lead and latency setting, for overall and high-flow periods.
+On 18 reserved years, lead-one MAE fell from 270 to 262 m³/s, and from
+744 to 697 m³/s across 79 high-flow periods. With a one-period data
+delay, lead-one MAE fell from 389 to 359 m³/s, and from 980 to 851 m³/s
+at high flow. The high-flow error still worsened by 154 m³/s when the
+latest completed observation was withheld. At high flow with no delay,
+lead-one bias shifted from −339 m³/s for persistence to −423 m³/s for
+seasonal history, despite lower MAE. Both latency settings are assumptions
+about input availability. These scores measure forecast use on archived
+SLON, which includes several tributaries. The controller inputs remain
+unchanged.
+[SLON report](results/loslr/slon_forecasts_verified_v1/report.md) · [Reserved-year error plot](results/loslr/slon_forecasts_verified_v1/reserved_errors.png)
+
+### Ontario MPC replay with historical SLON
+
+All 160 Ontario-only replays completed. Seasonal history changed 360 of
+864 executed releases across the 18 reserved years with the latest value
+available and 396 with a one-period delay. It reduced the number of
+infeasible predicted plans from 34 to 30 and from 35 to 27, respectively.
+Realized Lake St. Louis exposure increased in every cohort under both
+availability settings, including on high-flow periods. Better predicted
+feasibility and lower forecast MAE did not translate to lower downstream
+exposure.
+
+| Cohort and SLON availability | Ontario exposure, persistence → seasonal history | Lake St. Louis exposure, persistence → seasonal history |
+|---|---:|---:|
+| 18 reserved years, timely | 1.554 → 1.695 | 3.80 → 4.16 |
+| 18 reserved years, delayed | 1.280 → 1.066 | 5.10 → 5.63 |
+| 2017, timely | 7.151 → 6.355 | 2.95 → 3.21 |
+| 2017, delayed | 7.613 → 5.378 | 3.07 → 3.70 |
+| 2019, timely | 3.883 → 2.574 | 1.99 → 2.82 |
+| 2019, delayed | 3.963 → 2.160 | 2.02 → 3.10 |
+
+Exposure is measured in metre-periods above the fixed replay thresholds.
+Worst downstream headroom improved across the reserved years, even though
+total exposure increased. The Ontario-only planner uses aggregate SLON as
+fixed downstream forcing and continues with its least-violating candidate
+when it cannot find a feasible plan. All existing controller defaults remain
+unchanged.
+[Replay report](results/loslr/slon_mpc_replay_verified_v1/report.md)
+
+### Fixed-state diagnosis of the SLON replay
+
+We re-ran both forecast paths from both archived controller states at
+the 75 decisions where seasonal history increased realized Pointe-Claire
+exposure. Of the 6.390 metre-periods of increase across these selected
+decisions, 5.565 came from changing the forecast at the same inherited
+state and 0.825 came from changing the inherited state. The decomposition
+averages both swap orders. These are gross increases over the selected
+decisions.
+
+On development cases alone, 46 fixed-state forecast swaps increased
+exposure. Seasonal history gave a lower first-lead SLON estimate than
+persistence in all 46. At 44, the seasonal estimate was below realized
+SLON, and at 44 the native F limit was the final regime for at least one
+forecast. Swapping lead one alone reproduced the seasonal first release
+at 43 of those 46 states. Swapping only leads two to four reproduced it at
+zero. This motivates a targeted lead-one upper forecast bound, calibrated
+before any new reserved-year replay. Persistence remains the reference.
+[Fixed-state report](results/loslr/slon_state_diagnostic_verified_v1/report.md)
+
+### One-sided SLON margin experiments
+
+Three lead-one upper forecast variants reduced development downstream
+exposure. Each added more than the declared 0.10 metre-periods of
+upstream exposure at one or both data delays. A second screen tried a
+smaller margin and a floor at persistence. The half-margin variant
+passed the development gate at both delays and was frozen for the
+reserved replay.
+
+Across the 18 reserved years, half-margin SLON reduced Lake St. Louis
+exposure from 3.800 to 3.170 metre-periods without data delay, and from
+5.100 to 4.300 with a one-period delay. Ontario exposure increased from
+1.554 to 2.394 and from 1.280 to 1.878, respectively. Both increases
+exceeded the declared allowance. Persistence remains the reference.
+The 2020 replay accounts for nearly all of the upstream increase at
+both delays. In that year, the bound lowered downstream exposure by
+0.44 and 0.52 metre-periods while adding 0.820 and 0.596 metre-periods
+upstream. This is a year-level trade-off observed on the reserved data.
+[Initial screen](results/loslr/slon_upper_bound_v1/report.md) · [Smaller-margin screen and reserved replay](results/loslr/slon_upper_bound_followup_v1/report.md)
+
+### Observed downstream routing check
+
+We fitted daily flow-to-stage proxies on 1987–1990 and checked them on
+1,035 matched dates in 1991–1993. Adding same-day Carillon flow to Cornwall
+flow reduced Pointe-Claire stage MAE from 0.224 to 0.100 m and high-stage
+MAE from 0.398 to 0.143 m. It did not improve daily stage-change MAE.
+Seven- and eight-day Carillon proxies had higher stage MAE than the
+same-day proxy. Calibration-selected short lags did not improve on the
+same-day two-flow proxy in the holdout. The data support including the
+Ottawa contribution in a stage model. Physical travel time, flow
+partition and the historical Pointe-Claire datum tie remain unresolved.
+
+The agreed research rule for replacing the reference requires lower Lake St. Louis
+exposure with zero added Ontario exposure in each matched year and no
+loss of completion or physical feasibility. The prior half-margin
+variant needed +0.841 and +0.598 Ontario metre-periods across the reserved
+cohort at the two delays. It fails the rule at both delays. Positive
+allowances are reported as sensitivity cases.
+[Routing and agreed-rule report](results/ottawa/routing_validation_agreed_rule_v1/report.md)
+
+### Earlier Ontario releases under the agreed rule
+
+The finite hindsight search found a release shift that reduced Lake
+St. Louis exposure in 13 of 14 timely-data cases and 12 of 14 delayed
+cases with downstream exceedance. The shifts added no Ontario shoreline
+exposure and kept each year-end level within 2 mm of persistence MPC.
+Total downstream reductions were 1.55 and 1.61 metre-periods,
+respectively. The search used historical outcomes to select the shifts.
+
+The causal four-period planner requested one shift across 40 development
+runs and reduced neither exposure. Of the 25 hindsight shifts, 12 placed
+the later cut inside the four-period planning window. At the archived
+release, the causal forecast warned of exceedance in zero of those 12.
+The reserved replay did not trigger. The existing reference stays in place.
+[Release timing report](results/loslr/release_timing_final_v1/report.md)
+
+### Earlier high-SLON warning with Britannia flow
+
+On 30 reserved-period high-SLON onsets, the archived seasonal forecast
+warned of seven at either delay. A model trained to predict onset from
+SLON history warned of 18 at both delays. Adding observed Britannia flow
+reduced that count to 15 with timely data and 12 with delayed data. It
+reduced false alarms relative to SLON-only, but did not pass the gate
+for another release-search experiment.
+
+Only three of the 12 development hindsight shifts within the planning
+window coincided with a high-SLON onset. This motivates an alert for
+Pointe-Claire headroom at a specified Ontario release before revisiting
+the release search.
+[Earlier warning report](results/loslr/britannia_slon_warning_verified_v1/report.md)
+
+### Pointe-Claire headroom under the issued Ontario release
+
+We evaluated alerts at the releases in each issue-time Ontario MPC plan.
+A local opportunity required room for an additional 200 m³/s at issue
+time and a later threshold exceedance at the planned release. On the
+18 reserved years, the seasonal alert warned of seven of nine relevant
+target periods under either data delay, with 12.6% and 13.4% false alarm
+rates. The fitted headroom alert warned of five and six, with 8.7% and
+8.6% false alarm rates. It did not pass the predeclared gate.
+
+These labels use archived SLON and roughness at the specified releases.
+They show local opportunities for an early increase. An actual release
+shift still needs a feasible later cut and the annual shoreline check.
+[Headroom alert report](results/loslr/pointe_claire_headroom_alert_verified_v1/report.md)
+
+### Observed downstream headroom benchmark
+
+LaSalle discharge, Pointe-Claire stage and Cornwall discharge give us
+197 complete quarter-months across 2021–2025, beyond the legacy forcing
+archive. Three had mean stage above the 22.10 m study threshold, in
+May 2022 and May 2023. A held-out check that inputs observed LaSalle flow
+had 0.050 m stage MAE and a 0.091 m 95th-percentile absolute error.
+The modeled stage increase for 200 m³/s near the threshold was 0.057 m.
+These errors are large enough to affect whether a proposed increase appears
+feasible.
+[Downstream gauge report](results/ottawa/downstream_gauges_verified_v1/report.md)
+
+### Reach routing and headroom at handoff
+
+Older records favored same-day Cornwall and Britannia inputs. This is
+a daily alignment result. On 363 matched spring days from 2021–2024,
+adding Britannia reduced Pointe-Claire stage MAE from 26.4 cm to
+10.4 cm. Near the threshold the error was still 11.0 cm. The model
+found room for an extra 200 m³/s of local throughflow on 12 days
+when observed stage already reached or exceeded the threshold.
+Adding the Prairies bypass gauge provided no improvement on matched
+training and evaluation dates. For the handoff, keep filtered Plan 2014
+as the operator baseline and retain the frozen controller comparison.
+Calibrating the Ottawa split and testing release-dependent headroom
+would require matched flow measurements at Carillon and the
+Sainte-Anne and Vaudreuil outlets, or a validated hydraulic model.
+[Reach validation report](results/ottawa/reach_validation_verified_v1/report.md)
+
+### PPO probability and frozen execution
+
+Across 860 development states with multiple reachable releases, the
+saved policy assigned at least 5% probability to a median of four
+releases. The most probable executed release differed from the current
+deterministic choice at 379 states. This is a property of the policy
+distribution after the common filter.
+
+Choosing the most probable executed release increased mean annual
+development cost from **0.13853 to 0.20548** across 20 complete years and
+five seeds. Both policies had the same reported flood exposure. The
+release-change cost rose from 0.07495 to 0.14165 per year and accounts for
+nearly all of the total cost increase. External MPC cost 0.12119 on the
+same years. Keep deterministic PPO.
+[Probability audit](results/loslr/ppo_release_probabilities_v1/report.md) · [Frozen execution study](results/loslr/ppo_modal_release_v1/report.md)
+
+### Longer PPO training under peak protection
+
+Five fresh runs used the same peak-protected contract at 16,384 and
+32,768 decisions. Each earlier checkpoint is the uninterrupted prefix
+of the longer run. On the 19 jointly completed development years, mean
+cost rose from **0.14178 to 0.14847**. Four of five seeds worsened.
+External MPC cost **0.12622** on those same years. Mean Ontario exposure
+was 0.27083 at the earlier checkpoint and 0.26952 at the later one,
+with zero modeled downstream exposure at either checkpoint on this
+matched subset.
+
+The earlier checkpoints completed 100/100 full development runs. The
+later checkpoints completed 99/100, with seed 125 stopping at period
+13 in 1999. The fixed-state check found an eligible release from the
+earlier checkpoint's inherited state for either policy proposal. The
+later inherited state had an empty menu under both proposals. The
+later endpoint failed the development gate. Keep the frozen comparison
+and close the budget extension under this contract.
+[Duration study](results/loslr/ppo_duration_peak_v1/report.md) · [Training curves](results/loslr/ppo_duration_peak_v1/ppo_learning_curves.png)
+
+### Paired comparison with the hard Ottawa follower
+
+Plan 2014 requests, external-ranked MPC, Stackelberg MPC, and PPO ran
+through the same hard Ottawa follower, native Ontario limit checks and
+one-period routing. PPO requested a residual around Plan 2014 through
+the common feasible schedule filter. Five seeds trained for 16,384
+decisions each on 1901–1980, and the final checkpoints were evaluated.
+The Ontario windows are historical and the Ottawa inflows are synthetic.
+
+| Controller | Development years | Reserved years | Synthetic stress runs |
+|---|---:|---:|---:|
+| Filtered Plan 2014 | 16/22 | 15/18 | 0/36 |
+| External-ranked MPC | 16/22 | 15/18 | 0/36 |
+| Stackelberg MPC | 16/22 | 15/18 | 0/36 |
+| PPO, five seeds | 80/110 | 75/90 | 0/180 |
+
+There were no realized storage-bound or downstream flow-limit violations
+on executed periods. The annual controllers and PPO seeds completed the
+same years. On the 15 completed reserved years, mean operating cost
+relative to Plan 2014 was **−0.006 for both MPC arms** and **+0.016 for
+PPO**. Stackelberg ranking did not improve on external ranking under the
+shared candidate family. PPO did not reopen any of the common stops.
+
+In the 2017 and 2019 full-year cases, every arm stopped after 17 and 23
+executed periods, respectively. The report gives shoreline and
+Pointe-Claire exposure over those common prefixes. It leaves full-window
+cost blank. All stress runs also stopped, including 24 cases where the
+shared filter rejected every controller before the first release. These
+stress runs show the limitations of the common schedule filter.
+
+The separate nine-state diagnostic accepted **9/9** realized-input stops
+with physical bounds alone, and **1/9** with the forecast reserve, at
+both fifth-lead values tested. In a separate two-path stress sensitivity,
+retrying after dropping only the forecast reserve raised completion
+from **7/36 to 18/36**, with zero recorded realized violations. This
+sensitivity keeps the hard physical constraints and does not change the
+scored comparison or the default controllers.
+
+[Paired report](results/loslr/final_coupled_report_v1/report.md) ·
+[PPO learning curves](results/loslr/final_coupled_report_v1/ppo_learning_curves.png) ·
+[2017 and 2019 visual replay](background/ontario_coupled_final.html) ·
+[Reproduction commands](README.md#paired-hard-follower-comparison)
+
 ### Standalone Ottawa hard-follower study (synthetic)
 
 **Matched horizon study (120 rollouts):** excluding the deliberately infeasible

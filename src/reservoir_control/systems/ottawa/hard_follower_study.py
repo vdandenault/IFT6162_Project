@@ -205,8 +205,13 @@ def plot_case(c, case, traces, path, plans=()):
     fig.savefig(path, dpi=150); plt.close(fig)
 
 
-def run_study(config, output, mode):
-    c = validate_config(json.loads(config.read_text()))
+def run_study(config, output, mode, *, lookahead=None):
+    c = json.loads(config.read_text())
+    if lookahead is not None:
+        if not 1 <= lookahead <= len(c['known_ontario_executable_schedule_m3_s']):
+            raise ValueError('Look-ahead must be between 1 and the number of study periods')
+        c['horizon'] = lookahead
+    validate_config(c)
     output.mkdir(parents=True, exist_ok=False)
     # Fingerprint prior small observed/diagnostic bundles, never rewrite them.
     protected = [ROOT/'results/ottawa'/name for name in
@@ -241,12 +246,12 @@ def run_study(config, output, mode):
     sources = [Path(__file__), Path(__file__).with_name('hard_follower.py'), Path(__file__).with_name('routing.py'),
                ROOT/'src/reservoir_control/controllers/mpc/convex_response.py', config, ROOT/'uv.lock']
     import importlib.metadata
-    provenance = dict(forecast_mode=mode, source_sha256={str(p.relative_to(ROOT)): digest(p) for p in sources},
+    provenance = dict(forecast_mode=mode, lookahead=c['horizon'], source_sha256={str(p.relative_to(ROOT) if p.is_relative_to(ROOT) else p): digest(p) for p in sources},
                       protected_before_after=before, scipy_version=importlib.metadata.version('scipy'),
                       numpy_version=np.__version__, seeds=seeds)
     (output/'provenance.json').write_text(json.dumps(provenance, indent=2)+'\n')
     lines = ['# Standalone hard-constrained Ottawa follower', '',
-        f'Forecast mode: **{mode}**. All physical parameters are synthetic aggregate assumptions, not calibrated Ottawa or Baskatong values.', '',
+        f'Forecast mode: **{mode}**. Look-ahead: **{c["horizon"]} periods**. All physical parameters are synthetic aggregate assumptions, not calibrated Ottawa or Baskatong values.', '',
         'The pure optimizer eliminates storage through the exact SI water balance and solves a strictly convex release QP. '
         'A feasibility LP distinguishes infeasibility; independent SI and KKT residual checks gate every executable action. '
         'Storage, outlet and supplied downstream capacities are hard constraints, with no slack or clipping. '
@@ -261,6 +266,8 @@ def run_study(config, output, mode):
         lines.append(f"- {s['scenario']}, seed {s['seed']}, {s['policy']}: **{s['status']}**, {s['executed_steps']}/{s['requested_steps']} periods; "
             f"maximum storage departure {s['max_storage_violation_m3']:.3g} m³; downstream excess {s['max_downstream_violation_m3_s']:.3g} m³/s; "
             f"final transit {s['final_transit_volume_m3']:.3g} m³; solver time {s['total_solver_seconds']:.4f} s.")
+    import shlex
+    config_arg = '' if config.resolve() == CONFIG.resolve() else f' --config {shlex.quote(str(config))}'
     lines += ['', '## Interpretation and limits', '',
         'The pulse and tight-capacity cases test anticipation and retaining water when downstream release space is restricted. '
         'The deliberately infeasible case tests refusal to return an action. These are controller-behavior experiments, '
@@ -277,7 +284,7 @@ def run_study(config, output, mode):
         '`plans.json` contains every horizon, acceptance residual and failure reason; CSV traces and PNGs contain executed trajectories.', '',
         'Old observation/diagnostic bundle fingerprints were checked unchanged. The strict reconstruction and legacy soft follower are untouched.', '',
         '## Reproduce offline', '', '```sh',
-        f'uv run --group reproduction python -m reservoir_control.systems.ottawa.hard_follower_study --forecast {mode} --output results/ottawa/hard_follower_v1_{mode}_rerun',
+        f'uv run --group reproduction python -m reservoir_control.systems.ottawa.hard_follower_study --forecast {mode} --lookahead {c["horizon"]}{config_arg} --output results/ottawa/hard_follower_v1_{mode}_rerun',
         '```', '', 'Use a new output directory; existing results are never overwritten.']
     (output/'report.md').write_text('\n'.join(lines)+'\n')
     print(pd.DataFrame(summaries)[['scenario','policy','seed','status','executed_steps']].to_string(index=False))
@@ -288,9 +295,13 @@ def main():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, default=CONFIG)
     parser.add_argument('--forecast', choices=('perfect','noisy'), required=True)
+    parser.add_argument('--lookahead', type=int, help='Prediction window in periods (default: configured horizon)')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    run_study(args.config.resolve(), args.output.resolve(), args.forecast)
+    try:
+        run_study(args.config.resolve(), args.output.resolve(), args.forecast, lookahead=args.lookahead)
+    except ValueError as error:
+        parser.error(str(error))
 
 
 if __name__ == '__main__': main()

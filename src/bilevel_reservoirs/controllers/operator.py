@@ -44,6 +44,21 @@ def legacy_series_getitem(self, key):
     return original_series_getitem(self, key)
 
 
+ONTARIO_COST_COMPONENTS = (
+    "upstream_coastal", "downstream_coastal", "negative_energy_value", "recreational_boating",
+)
+
+
+def ontario_stage_costs(data):
+    """Evaluate the four Ontario stage indicators in their native units."""
+    return np.column_stack((
+        upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].to_numpy(),
+        downstreamCoastalImpacts.runModel(data)["downstreamCoastal"].to_numpy(),
+        -hydropowerProduction.runModel(data)["totalEnergyValue"].to_numpy(),
+        recreationalBoating.runModel(data)["totalRecBoating"].to_numpy(),
+    )).astype(np.float64)
+
+
 class Ontario(Agent):
     def reward(self, mdp: MDPState) -> MDPState:
         t = mdp.t
@@ -58,19 +73,7 @@ class Ontario(Agent):
         data["Month"] = np.asarray([int(mdp.params["Month"])])
         data["QM"] = np.asarray([int(mdp.params["QM"])])
 
-        return MDPState(
-            rewards={
-                self.id: np.asarray(
-                    [
-                        upstreamCoastalImpacts.runModel(data)["upstreamCoastal"].iloc[-1],
-                        downstreamCoastalImpacts.runModel(data)["downstreamCoastal"].iloc[-1],
-                        -hydropowerProduction.runModel(data)["totalEnergyValue"].iloc[-1],
-                        recreationalBoating.runModel(data)["totalRecBoating"].iloc[-1],
-                    ],
-                    dtype=np.float64,
-                )
-            }
-        )
+        return MDPState(rewards={self.id: ontario_stage_costs(data)[0]})
 
     def terminal_cost(self, mdp: MDPState) -> np.ndarray:
         """Ecological objectives requiring trajectory history."""
