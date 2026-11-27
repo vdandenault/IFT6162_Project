@@ -10,6 +10,15 @@ Course projects for IFT6162 from
 
 # Lake Ontario–Ottawa reservoir control
 
+## Project brief from Pierre-Luc Bacon
+
+- **Simulator and baseline.** Use the Plan 2014 rule curve as the operator baseline. Start from LOSLR’s 1900–2020 quarter-monthly supplies, release limits, and performance indicators. Use the Ottawa River Regulation Planning Board as a reference for Ottawa flows. [LOSLR repository](https://github.com/ksemmendinger/loslr_regulation_optimization) · [Ottawa River Regulation Planning Board](https://ottawariver.ca/)
+- **Model predictive control.** Use supply forecasts to choose Lake Ontario releases, with hard flood constraints for the Ontario shoreline and Lake St. Louis.
+- **Stackelberg control.** Treat Ontario as the leader and the aggregated Ottawa reservoirs as a follower with its own storage model and objective. Compare MPC that takes Ottawa flows as an external forecast with MPC that anticipates the follower’s optimized response. Include PPO as a supplementary comparison.
+- **Evaluation.** Report flood exposure at both locations alongside the other operating objectives, with a close look at spring 2017 and 2019. Focus on a careful comparison of Plan 2014, MPC, Stackelberg MPC, and PPO.
+
+## Simulator
+
 Lake Ontario releases and Ottawa River flows meet at Lake St. Louis.
 Plan 2014’s F limit uses the Pointe-Claire level to cap Ontario outflow.
 We model decisions at a quarter-month step with historical Ontario

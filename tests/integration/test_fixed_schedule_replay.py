@@ -1,9 +1,8 @@
 from pathlib import Path
 
-import pandas as pd
 import pytest
 
-from reservoir_control.experiments.fixed_schedule_replay import repair_offline, replay
+from reservoir_control.experiments.fixed_schedule_replay import replay
 from reservoir_control.study_config import REPO_ROOT, load_follower_config
 from reservoir_control.systems.loslr.data import read_trace, trace_path
 
@@ -57,15 +56,16 @@ def test_infeasible_follower_stops_before_either_action(inputs):
     assert "ottawa_executed_release_m3_s" not in record
 
 
-def test_offline_repair_replays_as_one_fixed_schedule(inputs):
+def test_valid_fixed_schedule_executes_and_preserves_terminal_transit(inputs):
     trajectory, config, cases = inputs
-    original = trajectory["ontFlow"].copy()
-    history = {"previous_flow": 595.0, "previous_ice": 2.0}
-    scenario = cases["one_period_delay_feasible"]
-    schedule, edits = repair_offline(trajectory, config, scenario, **history)
-    pd.testing.assert_series_equal(trajectory["ontFlow"], original)
-    assert edits[0]["period"] == 2
-    records, _ = replay(schedule, config, scenario, **history)
+    trajectory["ontFlow"] = [623, 622, 580, 611, 592, 662, 653, 667, 737, 763, 792, 821]
+    records, _ = replay(
+        trajectory,
+        config,
+        cases["one_period_delay_feasible"],
+        previous_flow=595.0,
+        previous_ice=2.0,
+    )
     assert len(records) == 12
     assert all(row["status"] == "executed" for row in records)
     assert [row["lookahead"] for row in records] == [5] * 8 + [4, 3, 2, 1]

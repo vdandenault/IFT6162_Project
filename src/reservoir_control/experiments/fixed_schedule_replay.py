@@ -5,15 +5,12 @@ import numpy as np
 from core.mechanism.base import MDPState
 from gymnasium.spaces import Box
 
+from reservoir_control.experiments.coupled_forecast import native_step
+from reservoir_control.experiments.coupled_transition import advance_ontario, score_ontario
 from reservoir_control.study_config import validate_follower_config
-from reservoir_control.systems.loslr.data import FORCING_COLUMNS
-from reservoir_control.systems.loslr.operator import (
-    ONTARIO_COST_COMPONENTS,
-    AdjustFlow,
-    ontario_stage_costs,
-)
-from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
-from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
+from reservoir_control.systems.loslr.operator import AdjustFlow
+from reservoir_control.systems.loslr.physics import FLOW_SCALE
+from reservoir_control.systems.loslr.simulator import LoslrEnv
 from reservoir_control.systems.ottawa.hard_follower import (
     FollowerTolerances,
     make_problem,
@@ -177,17 +174,8 @@ def replay_steps(
         # The arrival at execution is known. Replace the historical aggregate so
         # the Ottawa arrival is counted once.
         forcing.update(stlouisontOut=non_ontario, slonFlow_QM1=non_ontario)
-        forecast_level = level + round_d(
-            (forcing["ontNTS_QM1"] / FLOW_SCALE - flow) / CONVERSION, 6
-        )
-        allowed, regime = mechanism.constrain(
-            forcing,
-            level,
-            forecast_level,
-            flow,
-            "RF",
-            previous_flow=previous_flow,
-            previous_ice=previous_ice,
+        forecast_level, allowed, regime = native_step(
+            forcing, forcing["ontNTS_QM1"], flow, (level, previous_flow, previous_ice), mechanism
         )
         record.update(
             ontario_allowed_m3_s=allowed * FLOW_SCALE,
@@ -223,21 +211,9 @@ def replay_steps(
         ):
             raise ArithmeticError(f"Coupled balance or capacity mismatch at period {k + 1}")
 
-        mdp.params.update(forcing)
-        mdp.update(actions={"ont": {"flow": np.asarray([flow], dtype=np.float64)}})
-        mdp = env.simulate(mdp)
-        applied = float(mdp.state["ontFlow"][k + 1]) * FLOW_SCALE
-        routed = float(mdp.state["stlouisFlow"][k + 1]) * FLOW_SCALE
-        end_level = float(mdp.state["ontLevelBOQ"][k + 1])
-        level_residual = (
-            end_level - level - (forcing["ontNTS"] - applied) / (FLOW_SCALE * CONVERSION)
+        mdp, applied, routed, end_level, level_residual = advance_ontario(
+            env, mdp, forcing, committed, combined, tolerance.flow_m3_s
         )
-        if (
-            applied != committed
-            or abs(routed - combined) > tolerance.flow_m3_s
-            or abs(level_residual) > 0.500001e-6
-        ):
-            raise ArithmeticError(f"Ontario flow, routing or level mismatch at period {k + 1}")
 
         record.update(
             status="executed",
@@ -255,16 +231,7 @@ def replay_steps(
             pointe_claire_m=float(mdp.state["ptclaireLevel"][k + 1]),
         )
         if scored:
-            cost_inputs = {
-                **forcing,
-                **{name: series[k + 1] for name, series in mdp.state.data.items()},
-                "ontFlow": flow,
-                "ontLevel": (level + end_level) / 2,
-            }
-            costs = ontario_stage_costs({name: [value] for name, value in cost_inputs.items()})[0]
-            if not np.isfinite(costs).all():
-                raise ArithmeticError(f"Nonfinite executed Ontario costs at period {k + 1}")
-            record.update(zip(ONTARIO_COST_COMPONENTS, costs, strict=True))
+            record.update(score_ontario(mdp, forcing, flow, level, end_level))
         storage, queue, previous_release = next_storage, next_queue, release
         previous_flow, previous_ice = flow, forcing["iceInd"]
         if ottawa_forecast_bank is not None:
@@ -280,50 +247,3 @@ def replay_steps(
             if violation > tolerance.storage_m3:
                 record["reason"] = "Realized Ottawa storage left its bounds"
                 break
-
-
-def repair_offline(trajectory, config, scenario, *, previous_flow, previous_ice):
-    """Try fixed schedules from the same initial state, editing the first rejection."""
-    candidate = trajectory.copy().reset_index(drop=True)
-    candidate["ontFlow"] = candidate["ontFlow"].astype(float)
-    seen = set()
-    edits = []
-    for _ in range(4 * PERIODS):
-        key = tuple(candidate["ontFlow"])
-        if key in seen:
-            raise RuntimeError("Offline schedule repair revisited an earlier candidate")
-        seen.add(key)
-        records, _ = replay(
-            candidate, config, scenario, previous_flow=previous_flow, previous_ice=previous_ice
-        )
-        last = records[-1]
-        if last["status"] == "executed":
-            columns = FORCING_COLUMNS | {"ontLevelBOQ", "ontFlow", "ontNTS_QM1", "foreInd"}
-            candidate = candidate.loc[:, [col for col in candidate if col in columns]].copy()
-            candidate["ontLevelBOQ"] = [record["ontario_start_m"] for record in records]
-            return candidate, edits
-        if last["status"] != "commitment_rejected":
-            raise RuntimeError(
-                f"Offline schedule repair stopped at period {last['period']}: {last['reason']}"
-            )
-        edits.append(
-            {
-                key: last[key]
-                for key in (
-                    "period",
-                    "ontario_committed_m3_s",
-                    "ontario_allowed_m3_s",
-                    "ontario_limit_regime",
-                )
-            }
-        )
-        candidate.at[last["period"] - 1, "ontFlow"] = last["ontario_allowed_m3_s"] / FLOW_SCALE
-    raise RuntimeError("Offline schedule repair reached its attempt limit")
-
-
-def json_value(value):
-    if isinstance(value, np.ndarray):
-        return value.tolist()
-    if isinstance(value, np.generic):
-        return value.item()
-    raise TypeError(f"Cannot serialize {type(value).__name__}")

@@ -22,7 +22,6 @@ def native_step(forcing, supply, flow, state, limits):
 def forecast_forcing(rows, lead, non_ontario, future_roughness=None):
     issued = rows[0]
     supply = issued[f"ontNTS_QM{lead + 1}"]
-    # Only the calendar advances. Other exogenous inputs persist from issue time.
     return {
         **issued,
         **{name: rows[lead][name] for name in ("Sim", "Year", "Month", "QM")},

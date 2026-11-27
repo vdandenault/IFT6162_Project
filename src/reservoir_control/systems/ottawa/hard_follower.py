@@ -219,7 +219,6 @@ def solve_hard_follower(p: HardFollowerProblem, tolerances=FollowerTolerances())
     h = len(dt)
     identity = np.eye(h)
     w = p.weights
-    # x = r / q_scale; f+B*x = S[1:] / S_scale exactly, with no optimization equality relaxation.
     f = (p.initial_storage_m3 + np.cumsum(dt * inflow)) / p.storage_scale_m3
     b = -np.tril(np.ones((h, h))) * dt[None, :] * p.flow_scale_m3_s / p.storage_scale_m3
     target = d["storage_target_m3"][1:] / p.storage_scale_m3

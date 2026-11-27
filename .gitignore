@@ -121,5 +121,6 @@ wandb/
 /src/reservoir_control/experiments/final_coupled_playback.html
 /src/reservoir_control/experiments/replay_fixed_schedule_cli.py
 /src/reservoir_control/experiments/report_final_coupled.py
+/src/reservoir_control/experiments/study_downstream_anticipation.py
 /src/reservoir_control/experiments/study_ottawa_ranking_sensitivity.py
 /tests/integration/legacy_ottawa_comparison_cases.py
