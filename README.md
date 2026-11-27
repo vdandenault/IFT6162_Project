@@ -87,7 +87,7 @@ offline. Keep the Canadian Hydrographic Service responses local under their
 data terms. See the [Ottawa study guide](configs/studies/ottawa/README.md) for
 the standalone follower and Baskatong evidence workflow.
 
-## Data and research archive
+## Data and outputs
 
 - The pinned [LOSLR submodule](external/loslr_regulation_optimization) supplies
   Ontario reference code, forcing and performance indicators.
@@ -95,17 +95,6 @@ the standalone follower and Baskatong evidence workflow.
   adapter and reference parity tests.
 - Gauges, checkpoints, plots and replay outputs live in ignored local
   directories. Their absence from a fresh checkout is expected.
-
-The Lake Como project, exploratory Ontario/Ottawa experiments and their longer
-documentation are in the complete [pre-cleanup snapshot](https://github.com/vdandenault/IFT6162_Project/tree/2f08eab30d89f994abd6ebd18cc311b9005770a2).
-To work with that version alongside this checkout:
-
-```sh
-git worktree add --detach ../IFT6162_Project_full 2f08eab30d89f994abd6ebd18cc311b9005770a2
-```
-
-Follow the snapshot's README for its submodules and dependencies. Existing
-local results remain in the original checkout.
 
 ## Team
 
