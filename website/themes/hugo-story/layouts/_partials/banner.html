@@ -19,6 +19,7 @@
         <a class="primary-button" href="{{ .button.link }}">{{ .button.label }}</a>
         {{ partial "next-section.html" .next }}
       </div>
+      <label class="motion-choice" hidden><input type="checkbox" id="animate-sections"> Animate section transitions</label>
     </div>
     <figure class="map-panel">
       {{ partial "river-map.html" . }}

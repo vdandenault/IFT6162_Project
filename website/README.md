@@ -15,6 +15,7 @@ In VS Code, open the project repository, select **04 - Website: preview Hugo Sto
 
 Profile 04 runs the package’s `dev` script on port 1313. If the preview is already running, reuse it. The red Stop button in VS Code ends the server. If another application owns port 1313, the Debug Console reports the conflict.
 
+If your browser requests reduced motion, select **Animate section transitions** below the opening arrows to see the fades. The choice applies to that browser tab.
 
 ## Edit
 
@@ -22,6 +23,7 @@ Profile 04 runs the package’s `dev` script on port 1313. If the preview is alr
 | --- | --- |
 | Banner, spotlight introductions and next-section links | [data/story.yaml](data/story.yaml) |
 | Opening finding and basin map | [banner.html](themes/hugo-story/layouts/_partials/banner.html) and [river-map.html](layouts/_partials/river-map.html) |
+| Arrow scrolling and section fades | [story-motion.js](assets/js/story-motion.js) and [site.css](assets/css/site.css) |
 | Flood context, Plan 2014, simulator links and study constraints | [overview.html](layouts/_partials/overview.html) |
 | River equations and the symbols printed below each one | [data/equations.yaml](data/equations.yaml) |
 | Operator objectives and how each equation is used | [river-dynamics.html](layouts/_partials/river-dynamics.html) |

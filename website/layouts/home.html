@@ -7,6 +7,8 @@
   <title>{{ site.Title }} · Flood-year replay</title>
   {{ $styles := slice (resources.Get "css/theme.css") (resources.Get "css/site.css") (resources.Get "css/map.css") (resources.Get "css/rivers.css") (resources.Get "css/replay.css") (resources.Get "css/spring.css") | resources.Concat "css/site.css" | fingerprint }}
   <link rel="stylesheet" href="{{ $styles.RelPermalink }}">
+  {{ $motion := resources.Get "js/story-motion.js" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
+  <script defer src="{{ $motion.RelPermalink }}"></script>
   {{ $figures := resources.Get "js/river-figures.js" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
   <script defer src="{{ $figures.RelPermalink }}"></script>
   {{ $replay := resources.Get "js/replay.js" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
