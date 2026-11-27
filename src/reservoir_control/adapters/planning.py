@@ -13,8 +13,6 @@ class PlanningAdapter(Generic[State, Action, Forcing]):
 
     def transition(self, state: State, action: Action, forcing: Forcing,
                    time: DecisionTime) -> Transition[State]:
-        # Domain models own physics; this boundary prevents a mutating model or
-        # caller-owned array from corrupting the live state or forecast inputs.
         return self.model.transition(deepcopy(state), deepcopy(action), deepcopy(forcing), time)
 
     def rollout(self, state: State, actions: Sequence[Action],
@@ -23,6 +21,7 @@ class PlanningAdapter(Generic[State, Action, Forcing]):
             raise ValueError('Actions, explicit forcings and decision times must align')
         if any(b.index != a.index + 1 for a, b in zip(times, times[1:])):
             raise ValueError('Planning decision indices must be consecutive')
+        
         transitions = []
         current = deepcopy(state)
         for action, forcing, time in zip(actions, forcings, times):

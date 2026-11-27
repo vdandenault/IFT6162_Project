@@ -35,6 +35,7 @@ def solve_response(hessian, linear, constraints, bounds, initial):
             or not all(np.isfinite(v).all() for v in (h, g, a, b, x0))
             or not np.allclose(h, h.T) or np.linalg.eigvalsh(h).min() <= 0):
         raise ValueError('Finite strictly convex QP with aligned arrays required')
+    
     fit = minimize(lambda x: .5*x@h@x + g@x, x0,
                    jac=lambda x: h@x+g, method='SLSQP',
                    constraints={'type': 'ineq', 'fun': lambda x: b-a@x,
@@ -45,11 +46,11 @@ def solve_response(hessian, linear, constraints, bounds, initial):
     dual = np.zeros(len(a))
     if len(active):
         dual[active] = nnls(a[active].T, -(h@fit.x+g), maxiter=1000)[0]
+        
     primal = float(max(0, -slack.min()))
     stationarity = float(np.max(np.abs(h@fit.x+g+a.T@dual)))
     comp = float(np.max(np.abs(dual*slack)))
-    # For a strictly convex QP, independently checked KKT residuals certify the
-    # solution even when SLSQP reports a line-search warning near an active bound.
     if max(primal, stationarity, comp) > 2e-4:
         raise RuntimeError(f'Follower QP failed: {fit.message}; KKT={primal, stationarity, comp}')
+    
     return ConvexResponse(fit.x, float(fit.fun), primal, stationarity, comp, dual, active, bool(fit.success))

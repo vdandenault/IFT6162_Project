@@ -1,8 +1,11 @@
 from copy import deepcopy
 import numpy as np
 import pytest
-from reservoir_control.systems.ottawa.horizon_study import forecast_bank,HORIZONS,classify,common_cases
+from reservoir_control.systems.ottawa.forecasts import forecast_bank
 from reservoir_control.systems.ottawa.hard_follower_study import load_follower_config, rollout
+
+
+HORIZONS = (4, 5, 6, 8, 12)
 
 
 def inputs():
@@ -61,11 +64,3 @@ def test_perfect_delay_reproduces_with_unchanged_endpoint(horizon):
     assert trace.downstream_violation_m3_s.max()<1e-5
     assert trace.storage_violation_m3.max()<.01
     if horizon!=4: assert len(plans[-1]['planned_release_m3_s'])==1
-
-
-def test_success_does_not_mean_only_reaching_endpoint():
-    c,s=inputs();trace,plans,summary=rollout(c,s,'mpc','perfect',0)
-    synthetic=dict(summary,complete=True,status='completed',max_downstream_violation_m3_s=1.,full_objective=1.)
-    result=classify(synthetic,plans,c,4,0.)
-    assert result['reached_endpoint'] and not result['successful_completion']
-    assert result['status']=='endpoint_with_constraint_violations' and result['full_objective'] is None

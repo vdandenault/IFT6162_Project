@@ -110,7 +110,7 @@ class PPOAgent:
         z=torch.tensor(np.asarray(rollout['latent']),dtype=torch.float32)
         oldlog=torch.tensor(rollout['log_probability'],dtype=torch.float32)
         adv=torch.tensor(advantage);target=torch.tensor(returns);logs=[];stopped=False
-        for epoch in range(c.epochs):
+        for _ in range(c.epochs):
             indices=self.shuffle.permutation(len(x))
             for start in range(0,len(x),c.batch_size):
                 batch=indices[start:start+c.batch_size]
@@ -120,8 +120,6 @@ class PPOAgent:
                 if kl.item()>c.target_kl:stopped=True;break
                 policy=-torch.minimum(ratio*adv[batch],ratio.clamp(1-c.clip_ratio,1+c.clip_ratio)*adv[batch]).mean()
                 value=F.mse_loss(self.model.value(x[batch]),target[batch])
-                # Entropy coefficient is frozen at zero. Base Gaussian entropy
-                # is logged only; it is not called exact squashed entropy.
                 entropy=dist.entropy().sum(dim=-1).mean()
                 loss=policy+c.value_coefficient*value-c.entropy_coefficient*entropy
                 if not torch.isfinite(loss):raise ValueError('Nonfinite PPO loss')

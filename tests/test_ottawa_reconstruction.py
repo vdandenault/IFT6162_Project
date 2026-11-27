@@ -168,7 +168,10 @@ class DailyBalanceTests(unittest.TestCase):
             clean = pd.read_csv(folder/'processed/normalized/daily.csv', keep_default_na=False)
             self.assertEqual(clean.level_start_source_quality.tolist(), ['NA']*3)
             self.assertEqual(clean.discharge_source_quality.tolist(), ['NA']*3)
-            self.assertTrue((folder/'processed/normalized/daily_diagnostics.png').exists())
+            summary = json.loads((folder/'processed/summary.json').read_text())
+            self.assertEqual(summary['status'], 'processed_inputs')
+            self.assertFalse(list((folder/'processed').rglob('*.png')))
+            self.assertFalse((folder/'processed/report.md').exists())
 
     def test_assessment_cli_does_not_create_observations(self):
         with tempfile.TemporaryDirectory() as tmp:

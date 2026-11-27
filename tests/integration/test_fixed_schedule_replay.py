@@ -100,7 +100,7 @@ def test_matched_planners_keep_shared_fifth_commitment(inputs):
 
 def test_matched_response_ranking_uses_one_eligibility_gate(inputs):
     from reservoir_control.experiments.compare_ottawa_response import run_policy
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+    from reservoir_control.systems.ottawa.forecasts import forecast_bank
 
     trajectory, config, cases = inputs
     scenario = cases["one_period_delay_feasible"]
@@ -159,7 +159,7 @@ def test_candidate_proposals_match_budgets_and_free_capacity_at_the_arrival():
 def test_ottawa_recession_forecast_preserves_lead_one_and_uses_prior_observations():
     import numpy as np
 
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank, recession_bank
+    from reservoir_control.systems.ottawa.forecasts import forecast_bank, recession_bank
 
     observed = np.array([900., 1050., 2350., 1650., 1050., 900., 900., 900.])
     origin = forecast_bank(observed, "noisy", 119, 900., 700.)
@@ -178,7 +178,7 @@ def test_ottawa_recession_forecast_preserves_lead_one_and_uses_prior_observation
 def test_isolated_recession_cannot_distinguish_a_future_plateau_after_the_jump():
     import numpy as np
 
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank, recession_bank
+    from reservoir_control.systems.ottawa.forecasts import forecast_bank, recession_bank
 
     pulse = np.array([900., 1050., 2350., 1650., 1050., 900., 900.])
     plateau = np.array([900., 1050., 2350., 2350., 2350., 2150., 1800.])
@@ -295,7 +295,7 @@ def test_noisy_policy_uses_bank_and_updates_storage_with_realized_inflow(inputs)
     import numpy as np
 
     from reservoir_control.experiments.compare_ottawa_response import run_policy
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+    from reservoir_control.systems.ottawa.forecasts import forecast_bank
 
     trajectory, config, cases = inputs
     reference = cases["one_period_delay_feasible"]
@@ -331,7 +331,7 @@ def test_recovery_uses_past_inflow_and_checks_realized_storage(
     import numpy as np
 
     from reservoir_control.experiments.compare_ottawa_response import run_policy
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+    from reservoir_control.systems.ottawa.forecasts import forecast_bank
 
     trajectory, config, cases = inputs
     fixed, _ = repair_offline(
@@ -375,7 +375,7 @@ def test_guard_checks_excess_inflow_on_retry_only(inputs, guard_periods):
     import numpy as np
 
     from reservoir_control.experiments.compare_ottawa_response import run_policy
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+    from reservoir_control.systems.ottawa.forecasts import forecast_bank
 
     trajectory, config, cases = inputs
     fixed, _ = repair_offline(
@@ -408,7 +408,7 @@ def test_guard_checks_excess_inflow_on_retry_only(inputs, guard_periods):
 
 def test_after_retry_guard_covers_the_next_ordinary_decision(inputs):
     from reservoir_control.experiments.compare_ottawa_response import run_policy
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+    from reservoir_control.systems.ottawa.forecasts import forecast_bank
 
     trajectory, config, cases = inputs
     fixed, _ = repair_offline(

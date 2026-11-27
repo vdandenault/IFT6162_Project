@@ -102,3 +102,13 @@ wandb/
 /data/baseline/*.pkl
 /data/baseline/rule_curve_0.csv
 /data/baseline/onlyPhysicalLimits.toml
+
+# Completed Ottawa diagnostic runners kept for local replay
+/src/reservoir_control/systems/ottawa/baskatong_scenario.py
+/src/reservoir_control/systems/ottawa/delay_diagnostic.py
+/src/reservoir_control/systems/ottawa/discharge_comparison.py
+/src/reservoir_control/systems/ottawa/downstream_observations.py
+/src/reservoir_control/systems/ottawa/flow_source_audit.py
+/src/reservoir_control/systems/ottawa/historical_pilot.py
+/src/reservoir_control/systems/ottawa/horizon_study.py
+/src/reservoir_control/systems/ottawa/noisy_failure_diagnostic.py

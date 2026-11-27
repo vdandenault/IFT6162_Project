@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from dataclasses import asdict, replace
 import json
@@ -16,7 +17,9 @@ from reservoir_control.systems.loslr.coupled import load_protocol, start_states
 from reservoir_control.systems.loslr.data import load_inputs
 from reservoir_control.systems.loslr.model import OntarioModel
 from reservoir_control.systems.loslr.native import NativeReference
-from reservoir_control.systems.ottawa.horizon_study import forecast_bank, recession_bank
+from reservoir_control.systems.ottawa import forecasts
+
+LOG = logging.getLogger(__name__)
 
 ARMS = ("rule_curve", "external_mpc", "stackelberg_mpc", "ppo")
 PPO = PPOConfig(observation_dim=OBSERVATION_DIM, hidden=32, rollout=256, epochs=4,
@@ -38,8 +41,8 @@ def prepared_case(name, year, trajectory, start, base, inflows, capacities, desi
     config = {**base, "known_other_downstream_forecast_m3_s": [background] * p, "scenarios": [scenario]}
     if bank is None:
         noise = config["forecast_noise"]
-        bank = forecast_bank(inflows, "noisy", year, noise["initial_observed_inflow_estimate_m3_s"],
-                             noise["standard_deviation_m3_s"])
+        bank = forecasts.forecast_bank(inflows, "noisy", year, noise["initial_observed_inflow_estimate_m3_s"],
+                                       noise["standard_deviation_m3_s"])
     return {"name": name, "year": year, "design": design_label, "trajectory": trajectory,
             "rows": trajectory.to_dict("records"), "start": start, "config": config,
             "scenario": scenario, "bank": bank}
@@ -98,9 +101,9 @@ def stress_cases(root, frame, states, base, design_path=None):
                     inflows = pair[shape]
                     if design_path:
                         noise = base["forecast_noise"]
-                        raw = forecast_bank(inflows, "noisy", seed, noise["initial_observed_inflow_estimate_m3_s"],
-                                            noise["standard_deviation_m3_s"])
-                        bank = recession_bank(inflows, raw, jump_minimum_m3_s=700.)
+                        raw = forecasts.forecast_bank(inflows, "noisy", seed, noise["initial_observed_inflow_estimate_m3_s"],
+                                                      noise["standard_deviation_m3_s"])
+                        bank = forecasts.recession_bank(inflows, raw, jump_minimum_m3_s=700.)
                     else:
                         with np.load(directory / str(year) / f"{stem}_forecasts.npz") as forecasts:
                             bank = forecasts["receding"]
@@ -143,7 +146,7 @@ def train(env, seed, budget, out, *, checkpoint_steps=()):
         if agent.steps in checkpoint_steps:
             agent.save(out / f"checkpoint_{agent.steps}.pt")
         if agent.steps % 2048 == 0 or agent.steps == budget:
-            print(f"PPO {seed} {agent.steps}/{budget}", flush=True)
+            LOG.info("PPO seed %d: %d/%d steps", seed, agent.steps, budget)
     agent.save(out / "final.pt")
 
 
@@ -187,12 +190,14 @@ def evaluate(model, cases, costs, agents, destination, *, recovery_mode="origina
                 "request_interventions": sum((row["intervention_m3_s"] or 0.) > 1e-5 for row in executed),
                 "runtime_seconds": perf_counter() - started,
             })
-        print(f"{case['name']}: " + ", ".join(r["status"] for r in results[-len(policies):]), flush=True)
+        statuses = ", ".join(row["status"] for row in results[-len(policies):])
+        LOG.info("%s: %s", case["name"], statuses)
     pd.DataFrame(trajectories).to_csv(destination / "trajectories.csv", index=False)
     pd.DataFrame(results).to_csv(destination / "runs.csv", index=False)
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(
         description="Train and evaluate four Ontario controllers under one hard Ottawa execution contract."
     )
@@ -238,7 +243,7 @@ def main():
     budget = 256 if args.mode == "smoke" else design["training_decisions_per_seed"]
     args.output.mkdir(parents=True, exist_ok=False)
     sources = [CONFIG, Path(__file__), Path(__file__).with_name("final_coupled_env.py"),
-               Path(__file__).with_name("fixed_schedule_replay.py")]
+               Path(__file__).with_name("fixed_schedule_replay.py"), Path(forecasts.__file__)]
     if args.stress_design and args.stress_design.resolve() != CONFIG:
         sources.append(args.stress_design)
     plan = {"mode": args.mode, "recovery": args.recovery, "years": years, "case_names": [case["name"] for case in cases],

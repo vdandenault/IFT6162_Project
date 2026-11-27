@@ -3,15 +3,19 @@ from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 import json
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
 from scipy.optimize import lsq_linear
 
-from .downstream_observations import CAP, FIRST, LAST, SHIFT
-from .flow_source_audit import LICENCE, address, check_records, fetch
-from .reconstruction import digest
+from reservoir_control.evaluation.provenance import digest
 
+from reservoir_control.systems.ottawa.hydrometric import LICENCE, address, check_records, fetch
+
+FIRST, LAST = 2000, 2025
+CAP = 22.10
+SHIFT = 200.
 GAUGES = {"britannia": "02KF005", "prairies": "02OA004"}
 FIT = (2000, 2009)
 SELECT = (2010, 2016)
@@ -153,82 +157,6 @@ def evaluate(data, predictions, quarter_calendar):
     return pd.DataFrame(scores), pd.DataFrame(periods)
 
 
-def write_report(output, scores, periods, options, coefficients):
-    holdout = scores.loc[scores.split.eq("holdout")]
-    lines = [
-        "# Downstream routing and headroom check", "",
-        "## Observed boundaries", "",
-        "Cornwall supplies the St. Lawrence boundary. LaSalle measures discharge downstream of "
-        "Lake St. Louis. Britannia is upstream of Carillon. The Prairies gauge samples one of the "
-        "routes that bypass Lake St. Louis. Sainte-Anne and Vaudreuil feed Lake St. Louis, and the "
-        "Mille Îles is a second bypass. Québec reports that the share through the two Lake St. Louis "
-        "channels varied from about 12% in a low-water example to about 48% at higher levels. A fixed "
-        "Ottawa fraction has no general physical support. [Québec outlet study, section 2.2.1 and "
-        "Figure 7](https://www.cehq.gouv.qc.ca/mille-iles/etude-solutions-soutien-etiages-critiques.pdf) · "
-        "[Gauge locations and 2017 survey, annexes D–E](https://www.mrcautray.qc.ca/wp-content/uploads/2024/03/annexes-complet.pdf)",
-        "",
-        "All records use daily means matched by reported date. A daily lag search cannot resolve "
-        "subdaily arrival times. We shift by full calendar days and exclude "
-        "source-flagged or missing values. The public HYDAT Carillon discharge series ends in 1994, "
-        "and the added upstream gauges returned no discharge for 2025. [Carillon archive](https://wateroffice.ec.gc.ca/report/data_availability_e.html?parameter_type=Flow&station=02LB024&type=historical)", "",
-        "## Offline reach comparison", "",
-        "Fit seasonal and flow coefficients on 2000–2009. Select lags from 0 to 7 days using "
-        "common spring dates in 2010–2016 and LaSalle flow error. Refit on 2000–2016 and score "
-        "2021–2025 once. The 2017 and 2019 springs are reported separately in the CSV. Cornwall enters "
-        "with unit weight. A seasonal residual accounts for other contributions, and a nonnegative "
-        "Britannia coefficient measures its association with downstream flow. The branch model tests "
-        "a nonpositive same-day Prairies adjustment. The paired branch reference uses the same "
-        "lag and training dates with that adjustment omitted. These coefficients describe an empirical proxy. "
-        "Reach storage, local tributaries, backwater and use of an upstream Ottawa proxy all affect "
-        "the inferred timing and magnitude.", "",
-        "| Model | Cornwall / Britannia lag |", "| --- | ---: |",
-    ]
-    for name, (cornwall, ottawa, _) in options.items():
-        lines.append(f"| {name.replace('_', ' ')} | {cornwall} / {ottawa if ottawa is not None else '—'} days |")
-    lines += [
-        "", "## Spring headroom on the held-out dates", "",
-        "Each group is scored on common observed dates. Concurrent LaSalle flow is an offline stage "
-        "reference. Stage uses the same frozen rating from the earlier gauge check. Near-threshold "
-        "means within 0.10 m of 22.10 m. A false room call means modeled stage with an extra "
-        "200 m³/s of local throughflow stayed within the study threshold while current observed stage "
-        "was already at or above it.", "",
-        "| Matched group | Model | Dates | Flow MAE (m³/s) | Stage MAE (m) | Near-threshold MAE (m) | False room calls |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
-    ]
-    for row in holdout.itertuples(index=False):
-        lines.append(
-            f"| {row.cohort} | {row.model.replace('_', ' ')} | {row.samples} | "
-            f"{row.flow_mae_m3_s:.0f} | {row.stage_mae_m:.3f} | {row.near_cap_mae_m:.3f} | "
-            f"{row.modeled_room_with_observed_stage_at_or_above_cap} |"
-        )
-    branch_coef = coefficients["prairies_adjusted"]["prairies"]
-    lines += ["", f"The fitted Prairies adjustment was {branch_coef:.4f} m³/s of LaSalle "
-              "flow per m³/s of Prairies flow. The bound at zero allows the model to omit this signal. "
-              "This comparison cannot determine the split among the four outlets.", ""]
-    held_periods = periods[periods.start.dt.year.between(*HOLDOUT)]
-    lines += ["", "### Quarter-month flood cases", "",
-              "Period means require a complete set of eligible days. The table lists core periods above "
-              "22.10 m and compares estimated stage in those same periods.", "",
-              "| Start date | Observed stage (m) | Concurrent LaSalle (m) | Cornwall + season (m) | Lagged Ottawa proxy (m) | Prairies adjustment (m) |",
-              "| --- | ---: | ---: | ---: | ---: | ---: |"]
-    high = held_periods.loc[held_periods.cohort.eq("core") & held_periods.pointe_claire.gt(CAP)]
-    for row in high.itertuples():
-        estimates = []
-        for cohort, key in (("ottawa", "ottawa_selected_lags_stage"), ("branch", "prairies_adjusted_stage")):
-            matches = held_periods.loc[held_periods.start.eq(row.start) & held_periods.cohort.eq(cohort), key]
-            estimates.append(f"{matches.iloc[0]:.3f}" if len(matches) else "—")
-        lines.append(f"| {row.start.date()} | {row.pointe_claire:.3f} | {row.concurrent_lasalle_stage:.3f} "
-                     f"| {row.cornwall_seasonal_stage:.3f} | {' | '.join(estimates)} |")
-    lines += ["", "## Decision", "",
-              "These checks use realized flows and actual release history. The 200 m³/s sensitivity is "
-              "an increment to local throughflow. Its size and timing after an upstream release change "
-              "would require independent reach and branch hydraulics. The fixed 22.10 m threshold also "
-              "differs from operational application of the changing Plan 2014 tier. Keep the frozen controller "
-              "comparison for the project handoff. Reopen this question when matched Carillon and "
-              "Sainte-Anne/Vaudreuil flow or a validated hydraulic routing model is available.", ""]
-    (output / "report.md").write_text("\n".join(lines))
-
-
 def main():
     parser = ArgumentParser(
         description="Validate offline reach flow and Pointe-Claire headroom with frozen gauges."
@@ -281,7 +209,7 @@ def main():
                        for name in ("daily.csv", "quarter_months.csv", "rating_fit.json", "protocol.json")},
         "gauges": {name: {"url": url, "sha256": digest(raw / name)} for name, url in sources.items()},
     }, indent=2) + "\n")
-    write_report(args.output, scores, periods, options, coefficients)
+    scores.to_csv(sys.stdout, index=False)
 
 
 if __name__ == "__main__":
