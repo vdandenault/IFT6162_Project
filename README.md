@@ -24,7 +24,7 @@ constraints, and feasibility and recovery checks.
 | [`src/reservoir_control/systems/`](src/reservoir_control/systems/) | Ontario simulator and Plan 2014 rules in `loslr/`, Ottawa storage and the hard-constrained follower in `ottawa/` |
 | [`src/reservoir_control/controllers/`](src/reservoir_control/controllers/) | Shared MPC and PPO algorithms |
 | [`src/reservoir_control/experiments/`](src/reservoir_control/experiments/) | Coupled runner, comparisons, and replay |
-| [`configs/`](configs/) | Three settings files for coupled runs, Ontario-only runs, and Ottawa gauge evidence |
+| [`configs/`](configs/) | Settings for coupled and Ontario-only runs |
 | [`data/`](data/) and [`external/`](external/) | Local baseline settings and pinned LOSLR reference data |
 | [`tests/`](tests/) and `results/` | Automated checks and locally generated outputs |
 
@@ -99,10 +99,3 @@ Use `--mode reserved` in place of `--mode development --event-only`
 for the 18-year evaluation. Each run writes `runs.csv` and
 `trajectories.csv`. With a training root, omit `--controller` to evaluate
 all four together.
-
-**Ottawa follower on its own.**
-
-```sh
-uv run --locked --group ontario python -m reservoir_control.systems.ottawa.hard_follower_study \
-  --forecast perfect --lookahead 5 --output results/ottawa/follower_demo
-```

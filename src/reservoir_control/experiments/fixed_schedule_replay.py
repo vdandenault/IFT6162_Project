@@ -11,6 +11,7 @@ import pandas as pd
 from core.mechanism.base import MDPState
 from gymnasium.spaces import Box
 
+from reservoir_control.evaluation.provenance import digest
 from reservoir_control.systems.loslr.operator import (
     ONTARIO_COST_COMPONENTS,
     AdjustFlow,
@@ -19,16 +20,14 @@ from reservoir_control.systems.loslr.operator import (
 from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
 from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
 from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS
-from reservoir_control.systems.ottawa.hard_follower_study import (
+from reservoir_control.systems.ottawa.follower_problem import (
     CONFIG,
-    FollowerTolerances,
-    TransitState,
-    digest,
     load_follower_config,
     make_problem,
-    solve_hard_follower,
     validate_config,
 )
+from reservoir_control.systems.ottawa.hard_follower import FollowerTolerances, solve_hard_follower
+from reservoir_control.systems.ottawa.routing import TransitState
 
 LOG = logging.getLogger(__name__)
 

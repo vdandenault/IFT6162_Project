@@ -3,10 +3,8 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
+from reservoir_control.systems.ottawa.follower_problem import load_follower_config
 from reservoir_control.systems.ottawa.forecasts import forecast_bank
-from reservoir_control.systems.ottawa.hard_follower_study import load_follower_config, rollout
-
-HORIZONS = (4, 5, 6, 8, 12)
 
 
 def inputs():
@@ -25,25 +23,6 @@ def bank_for(c, s, mode="noisy", seed=11):
     )
 
 
-def test_overlaps_match_every_time_and_horizon():
-    c, s = inputs()
-    bank = bank_for(c, s)
-    for k in range(12):
-        for a in HORIZONS:
-            for b in HORIZONS:
-                overlap = min(a, b, 12 - k)
-                np.testing.assert_array_equal(
-                    bank[k, : min(a, 12 - k)][:overlap], bank[k, : min(b, 12 - k)][:overlap]
-                )
-    for h in HORIZONS:
-        changed = deepcopy(c)
-        changed["horizon"] = h
-        _, plans, _ = rollout(changed, s, "mpc", "noisy", 11, forecast_bank=bank)
-        for p in plans:
-            actual = p["supplied_problem"]["net_inflow_m3_s"]
-            np.testing.assert_array_equal(actual, bank[p["step"], : len(actual)])
-
-
 def test_bank_is_causal_and_independent_of_unobserved_suffix():
     c, s = inputs()
     original = bank_for(c, s)
@@ -56,33 +35,16 @@ def test_bank_is_causal_and_independent_of_unobserved_suffix():
         original[0, 0] = 0
 
 
-def test_early_stop_and_run_order_cannot_change_bank():
-    c, s = inputs()
-    bank = bank_for(c, s)
-    before = bank.copy()
-    for h in [12, 4, 8, 5, 6]:
-        changed = deepcopy(c)
-        changed["horizon"] = h
-        rollout(changed, s, "mpc", "noisy", 11, forecast_bank=bank)
-    np.testing.assert_array_equal(bank, before)
-    np.testing.assert_array_equal(bank_for(c, s), before)
+def test_seeded_forecasts_repeat_and_leave_unavailable_leads_empty():
+    config, scenario = inputs()
+    bank = bank_for(config, scenario)
+    np.testing.assert_array_equal(bank_for(config, scenario), bank)
+    assert bank_for(config, scenario, seed=22)[0, 0] != bank[0, 0]
 
-
-@pytest.mark.parametrize("horizon", HORIZONS)
-def test_perfect_delay_reproduces_with_unchanged_endpoint(horizon):
-    c, s = inputs()
-    bank = bank_for(c, s, "perfect", 0)
-    c["horizon"] = horizon
-    trace, plans, summary = rollout(c, s, "mpc", "perfect", 0, forecast_bank=bank)
-    old, _, original = rollout(c, s, "mpc", "perfect", 0)
-    np.testing.assert_allclose(trace.executed_release_m3_s, old.executed_release_m3_s, atol=1e-8)
-    assert summary["complete"] == (horizon != 4)
-    assert summary["status"] == ("infeasible" if horizon == 4 else "completed")
-    assert summary["final_transit_volume_m3"] == pytest.approx(
-        trace.executed_release_m3_s.iloc[-1] * 657000.0
-    )
-    assert abs(trace.system_balance_error_m3).max() < 0.01
-    assert trace.downstream_violation_m3_s.max() < 1e-5
-    assert trace.storage_violation_m3.max() < 0.01
-    if horizon != 4:
-        assert len(plans[-1]["planned_release_m3_s"]) == 1
+    realized = scenario["realized_net_inflow_m3_s"]
+    perfect = bank_for(config, scenario, mode="perfect")
+    for step in range(len(realized)):
+        remaining = len(realized) - step
+        np.testing.assert_array_equal(perfect[step, :remaining], realized[step:])
+        assert np.isnan(perfect[step, remaining:]).all()
+        assert np.isnan(bank[step, remaining:]).all()

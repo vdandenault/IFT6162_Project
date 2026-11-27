@@ -3,16 +3,12 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
+from reservoir_control.systems.ottawa.follower_problem import load_follower_config, make_problem
 from reservoir_control.systems.ottawa.hard_follower import (
     FollowerWeights,
     HardFollowerProblem,
     InvalidFollowerInput,
     solve_hard_follower,
-)
-from reservoir_control.systems.ottawa.hard_follower_study import (
-    inflow_forecast,
-    load_follower_config,
-    rollout,
 )
 from reservoir_control.systems.ottawa.routing import TransitState
 
@@ -131,56 +127,6 @@ def test_solver_failure_and_residual_gate(monkeypatch):
     assert result.status == "solver_failure" and result.first_release_m3_s is None
 
 
-def config():
-    return load_follower_config()
-
-
-def test_rollout_noise_reproducible_and_causal():
-    c = config()
-    s = c["scenarios"][0]
-    a, _, summary = rollout(c, s, "mpc", "noisy", 11)
-    b, _, _ = rollout(c, s, "mpc", "noisy", 11)
-    np.testing.assert_array_equal(a.forecast_net_inflow_m3_s, b.forecast_net_inflow_m3_s)
-    np.testing.assert_allclose(a.executed_release_m3_s, b.executed_release_m3_s)
-    assert abs(summary["cumulative_system_balance_error_m3"]) < 0.01
-    x = inflow_forecast("noisy", [123.0], 900, 3, np.random.default_rng(1), 0)
-    np.testing.assert_array_equal(x, [123] * 3)
-    assert (a.planned_first_release_m3_s == a.executed_release_m3_s).all()
-
-
-def test_first_action_only_replans_from_realized_state():
-    c = config()
-    case = c["scenarios"][0]
-    calls = []
-
-    def spy(p, t):
-        calls.append(p)
-        return solve_hard_follower(p, t)
-
-    trace, plans, summary = rollout(c, case, "mpc", "noisy", 11, solver=spy)
-    for k in range(1, len(calls)):
-        assert calls[k].initial_storage_m3 == trace.storage_end_m3.iloc[k - 1]
-        assert calls[k].previous_release_m3_s == trace.executed_release_m3_s.iloc[k - 1]
-    for k, row in trace.iterrows():
-        assert row.executed_release_m3_s == plans[k]["planned_release_m3_s"][0]
-        assert row.storage_end_m3 - row.storage_start_m3 == pytest.approx(
-            657000 * (row.realized_net_inflow_m3_s - row.executed_release_m3_s), abs=1e-5
-        )
-
-
-def test_delayed_rollout_and_stopping_without_clipping():
-    c = config()
-    case = c["scenarios"][-1]
-    trace, _, s = rollout(c, case, "mpc", "perfect", 0)
-    assert s["complete"] and s["final_transit_volume_m3"] > 0
-    assert np.max(abs(trace.system_balance_error_m3)) < 0.01
-    trace, _, s = rollout(c, c["scenarios"][1], "reference", "perfect", 0)
-    assert s["status"] == "physical_storage_violation"
-    assert trace.storage_end_m3.iloc[-1] > c["storage_maximum_m3"]
-    trace, plans, s = rollout(c, c["scenarios"][3], "mpc", "perfect", 0)
-    assert len(trace) == 0 and plans[0]["action"] is None and s["status"] == "infeasible"
-
-
 def test_approximate_status_requires_physical_checks(monkeypatch):
     import reservoir_control.systems.ottawa.hard_follower as module
 
@@ -214,13 +160,21 @@ def test_noncausal_routing_rejected():
         solve_hard_follower(p)
 
 
-def test_realized_forecast_departure_is_recorded_not_clipped():
-    c = config()
-    c["forecast_noise"]["standard_deviation_m3_s"] = 0
-    case = dict(c["scenarios"][0])
-    case["realized_net_inflow_m3_s"] = [10000.0] * 12
-    trace, _, summary = rollout(c, case, "mpc", "noisy", 11)
-    assert summary["status"] == "physical_storage_violation" and len(trace) == 1
-    assert trace.predicted_first_step_feasible.iloc[0]
-    assert trace.storage_end_m3.iloc[0] > c["storage_maximum_m3"]
-    assert summary["predicted_feasible_realized_violation_steps"] == 1
+def test_problem_builder_uses_current_state_and_slices_the_forecast_window():
+    config = load_follower_config()
+    scenario = next(case for case in config["scenarios"] if case["id"] == "one_period_delay")
+    duration = config["clock"]["duration_seconds"]
+    transit = TransitState((500 * duration,))
+    built = make_problem(config, scenario, 2, 3e9, 700, transit, [800, 900])
+
+    assert built.initial_storage_m3 == 3e9
+    assert built.previous_release_m3_s == 700
+    assert built.net_inflow_m3_s == [800, 900]
+    assert (
+        built.ontario_executable_release_m3_s
+        == config["known_ontario_executable_schedule_m3_s"][2:4]
+    )
+    assert built.downstream_capacity_m3_s == scenario["downstream_capacity_m3_s"][2:4]
+    np.testing.assert_array_equal(built.duration_seconds, [duration, duration])
+    np.testing.assert_array_equal(built.in_transit_contribution_m3_s, [500, 0])
+    np.testing.assert_array_equal(built.routing_matrix, [[0, 0], [1, 0]])

@@ -5,7 +5,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = REPO_ROOT / "configs"
 COUPLED_CONFIG = CONFIG_DIR / "coupled.json"
 ONTARIO_CONFIG = CONFIG_DIR / "ontario.json"
-OTTAWA_EVIDENCE = CONFIG_DIR / "ottawa_evidence.json"
 
 
 def load_settings(path: Path, section: str) -> dict:
