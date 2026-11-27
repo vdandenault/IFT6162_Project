@@ -1,3 +1,13 @@
+# IFT6162 Project
+Course projects for IFT6162 from 
+[pierrelucbacon.com/rlbook/interactive/projects.html](https://pierrelucbacon.com/rlbook/interactive/projects.html).
+
+## Team Members: 
+- Daniel Martineau
+- Nadine Mohamed
+- Vincent Dandenault
+
+
 # Lake Ontario–Ottawa reservoir control
 
 Lake Ontario releases and Ottawa River flows meet at Lake St. Louis.
@@ -6,6 +16,8 @@ We model decisions at a quarter-month step with historical Ontario
 forcing and synthetic Ottawa inflow, storage, and routing. Every
 controller uses the same Ontario limits, Ottawa follower with hard
 constraints, and feasibility and recovery checks.
+
+The project code is in `src/reservoir_control`.
 
 ## Controllers
 
@@ -50,7 +62,7 @@ years for all three, or keep just the controller you want in the loop.
 
 ```sh
 for controller in rule_curve external_mpc stackelberg_mpc; do
-  uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+  uv run --locked --group ontario python -m reservoir_control.experiments.final_coupled_study \
     --mode development --event-only --recovery peak_protected \
     --controller "$controller" --output "results/loslr/${controller}_events"
 done
@@ -62,11 +74,11 @@ existing directory containing the five saved seed runs and skip the loop.
 ```sh
 training_root=results/loslr/ppo_training
 for seed in 123 124 125 126 127; do
-  uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+  uv run --locked --group ontario python -m reservoir_control.experiments.final_coupled_study \
     --mode train --seed "$seed" --output "$training_root/seed_$seed"
 done
 
-uv run --locked --group ontario python -m bilevel_reservoirs.solvers.final_coupled_study \
+uv run --locked --group ontario python -m reservoir_control.experiments.final_coupled_study \
   --mode development --event-only --recovery peak_protected --controller ppo \
   --training-root "$training_root" --output results/loslr/ppo_events
 ```

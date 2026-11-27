@@ -9,9 +9,9 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
-from bilevel_reservoirs.simulators.physics import FLOW_SCALE
-from bilevel_reservoirs.solvers.final_coupled_env import HardCoupledEnv, OBSERVATION_DIM, OFFSETS
-from bilevel_reservoirs.solvers.fixed_schedule_replay import CONFIG, digest, json_value
+from reservoir_control.systems.loslr.physics import FLOW_SCALE
+from reservoir_control.experiments.final_coupled_env import HardCoupledEnv, OBSERVATION_DIM, OFFSETS
+from reservoir_control.experiments.fixed_schedule_replay import CONFIG, digest, json_value
 from reservoir_control.controllers.ppo.agent import PPOAgent, PPOConfig
 from reservoir_control.systems.loslr.coupled import CONFIG as CHRONOLOGY, load_protocol, start_states
 from reservoir_control.systems.loslr.data import load_inputs

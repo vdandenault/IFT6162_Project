@@ -81,7 +81,7 @@ wheels/
 *.ipynb
 
 # Experiment outputs
-experiments/
+/experiments/
 
 # Backup files and directories
 *_backup_*

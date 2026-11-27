@@ -9,16 +9,16 @@ from gymnasium.spaces import Box
 import numpy as np
 import pandas as pd
 
-from bilevel_reservoirs.controllers.operator import AdjustFlow
-from bilevel_reservoirs.simulators.physics import FLOW_SCALE
-from bilevel_reservoirs.solvers.final_coupled_env import HardCoupledEnv
-from bilevel_reservoirs.solvers.final_coupled_study import (
+from reservoir_control.systems.loslr.operator import AdjustFlow
+from reservoir_control.systems.loslr.physics import FLOW_SCALE
+from reservoir_control.experiments.final_coupled_env import HardCoupledEnv
+from reservoir_control.experiments.final_coupled_study import (
     CONFIG, DESIGN, NativeReference, OntarioModel, annual_cases, load_inputs, load_protocol, start_states,
 )
-from bilevel_reservoirs.solvers.fixed_schedule_replay import (
+from reservoir_control.experiments.fixed_schedule_replay import (
     FollowerTolerances, TransitState, digest, json_value, make_problem,
 )
-from bilevel_reservoirs.solvers.report_final_coupled import playback, plt
+from reservoir_control.experiments.report_final_coupled import playback, plt
 from reservoir_control.systems.loslr.adapter import decision_time
 
 DESIGN_PATH = CONFIG.with_name("ranking_sensitivity_v1.json")

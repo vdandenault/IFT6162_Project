@@ -7,11 +7,11 @@ import gymnasium as gym
 from gymnasium.spaces import Box
 import numpy as np
 
-from bilevel_reservoirs.simulators.physics import FLOW_SCALE
-from bilevel_reservoirs.solvers.compare_ottawa_response import (
+from reservoir_control.systems.loslr.physics import FLOW_SCALE
+from reservoir_control.experiments.compare_ottawa_response import (
     ONTARIO_HORIZON, capped_follower, forecast_forcing, forecast_trajectory, native_step,
 )
-from bilevel_reservoirs.solvers.fixed_schedule_replay import FollowerTolerances, replay_steps, solve_hard_follower
+from reservoir_control.experiments.fixed_schedule_replay import FollowerTolerances, replay_steps, solve_hard_follower
 from reservoir_control.systems.loslr.adapter import decision_time
 from reservoir_control.systems.loslr.coupled import f_limit_target, operating_cost
 from reservoir_control.systems.loslr.data import SupplyForecast

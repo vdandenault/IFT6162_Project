@@ -8,10 +8,10 @@ from typing import Any
 import numpy as np
 from core.mechanism.base import MDPState
 
-from bilevel_reservoirs.controllers.operator import Ontario
-from bilevel_reservoirs.simulators.native import native_reference
-from bilevel_reservoirs.solvers.mpc_shooting import MPCShooting, MPCShootingCfg
-from bilevel_reservoirs.solvers.rule_curve import FORCING_COLUMNS
+from reservoir_control.systems.loslr.operator import Ontario
+from reservoir_control.systems.loslr.native import native_reference
+from reservoir_control.systems.loslr.solvers.mpc_shooting import MPCShooting, MPCShootingCfg
+from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS
 
 round_d = native_reference().utils.round_d
 

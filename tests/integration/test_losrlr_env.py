@@ -1,14 +1,14 @@
+import tomllib
 from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
-import toml
 from core.mechanism.base import MDPState
 
-from bilevel_reservoirs.simulators.loslr import LoslrEnv
-from bilevel_reservoirs.simulators.native import native_reference
+from reservoir_control.systems.loslr.simulator import LoslrEnv
+from reservoir_control.systems.loslr.native import native_reference
 
 native = native_reference()
 getPlanLimitsInputs = native.limits.getPlanLimitsInputs
@@ -86,7 +86,8 @@ SIMULATED_COLUMNS = ["ontLevelBOQ", "ontLevelEOQ", "ontLevelMOQ", *sorted(ROUTED
 
 @pytest.fixture(scope="module")
 def config():
-    return toml.load(DATA_PATH / "baseline" / "config.toml")
+    with (DATA_PATH / "baseline" / "config.toml").open("rb") as config:
+        return tomllib.load(config)
 
 
 @pytest.fixture(scope="module")

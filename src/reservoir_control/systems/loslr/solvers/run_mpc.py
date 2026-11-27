@@ -7,10 +7,10 @@ from pathlib import Path
 import numpy as np
 from gymnasium.spaces import Box
 
-from bilevel_reservoirs.controllers.operator import AdjustFlowConfig, OntarioConfig
-from bilevel_reservoirs.solvers.mpc_beam import MPCBeamSearchCfg
-from bilevel_reservoirs.solvers.mpc_mppi import MPCMPPICfg
-from bilevel_reservoirs.solvers.mpc_shooting import MPCShootingCfg
+from reservoir_control.systems.loslr.operator import AdjustFlowConfig, OntarioConfig
+from reservoir_control.systems.loslr.solvers.mpc_beam import MPCBeamSearchCfg
+from reservoir_control.systems.loslr.solvers.mpc_mppi import MPCMPPICfg
+from reservoir_control.systems.loslr.solvers.mpc_shooting import MPCShootingCfg
 
 SOLVERS = {"shooting": MPCShootingCfg, "beam": MPCBeamSearchCfg, "mppi": MPCMPPICfg}
 

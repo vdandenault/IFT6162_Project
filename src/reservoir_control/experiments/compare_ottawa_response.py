@@ -11,10 +11,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from bilevel_reservoirs.controllers.operator import ONTARIO_COST_COMPONENTS, ontario_stage_costs
-from bilevel_reservoirs.simulators.loslr import LoslrEnv, round_d
-from bilevel_reservoirs.simulators.physics import CONVERSION, FLOW_SCALE
-from bilevel_reservoirs.solvers.fixed_schedule_replay import (
+from reservoir_control.systems.loslr.operator import ONTARIO_COST_COMPONENTS, ontario_stage_costs
+from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
+from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
+from reservoir_control.experiments.fixed_schedule_replay import (
     CONFIG, FollowerTolerances, digest, json_value, replay, solve_hard_follower,
 )
 

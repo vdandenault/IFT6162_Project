@@ -3,7 +3,7 @@ import pytest
 
 jax = pytest.importorskip("jax")
 
-from bilevel_reservoirs.simulators.physics import (
+from reservoir_control.systems.loslr.physics import (
     CONVERSION,
     DATUM,
     FLOW_SCALE,

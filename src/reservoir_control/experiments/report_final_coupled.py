@@ -1,5 +1,6 @@
 """Assemble matched results, learning curves, and a local Ontario–Ottawa replay."""
 from argparse import ArgumentParser
+from importlib.resources import files
 import json
 from pathlib import Path
 
@@ -8,10 +9,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from bilevel_reservoirs.solvers.final_coupled_study import ARMS, CHRONOLOGY, load_protocol
-from bilevel_reservoirs.solvers.fixed_schedule_replay import digest
+from reservoir_control.experiments.final_coupled_study import ARMS, load_protocol
+from reservoir_control.experiments.fixed_schedule_replay import digest
 
-ROOT = CHRONOLOGY.parents[3]
 MODES = ("development", "reserved", "stress")
 
 
@@ -197,7 +197,7 @@ def playback(root, tables, seeds, output, *, trajectory_paths=None):
                                "executed": summary.executed_periods, "metrics": metrics, "rows": rows})
             label = name.removeprefix("annual_") + " full year" if mode == "development" else name.removeprefix("stress_").replace("_", " ")
             cases.append({"id": name, "label": label, "periods": int(runs.planned_periods.iloc[0]), "series": series})
-    template = (ROOT / "scripts/visualization/final_coupled_playback.html").read_text()
+    template = files(__package__).joinpath("final_coupled_playback.html").read_text(encoding="utf-8")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(template.replace("__REPLAY_DATA__", json.dumps({"seeds": seeds, "cases": cases}, allow_nan=False)))
 

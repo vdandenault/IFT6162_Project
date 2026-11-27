@@ -17,10 +17,10 @@ from metamarl.reporting.query import Query
 from metamarl.reporting.wandb import WandbConfig
 from pydantic import Field
 
-from bilevel_reservoirs.controllers.operator import AdjustFlowConfig, OntarioConfig
-from bilevel_reservoirs.simulators.loslr import LoslrEnv
-from bilevel_reservoirs.solvers.mpc_shooting import MPCShootingCfg
-from bilevel_reservoirs.solvers.rule_curve import (
+from reservoir_control.systems.loslr.operator import AdjustFlowConfig, OntarioConfig
+from reservoir_control.systems.loslr.simulator import LoslrEnv
+from reservoir_control.systems.loslr.solvers.mpc_shooting import MPCShootingCfg
+from reservoir_control.systems.loslr.solvers.rule_curve import (
     ForecastLeadTime,
     ForecastSkill,
     RuleCurveCfg,

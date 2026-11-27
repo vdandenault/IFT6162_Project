@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import tomllib
 from collections import deque
 from enum import StrEnum
 from pathlib import Path
@@ -9,12 +10,11 @@ from typing import Any, Self, override
 
 import numpy as np
 import pandas as pd
-import toml
 from core.mechanism.base import MDPState
 from core.optimizers.base import Optimizer, OptimizerConfig
 
-from bilevel_reservoirs.simulators.native import native_reference
-from bilevel_reservoirs.simulators.loslr import LoslrEnv
+from reservoir_control.systems.loslr.native import native_reference
+from reservoir_control.systems.loslr.simulator import LoslrEnv
 
 round_d = native_reference().utils.round_d
 septemberRule = native_reference().september.septemberRule
@@ -115,7 +115,8 @@ class RuleCurveCfg(OptimizerConfig):
         if self.start_step < 48:
             raise ValueError("Rule curve requires 48 previous quarter-months")
 
-        cfg = toml.load(self.data_path / "baseline" / "config.toml")
+        with (self.data_path / "baseline" / "config.toml").open("rb") as config:
+            cfg = tomllib.load(config)
         self.releaseFunInputs = cfg["releaseFunction"]
         self.dvName = cfg["decisionVariables"]["dvName"]
         self.input_path = (

@@ -5,8 +5,8 @@ from core.envs.hooks import reset, transition
 from core.envs.marl_regulated import MultiAgentEnv
 from core.mechanism.base import MDPState
 
-from bilevel_reservoirs.simulators.native import native_reference
-from bilevel_reservoirs.simulators.physics import (
+from reservoir_control.systems.loslr.native import native_reference
+from reservoir_control.systems.loslr.physics import (
     CONVERSION,
     DATUM,
     FLOW_SCALE,

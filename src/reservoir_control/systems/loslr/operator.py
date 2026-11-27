@@ -12,7 +12,7 @@ from core.agents.base import Agent, AgentConfig
 from core.mechanism.base import MDPState, Mechanism
 from core.mechanism.config import MechanismConfig
 
-from bilevel_reservoirs.simulators.native import native_reference
+from reservoir_control.systems.loslr.native import native_reference
 
 planLimits = native_reference().limits.planLimits
 

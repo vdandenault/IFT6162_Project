@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import pytest
 
-from bilevel_reservoirs.solvers.fixed_schedule_replay import CONFIG, repair_offline, replay
+from reservoir_control.experiments.fixed_schedule_replay import CONFIG, repair_offline, replay
 
 pytestmark = pytest.mark.integration
 
@@ -71,7 +71,7 @@ def test_offline_repair_replays_as_one_fixed_schedule(inputs):
 
 
 def test_matched_planners_keep_shared_fifth_commitment(inputs):
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
 
     trajectory, config, cases = inputs
     scenario = cases["one_period_delay_feasible"]
@@ -95,7 +95,7 @@ def test_matched_planners_keep_shared_fifth_commitment(inputs):
 
 
 def test_matched_response_ranking_uses_one_eligibility_gate(inputs):
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
     from reservoir_control.systems.ottawa.horizon_study import forecast_bank
 
     trajectory, config, cases = inputs
@@ -134,7 +134,7 @@ def test_matched_response_ranking_uses_one_eligibility_gate(inputs):
 def test_candidate_proposals_match_budgets_and_free_capacity_at_the_arrival():
     import numpy as np
 
-    from bilevel_reservoirs.solvers.compare_ottawa_response import nearby_schedules
+    from reservoir_control.experiments.compare_ottawa_response import nearby_schedules
 
     anchor = (6000., 6000., 6000., 6000., 6700.)
     attempted = {anchor, (6050., *anchor[1:])}
@@ -191,7 +191,7 @@ def test_isolated_recession_cannot_distinguish_a_future_plateau_after_the_jump()
 
 
 def test_native_limit_candidates_extend_external_replay(inputs):
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
 
     trajectory, config, cases = inputs
     scenario = cases["one_period_delay_feasible"]
@@ -214,8 +214,8 @@ def test_native_limit_candidates_extend_external_replay(inputs):
 def test_forecast_f_ceiling_brackets_native_limit(inputs):
     from gymnasium.spaces import Box
 
-    from bilevel_reservoirs.controllers.operator import AdjustFlow
-    from bilevel_reservoirs.solvers.compare_ottawa_response import (
+    from reservoir_control.systems.loslr.operator import AdjustFlow
+    from reservoir_control.experiments.compare_ottawa_response import (
         forecast_f_ceiling, forecast_forcing, native_step,
     )
 
@@ -235,7 +235,7 @@ def test_forecast_f_ceiling_brackets_native_limit(inputs):
 
 
 def test_f_alignment_clears_the_original_anticipating_stop(inputs):
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
 
     trajectory, config, cases = inputs
     scenario = cases["one_period_delay_feasible"]
@@ -253,7 +253,7 @@ def test_f_alignment_clears_the_original_anticipating_stop(inputs):
 
 
 def test_external_screen_keeps_ranking_and_skips_infeasible_schedules(inputs):
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
 
     trajectory, config, cases = inputs
     scenario = cases["one_period_delay_feasible"]
@@ -290,7 +290,7 @@ def test_external_screen_keeps_ranking_and_skips_infeasible_schedules(inputs):
 def test_noisy_policy_uses_bank_and_updates_storage_with_realized_inflow(inputs):
     import numpy as np
 
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
     from reservoir_control.systems.ottawa.horizon_study import forecast_bank
 
     trajectory, config, cases = inputs
@@ -326,7 +326,7 @@ def test_recovery_uses_past_inflow_and_checks_realized_storage(
 ):
     import numpy as np
 
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
     from reservoir_control.systems.ottawa.horizon_study import forecast_bank
 
     trajectory, config, cases = inputs
@@ -370,7 +370,7 @@ def test_recovery_uses_past_inflow_and_checks_realized_storage(
 def test_guard_checks_excess_inflow_on_retry_only(inputs, guard_periods):
     import numpy as np
 
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
     from reservoir_control.systems.ottawa.horizon_study import forecast_bank
 
     trajectory, config, cases = inputs
@@ -403,7 +403,7 @@ def test_guard_checks_excess_inflow_on_retry_only(inputs, guard_periods):
 
 
 def test_after_retry_guard_covers_the_next_ordinary_decision(inputs):
-    from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
+    from reservoir_control.experiments.compare_ottawa_response import run_policy
     from reservoir_control.systems.ottawa.horizon_study import forecast_bank
 
     trajectory, config, cases = inputs

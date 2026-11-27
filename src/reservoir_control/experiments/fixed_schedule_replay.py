@@ -12,10 +12,10 @@ import pandas as pd
 from core.mechanism.base import MDPState
 from gymnasium.spaces import Box
 
-from bilevel_reservoirs.controllers.operator import AdjustFlow, ONTARIO_COST_COMPONENTS, ontario_stage_costs
-from bilevel_reservoirs.simulators.loslr import LoslrEnv, round_d
-from bilevel_reservoirs.simulators.physics import CONVERSION, FLOW_SCALE
-from bilevel_reservoirs.solvers.rule_curve import FORCING_COLUMNS
+from reservoir_control.systems.loslr.operator import AdjustFlow, ONTARIO_COST_COMPONENTS, ontario_stage_costs
+from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
+from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
+from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS
 from reservoir_control.systems.ottawa.hard_follower_study import (
     CONFIG,
     FollowerTolerances,

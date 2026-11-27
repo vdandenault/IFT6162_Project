@@ -11,10 +11,10 @@ from core.mechanism.base import MDPState
 from core.optimizers.base import Optimizer
 from scipy.optimize import minimize
 
-from bilevel_reservoirs.controllers.operator import Ontario
-from bilevel_reservoirs.simulators.loslr import LoslrEnv
-from bilevel_reservoirs.simulators.native import native_reference
-from bilevel_reservoirs.solvers.rule_curve import FORCING_COLUMNS, RuleCurveCfg
+from reservoir_control.systems.loslr.operator import Ontario
+from reservoir_control.systems.loslr.simulator import LoslrEnv
+from reservoir_control.systems.loslr.native import native_reference
+from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS, RuleCurveCfg
 
 round_d = native_reference().utils.round_d
 

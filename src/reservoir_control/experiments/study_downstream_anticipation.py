@@ -8,12 +8,12 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
-from bilevel_reservoirs.solvers.final_coupled_env import HardCoupledEnv
-from bilevel_reservoirs.solvers.final_coupled_study import (
+from reservoir_control.experiments.final_coupled_env import HardCoupledEnv
+from reservoir_control.experiments.final_coupled_study import (
     ARMS, CHRONOLOGY, CONFIG, DESIGN, NativeReference, OntarioModel, annual_cases,
     load_inputs, load_protocol, start_states, stress_cases,
 )
-from bilevel_reservoirs.solvers.fixed_schedule_replay import digest, json_value
+from reservoir_control.experiments.fixed_schedule_replay import digest, json_value
 
 SETTINGS = CONFIG.with_name("downstream_anticipation_v1.json")
 STRESS_DESIGN = CONFIG.with_name("shared_recovery_final_check_v1.json")

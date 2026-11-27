@@ -5,16 +5,16 @@ import pandas as pd
 import pytest
 from gymnasium.spaces import Box
 
-from bilevel_reservoirs.controllers.operator import AdjustFlowConfig
-from bilevel_reservoirs.controllers.operator import OntarioConfig as Ontario
-from bilevel_reservoirs.simulators.loslr import LoslrEnv
-from bilevel_reservoirs.solvers.rule_curve import (
+from reservoir_control.systems.loslr.operator import AdjustFlowConfig
+from reservoir_control.systems.loslr.operator import OntarioConfig as Ontario
+from reservoir_control.systems.loslr.simulator import LoslrEnv
+from reservoir_control.systems.loslr.solvers.rule_curve import (
     ForecastLeadTime,
     ForecastSkill,
     RuleCurveCfg,
     Trace,
 )
-from bilevel_reservoirs.simulators.native import native_reference
+from reservoir_control.systems.loslr.native import native_reference
 
 planLimits = native_reference().limits.planLimits
 

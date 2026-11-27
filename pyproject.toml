@@ -23,11 +23,79 @@ ontario = [
     {include-group = "jax"},
     "metamarl==0.1.0",
     "pandas>=3,<4",
-    "toml>=0.10.2",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/reservoir_control", "src/bilevel_reservoirs"]
+packages = ["src/reservoir_control"]
 
 [tool.uv.sources]
 metamarl = { path = "external/metamarl", editable = true }
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".venv-ontario",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "external",
+]
+line-length = 100
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "TID252"]
+ignore = []
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.isort]
+known-first-party = ["reservoir_control"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.pytest.ini_options]
+minversion = "8.3"
+addopts = "-ra --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+xfail_strict = true
+markers = [
+    "unit: fast, isolated tests without external services",
+    "integration: multi-component tests",
+    "system: full end-to-end tests",
+    "notebook: executes a tutorial notebook end-to-end (slow)",
+]

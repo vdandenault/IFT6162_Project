@@ -11,6 +11,7 @@ import importlib.util
 import subprocess
 import sys
 import threading
+from functools import cache
 from pathlib import Path
 from types import ModuleType
 
@@ -27,6 +28,11 @@ def sha256(path: Path) -> str:
 
 def default_checkout() -> Path:
     return Path(__file__).resolve().parents[4] / "external/loslr_regulation_optimization"
+
+
+@cache
+def native_reference() -> NativeReference:
+    return NativeReference()
 
 
 class NativeReference:
