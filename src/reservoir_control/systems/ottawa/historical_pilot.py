@@ -14,9 +14,10 @@ from urllib.request import urlopen
 
 import numpy as np
 import pandas as pd
-from .reconstruction import ROOT, StorageMapping, digest, prepare, plots
+from reservoir_control.study_config import OTTAWA_EVIDENCE, load_settings
+from .reconstruction import StorageMapping, digest, prepare, plots
 
-CONFIG = ROOT/'configs/studies/ottawa/baskatong_1970.json'
+CONFIG = OTTAWA_EVIDENCE
 
 
 def requests_for(c):
@@ -218,7 +219,7 @@ uv run python -m reservoir_control.systems.ottawa.historical_pilot \\
 For byte-identical source reuse, add `--raw-dir /path/to/this/run/raw`; the saved
 raw manifest is verified. A fresh network run may reflect later archive revisions.
 The selected year and station definitions are frozen in
-`configs/studies/ottawa/baskatong_1970.json`; the earlier assessment is untouched.
+the `baskatong_1970` section of `configs/ottawa_evidence.json`.
 
 Next specific requirement for a closed balance: instantaneous boundary levels,
 an owner-confirmed mapping of 02LG006/02LG007 and all active outlets, historical
@@ -237,7 +238,7 @@ def main():
     parser.add_argument('--raw-dir', type=Path, help='Reuse a verified local acquisition instead of network access')
     args = parser.parse_args()
     if args.output.exists() and any(args.output.iterdir()): raise FileExistsError('Use a fresh output directory')
-    c = json.loads(CONFIG.read_text()); urls = requests_for(c)
+    c = load_settings(CONFIG, "baskatong_1970"); urls = requests_for(c)
     args.output.mkdir(parents=True); raw = args.output/'raw'; raw.mkdir()
     if args.raw_dir:
         manifest = json.loads((args.raw_dir/'manifest.json').read_text())

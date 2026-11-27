@@ -15,7 +15,7 @@ from reservoir_control.systems.loslr.operator import ONTARIO_COST_COMPONENTS, on
 from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
 from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
 from reservoir_control.experiments.fixed_schedule_replay import (
-    CONFIG, FollowerTolerances, digest, json_value, replay, solve_hard_follower,
+    CONFIG, FollowerTolerances, digest, json_value, load_follower_config, replay, solve_hard_follower,
 )
 
 ONTARIO_HORIZON = 4
@@ -483,7 +483,7 @@ def main():
     if not 1 <= args.align_from <= len(trajectory) or (args.align_from != 1 and not args.align_f):
         parser.error("--align-from requires --align-f and a period inside the trajectory")
     trajectory["ontFlow"] = fixed["ontFlow"]
-    config = json.loads(CONFIG.read_text())
+    config = load_follower_config()
     scenario = next(case for case in config["scenarios"] if case["id"] == "one_period_delay_feasible")
     audit, runs, plans = [], {}, {}
     policies = ("external", "external_screened", "anticipating") if args.screen_external else (

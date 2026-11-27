@@ -9,8 +9,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from reservoir_control.study_config import ONTARIO_CONFIG, load_settings
 ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_CONFIG = ROOT / 'configs/studies/loslr/scoring.json'
+DEFAULT_CONFIG = ONTARIO_CONFIG
 
 
 @dataclass(frozen=True)
@@ -89,7 +90,7 @@ def main():
     args = parser.parse_args()
     if args.output.exists() and any(args.output.iterdir()):
         raise FileExistsError('Use a fresh scoring output directory')
-    raw = json.loads(args.config.read_text())
+    raw = load_settings(args.config, "scoring")
     if raw.get('schema_version') != 1:
         raise ValueError('Unsupported scoring configuration version')
     settings = ScoreSettings(**{name: raw[name] for name in ScoreSettings.__dataclass_fields__})

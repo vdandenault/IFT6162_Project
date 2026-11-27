@@ -1,17 +1,17 @@
 """Synthetic fixtures validate scenario accounting, not Baskatong calibration."""
-import json
 import unittest
 import numpy as np
 import pandas as pd
+from reservoir_control.study_config import OTTAWA_EVIDENCE, load_settings
 from reservoir_control.systems.ottawa.baskatong_scenario import (
-    CONFIG, LinearStorage, align_centers, effective_inputs, prescribe, simulate,
+    LinearStorage, align_centers, effective_inputs, prescribe, simulate,
     evaluate_case, negative_diagnostics, validate,
 )
 
 
 class ScenarioChecks(unittest.TestCase):
     def fixture(self):
-        c = json.loads(CONFIG.read_text())
+        c = load_settings(OTTAWA_EVIDENCE, "baskatong_release_scenario")
         c['observed_inputs'].update(first_date='2021-01-01', last_interval_start_date='2021-01-04',
                                      following_context_date='2021-01-05')
         c['experimental_bounds_assumed'].update(level_minimum_m=0., level_maximum_m=30.,

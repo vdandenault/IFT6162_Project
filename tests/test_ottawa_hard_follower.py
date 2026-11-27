@@ -1,11 +1,10 @@
 from dataclasses import replace
-import json
 import numpy as np
 import pytest
 from reservoir_control.systems.ottawa.hard_follower import (
     HardFollowerProblem, FollowerWeights, solve_hard_follower, InvalidFollowerInput)
 from reservoir_control.systems.ottawa.routing import TransitState
-from reservoir_control.systems.ottawa.hard_follower_study import CONFIG, rollout, inflow_forecast
+from reservoir_control.systems.ottawa.hard_follower_study import load_follower_config, rollout, inflow_forecast
 
 
 def problem(**kwargs):
@@ -81,7 +80,7 @@ def test_solver_failure_and_residual_gate(monkeypatch):
     assert result.status=='solver_failure' and result.first_release_m3_s is None
 
 
-def config(): return json.loads(CONFIG.read_text())
+def config(): return load_follower_config()
 
 
 def test_rollout_noise_reproducible_and_causal():

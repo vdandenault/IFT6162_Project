@@ -1,16 +1,15 @@
 from copy import deepcopy
-import json
 import numpy as np
 import pytest
 from reservoir_control.systems.ottawa.delay_diagnostic import (
     explicit_storage_feasibility, boundary_state, witness_frame, bottleneck)
 from reservoir_control.systems.ottawa.hard_follower import solve_hard_follower
-from reservoir_control.systems.ottawa.hard_follower_study import CONFIG, make_problem, rollout
+from reservoir_control.systems.ottawa.hard_follower_study import load_follower_config, make_problem, rollout
 from reservoir_control.systems.ottawa.routing import TransitState
 
 
 def setup():
-    c=json.loads(CONFIG.read_text())
+    c=load_follower_config()
     return c,next(x for x in c['scenarios'] if x['id']=='one_period_delay')
 
 

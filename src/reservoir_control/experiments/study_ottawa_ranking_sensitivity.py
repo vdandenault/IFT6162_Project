@@ -9,19 +9,19 @@ from gymnasium.spaces import Box
 import numpy as np
 import pandas as pd
 
+from reservoir_control.study_config import load_settings
 from reservoir_control.systems.loslr.operator import AdjustFlow
 from reservoir_control.systems.loslr.physics import FLOW_SCALE
 from reservoir_control.experiments.final_coupled_env import HardCoupledEnv
 from reservoir_control.experiments.final_coupled_study import (
-    CONFIG, DESIGN, NativeReference, OntarioModel, annual_cases, load_inputs, load_protocol, start_states,
+    CONFIG, NativeReference, OntarioModel, annual_cases, load_inputs, load_protocol, start_states,
 )
 from reservoir_control.experiments.fixed_schedule_replay import (
-    FollowerTolerances, TransitState, digest, json_value, make_problem,
+    FollowerTolerances, TransitState, digest, json_value, load_follower_config, make_problem,
 )
 from reservoir_control.experiments.report_final_coupled import playback, plt
 from reservoir_control.systems.loslr.adapter import decision_time
 
-DESIGN_PATH = CONFIG.with_name("ranking_sensitivity_v1.json")
 REFERENCE = (5e9, 1)
 ARMS = ("external_mpc", "stackelberg_mpc")
 
@@ -220,11 +220,11 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--playback", type=Path, required=True)
     args = parser.parse_args()
-    design = json.loads(DESIGN_PATH.read_text())
+    design = load_settings(CONFIG, "ranking_sensitivity")
     protocol = load_protocol()
-    annual = json.loads(DESIGN.read_text())
+    annual = load_settings(CONFIG, "annual")
     costs = {**protocol, "incomplete_penalty": annual["incomplete_penalty"]}
-    config = json.loads(CONFIG.read_text())
+    config = load_follower_config()
     reference = NativeReference()
     model = OntarioModel(reference)
     frame = load_inputs(reference)
@@ -256,7 +256,7 @@ def main():
     playback(root, {"development": events, "stress": pd.read_csv(stress_dir / "runs.csv")},
              protocol["seeds"], args.playback,
              trajectory_paths={"development": events_dir / "trajectories.csv", "stress": stress_dir / "trajectories.csv"})
-    sources = (CONFIG, DESIGN, DESIGN_PATH, events_dir / "trajectories.csv", events_dir / "runs.csv",
+    sources = (CONFIG, events_dir / "trajectories.csv", events_dir / "runs.csv",
                stress_dir / "trajectories.csv", stress_dir / "runs.csv")
     (args.output / "settings.json").write_text(json.dumps({
         "design": design, "paired_variants": selected, "source_sha256": {str(p): digest(p) for p in sources},

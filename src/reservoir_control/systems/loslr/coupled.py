@@ -1,9 +1,8 @@
 """Ontario–Ottawa research coupling and planning adapter, separate from algorithms."""
 from dataclasses import dataclass, replace
-import json
-from pathlib import Path
 import numpy as np
 from reservoir_control.controllers.mpc.bilevel import NestedResponseSearch
+from reservoir_control.study_config import COUPLED_CONFIG, load_settings
 from reservoir_control.systems.ottawa.model import (
     OttawaParameters, OttawaState, OttawaForcing, AggregateStorageModel,
 )
@@ -13,13 +12,12 @@ from .data import forcing_from_row
 from .model import OntarioModel, Plan2014, ReleaseRequest
 from .planning import OntarioPlanningAdapter
 
-ROOT = Path(__file__).resolve().parents[4]
-CONFIG = ROOT/'configs/studies/loslr/coupled_v1.json'
+CONFIG = COUPLED_CONFIG
 DURATION = 365*86400/48
 
 
 def load_protocol(path=CONFIG):
-    c = json.loads(Path(path).read_text())
+    c = load_settings(path, "protocol")
     numeric = [v for v in c.values() if isinstance(v, (int, float))]
     if c['schema_version'] != 1 or not np.isfinite(numeric).all():
         raise ValueError('Supported finite study settings required')

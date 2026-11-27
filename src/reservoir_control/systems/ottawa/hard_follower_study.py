@@ -5,13 +5,18 @@ import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from reservoir_control.study_config import COUPLED_CONFIG, load_settings
 from .hard_follower import (HardFollowerProblem, FollowerWeights, FollowerTolerances,
                             solve_hard_follower, InvalidFollowerInput)
 from .routing import TransitState
 from .reconstruction import ROOT, digest
 from .discharge_comparison import snapshot
 
-CONFIG = ROOT/'configs/studies/ottawa/hard_follower_v1.json'
+CONFIG = COUPLED_CONFIG
+
+
+def load_follower_config(path=CONFIG):
+    return load_settings(path, "follower")
 
 
 def inflow_forecast(mode, realized_past, initial_estimate, horizon, rng, sigma, *, perfect_values=None):
@@ -206,7 +211,7 @@ def plot_case(c, case, traces, path, plans=()):
 
 
 def run_study(config, output, mode, *, lookahead=None):
-    c = json.loads(config.read_text())
+    c = load_follower_config(config)
     if lookahead is not None:
         if not 1 <= lookahead <= len(c['known_ontario_executable_schedule_m3_s']):
             raise ValueError('Look-ahead must be between 1 and the number of study periods')

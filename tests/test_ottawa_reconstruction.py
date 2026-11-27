@@ -8,6 +8,7 @@ import tempfile
 import unittest
 import numpy as np
 import pandas as pd
+from reservoir_control.study_config import load_settings
 from reservoir_control.systems.ottawa.reconstruction import (
     DEFAULT_METADATA, StorageMapping, convert, daily_boundaries, instant, prepare,
 )
@@ -15,7 +16,7 @@ from reservoir_control.systems.ottawa.reconstruction import (
 
 class DailyBalanceTests(unittest.TestCase):
     def fixture(self, start='2021-03-13', end='2021-03-16', zone='America/Toronto'):
-        metadata = json.loads(DEFAULT_METADATA.read_text())
+        metadata = load_settings(DEFAULT_METADATA, "baskatong_metadata")
         metadata['reservoir'] = 'Synthetic unit-test reservoir, not historical observations'
         metadata['target'] = {'start_date': start, 'end_date_exclusive': end}
         boundaries = daily_boundaries(start, end, zone)

@@ -17,7 +17,16 @@ forcing and synthetic Ottawa inflow, storage, and routing. Every
 controller uses the same Ontario limits, Ottawa follower with hard
 constraints, and feasibility and recovery checks.
 
-The project code is in `src/reservoir_control`.
+## Project layout
+
+| Folder | What’s there |
+| --- | --- |
+| [`src/reservoir_control/systems/`](src/reservoir_control/systems/) | Ontario simulator and Plan 2014 rules in `loslr/`, Ottawa storage and the hard-constrained follower in `ottawa/` |
+| [`src/reservoir_control/controllers/`](src/reservoir_control/controllers/) | Shared MPC and PPO algorithms |
+| [`src/reservoir_control/experiments/`](src/reservoir_control/experiments/) | Coupled runner, comparisons, and replay |
+| [`configs/`](configs/) | Three settings files for coupled runs, Ontario-only runs, and Ottawa gauge evidence |
+| [`data/`](data/) and [`external/`](external/) | Reference data and pinned dependencies |
+| [`tests/`](tests/) and `results/` | Automated checks and locally generated outputs |
 
 ## Controllers
 

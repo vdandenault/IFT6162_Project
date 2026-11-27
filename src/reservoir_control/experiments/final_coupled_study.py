@@ -9,17 +9,17 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
+from reservoir_control.study_config import load_settings
 from reservoir_control.systems.loslr.physics import FLOW_SCALE
 from reservoir_control.experiments.final_coupled_env import HardCoupledEnv, OBSERVATION_DIM, OFFSETS
-from reservoir_control.experiments.fixed_schedule_replay import CONFIG, digest, json_value
+from reservoir_control.experiments.fixed_schedule_replay import CONFIG, digest, json_value, load_follower_config
 from reservoir_control.controllers.ppo.agent import PPOAgent, PPOConfig
-from reservoir_control.systems.loslr.coupled import CONFIG as CHRONOLOGY, load_protocol, start_states
+from reservoir_control.systems.loslr.coupled import load_protocol, start_states
 from reservoir_control.systems.loslr.data import load_inputs
 from reservoir_control.systems.loslr.model import OntarioModel
 from reservoir_control.systems.loslr.native import NativeReference
 from reservoir_control.systems.ottawa.horizon_study import forecast_bank, recession_bank
 
-DESIGN = CHRONOLOGY.with_name("final_coupled_v1.json")
 ARMS = ("rule_curve", "external_mpc", "stackelberg_mpc", "ppo")
 PPO = PPOConfig(observation_dim=OBSERVATION_DIM, hidden=32, rollout=256, epochs=4,
                 batch_size=64, learning_rate=1e-4, reward_scale=1.)
@@ -73,7 +73,7 @@ def annual_cases(frame, states, years, base, design):
 
 def stress_cases(root, frame, states, base, design_path=None):
     directory = root / "ottawa_two_path_wider_fresh_v1"
-    frozen = (json.loads(design_path.read_text()) if design_path else
+    frozen = (load_settings(design_path, "confirmation_stress") if design_path else
               json.loads((directory / "settings.json").read_text())["design"])
     caps = next(case["downstream_capacity_m3_s"] for case in base["scenarios"] if case["id"] == "one_period_delay")
     cases = []
@@ -206,9 +206,9 @@ def main():
     parser.add_argument("--event-only", action="store_true", help="Evaluate only the 2017 and 2019 development years")
     parser.add_argument("--stress-design", type=Path, help="Use the declared alternative synthetic stress inputs")
     args = parser.parse_args()
-    protocol, design = load_protocol(), json.loads(DESIGN.read_text())
+    protocol, design = load_protocol(), load_settings(CONFIG, "annual")
     costs = {**protocol, "incomplete_penalty": design["incomplete_penalty"]}
-    base = json.loads(CONFIG.read_text())
+    base = load_follower_config()
     training = args.mode in ("smoke", "train")
     controllers = (args.controller,) if args.controller else ARMS
     if training and args.controller:
@@ -237,9 +237,9 @@ def main():
              else annual_cases(frame, states, years, base, design))
     budget = 256 if args.mode == "smoke" else design["training_decisions_per_seed"]
     args.output.mkdir(parents=True, exist_ok=False)
-    sources = [CONFIG, DESIGN, CHRONOLOGY, Path(__file__), Path(__file__).with_name("final_coupled_env.py"),
+    sources = [CONFIG, Path(__file__), Path(__file__).with_name("final_coupled_env.py"),
                Path(__file__).with_name("fixed_schedule_replay.py")]
-    if args.stress_design:
+    if args.stress_design and args.stress_design.resolve() != CONFIG:
         sources.append(args.stress_design)
     plan = {"mode": args.mode, "recovery": args.recovery, "years": years, "case_names": [case["name"] for case in cases],
             "controllers": ("ppo",) if training else controllers,

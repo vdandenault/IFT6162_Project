@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import scipy
 
-from .hard_follower_study import CONFIG, validate_config, inflow_forecast, rollout
+from .hard_follower_study import CONFIG, load_follower_config, validate_config, inflow_forecast, rollout
 from .discharge_comparison import snapshot
 from .reconstruction import ROOT, digest
 
@@ -101,7 +101,7 @@ def common_cases(summary,mode):
 
 
 def run(config,output):
-    c=validate_config(json.loads(config.read_text()))
+    c=validate_config(load_follower_config(config))
     if len(c['scenarios'])!=6 or len(c['known_ontario_executable_schedule_m3_s'])!=12:
         raise ValueError('This declared study requires all six original 12-period scenarios')
     if c['forecast_noise']['seeds']!=[11,22,33]: raise ValueError('Expected original noisy seeds')

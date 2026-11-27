@@ -14,7 +14,7 @@ import pandas as pd
 from scipy.optimize import linprog
 
 from .hard_follower import validate_problem, solve_hard_follower, FollowerTolerances
-from .hard_follower_study import CONFIG, make_problem, rollout, validate_config
+from .hard_follower_study import CONFIG, load_follower_config, make_problem, rollout, validate_config
 from .routing import TransitState
 from .reconstruction import ROOT, digest
 from .discharge_comparison import snapshot
@@ -110,7 +110,7 @@ def bottleneck(c, case, k, storage):
 
 
 def run(config, output):
-    c=validate_config(json.loads(config.read_text()))
+    c=validate_config(load_follower_config(config))
     case=next(x for x in c['scenarios'] if x['id']=='one_period_delay')
     if c['horizon']!=4: raise ValueError('Diagnostic expects original four-period horizon')
     protected=[ROOT/'results/ottawa'/name for name in ('hard_follower_v1_perfect_verified',

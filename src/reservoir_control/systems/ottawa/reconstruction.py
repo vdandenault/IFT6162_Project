@@ -15,8 +15,9 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
+from reservoir_control.study_config import OTTAWA_EVIDENCE, load_settings
 ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_METADATA = ROOT/'configs/studies/ottawa/baskatong.json'
+DEFAULT_METADATA = OTTAWA_EVIDENCE
 LEVEL_COLUMNS = ['timestamp', 'level', 'unit', 'aggregation', 'statistic', 'quality_flag', 'source_id']
 FLOW_COLUMNS = ['interval_start', 'interval_end', 'mean_discharge', 'unit', 'aggregation',
                 'statistic', 'quality_flag', 'source_id']
@@ -363,7 +364,7 @@ def main():
     if any(supplied) and not all(supplied): parser.error('Supply levels, outflows and contract together')
     if not any(supplied) and (args.storage_curve or args.usable_volume_m3 is not None):
         parser.error('Storage scenarios require actual input files and a contract')
-    metadata = json.loads(args.metadata.read_text())
+    metadata = load_settings(args.metadata, "baskatong_metadata")
     if metadata.get('schema_version') != 1: raise ValueError('Unsupported reservoir metadata')
     inputs = {'metadata': args.metadata}
     frame = None

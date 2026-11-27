@@ -1,17 +1,18 @@
-import json
 
 import pandas as pd
 import pytest
 
-from reservoir_control.experiments.fixed_schedule_replay import CONFIG, repair_offline, replay
+from reservoir_control.study_config import REPO_ROOT
+
+from reservoir_control.experiments.fixed_schedule_replay import load_follower_config, repair_offline, replay
 
 pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
 def inputs():
-    config = json.loads(CONFIG.read_text())
-    path = CONFIG.parents[3] / "data/input/historic/1961_2020/12month_sqAR.txt"
+    config = load_follower_config()
+    path = REPO_ROOT / "data/input/historic/1961_2020/12month_sqAR.txt"
     trajectory = pd.read_table(path).iloc[48:60].copy()
     trajectory["ontLevelBOQ"] = 74.55
     trajectory["ontFlow"] = [623, 693, 710, 687, 672, 666, 653, 667, 737, 769, 795, 821]

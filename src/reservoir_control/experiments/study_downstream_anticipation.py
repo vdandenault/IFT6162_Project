@@ -8,15 +8,14 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
+from reservoir_control.study_config import load_settings
 from reservoir_control.experiments.final_coupled_env import HardCoupledEnv
 from reservoir_control.experiments.final_coupled_study import (
-    ARMS, CHRONOLOGY, CONFIG, DESIGN, NativeReference, OntarioModel, annual_cases,
+    ARMS, CONFIG, NativeReference, OntarioModel, annual_cases,
     load_inputs, load_protocol, start_states, stress_cases,
 )
-from reservoir_control.experiments.fixed_schedule_replay import digest, json_value
+from reservoir_control.experiments.fixed_schedule_replay import digest, json_value, load_follower_config
 
-SETTINGS = CONFIG.with_name("downstream_anticipation_v1.json")
-STRESS_DESIGN = CONFIG.with_name("shared_recovery_final_check_v1.json")
 ARCHIVES = ("events", "reserved", "confirmation")
 COST_FIELDS = ["full_cost", "upstream_exposure_m_periods", "downstream_exposure_m_periods"]
 
@@ -186,10 +185,12 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = Path("results/loslr")
-    settings, design, base = (json.loads(path.read_text()) for path in (SETTINGS, DESIGN, CONFIG))
+    settings = load_settings(CONFIG, "downstream_anticipation")
+    design = load_settings(CONFIG, "annual")
+    base = load_follower_config()
     costs = {**load_protocol(), "incomplete_penalty": design["incomplete_penalty"]}
     folders = {name: root / f"final_recovery_peak_protected_{name}_v1" for name in ARCHIVES}
-    sources = [SETTINGS, STRESS_DESIGN, CHRONOLOGY, DESIGN, CONFIG]
+    sources = [CONFIG]
     for folder in folders.values():
         sources.extend(folder / name for name in ("plan.json", "runs.csv", "trajectories.csv"))
     provenance = {str(path): digest(path) for path in sources}
@@ -203,7 +204,7 @@ def main():
     states = start_states(model, frame, sorted(years))
     cases = {name: annual_cases(frame, states, plans[name]["years"], base, design)
              for name in ("events", "reserved")}
-    cases["confirmation"] = stress_cases(root, frame, states, base, STRESS_DESIGN)
+    cases["confirmation"] = stress_cases(root, frame, states, base, CONFIG)
 
     output = args.output
     output.mkdir(parents=True, exist_ok=False)

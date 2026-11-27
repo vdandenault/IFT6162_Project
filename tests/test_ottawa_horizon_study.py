@@ -1,13 +1,12 @@
 from copy import deepcopy
-import json
 import numpy as np
 import pytest
 from reservoir_control.systems.ottawa.horizon_study import forecast_bank,HORIZONS,classify,common_cases
-from reservoir_control.systems.ottawa.hard_follower_study import CONFIG,rollout
+from reservoir_control.systems.ottawa.hard_follower_study import load_follower_config, rollout
 
 
 def inputs():
-    c=json.loads(CONFIG.read_text());case=next(x for x in c['scenarios'] if x['id']=='one_period_delay')
+    c=load_follower_config();case=next(x for x in c['scenarios'] if x['id']=='one_period_delay')
     return c,case
 
 

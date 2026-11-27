@@ -18,6 +18,7 @@ from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
 from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS
 from reservoir_control.systems.ottawa.hard_follower_study import (
     CONFIG,
+    load_follower_config,
     FollowerTolerances,
     TransitState,
     digest,
@@ -261,7 +262,7 @@ def main():
     args = parser.parse_args()
     if args.output.exists():
         parser.error("--output must be a fresh directory")
-    config = json.loads(CONFIG.read_text())
+    config = load_follower_config()
     scenarios = {case["id"]: case for case in config["scenarios"]}
     if args.scenario not in scenarios:
         parser.error(f"--scenario must be one of {', '.join(scenarios)}")

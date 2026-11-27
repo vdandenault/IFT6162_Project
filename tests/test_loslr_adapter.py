@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 
 
+from reservoir_control.study_config import ONTARIO_CONFIG
 from reservoir_control.adapters.planning import PlanningAdapter
 from reservoir_control.systems.loslr.adapter import OntarioSession, decision_time, initial_state
 from reservoir_control.systems.loslr.baseline import adapter_trace, archived_glrrm_comparison, compare_traces, run, study_recipe
@@ -190,8 +191,7 @@ class LoslrParityTests(unittest.TestCase):
         self.assertEqual(sys.path, path)
 
     def test_recipe_rejects_unimplemented_variant_and_invalid_data_range(self):
-        recipe_path = Path(__file__).resolve().parents[1] / 'configs/studies/loslr/native_baseline.json'
-        recipe = json.loads(recipe_path.read_text())
+        recipe = study_recipe(ONTARIO_CONFIG)
         recipe['limits'] = 'onlyPhysicalLimits'
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / 'changed.json'

@@ -1,8 +1,0 @@
-{
-  "storage_maximum_m3": [4000000000, 5000000000, 6000000000],
-  "routing_delay_periods": [0, 1, 2],
-  "snapshot_years": [2017, 2019],
-  "snapshot_periods": [12, 15, 17, 18, 20, 22, 24, 26, 29, 33],
-  "evaluation_years": [1995, 1997, 2011, 2020],
-  "maximum_paired_variants": 3
-}

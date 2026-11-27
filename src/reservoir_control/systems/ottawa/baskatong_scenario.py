@@ -9,11 +9,12 @@ import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from reservoir_control.study_config import OTTAWA_EVIDENCE, load_settings
 from .historical_pilot import extract
 from .discharge_comparison import snapshot
 from .reconstruction import ROOT, digest
 
-CONFIG = ROOT/'configs/studies/ottawa/baskatong_1970_scenario.json'
+CONFIG = OTTAWA_EVIDENCE
 
 
 @dataclass(frozen=True)
@@ -405,7 +406,7 @@ def main():
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.pilot.resolve()): raise ValueError('Scenario output must be outside the preserved observation bundle')
     if args.output.exists() and any(args.output.iterdir()): raise FileExistsError('Use a fresh scenario output directory')
-    c = validate(json.loads(args.config.read_text()))
+    c = validate(load_settings(args.config, "baskatong_release_scenario"))
     before = snapshot(args.pilot)
     manifest = json.loads((args.pilot/'raw/manifest.json').read_text())
     for name, record in manifest['files'].items():

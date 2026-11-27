@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from reservoir_control.study_config import ONTARIO_CONFIG, load_settings
 from .adapter import OntarioSession
 from .data import baseline_parameters, input_audit, load_inputs
 from .model import OntarioModel, Plan2014
@@ -144,7 +145,7 @@ def archived_glrrm_comparison(reference: NativeReference, native: pd.DataFrame) 
 
 
 def study_recipe(path: Path) -> dict:
-    recipe = json.loads(path.read_text())
+    recipe = load_settings(path, "native_baseline")
     fixed = {"schema_version": 1, "system": "loslr", "controller": "plan2014_reference",
              "upstream_commit": UPSTREAM_COMMIT,
              "input": "input/historic/1900_2020/12month_sqAR.txt",
@@ -167,7 +168,7 @@ def run(output: Path, checkout: Path | None = None, last_year: int | None = None
         config: Path | None = None) -> dict:
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"Refusing to overwrite existing baseline artifacts: {output}")
-    config = config or Path(__file__).resolve().parents[4] / "configs/studies/loslr/native_baseline.json"
+    config = config or ONTARIO_CONFIG
     recipe = study_recipe(config)
     last_year = recipe["last_year"] if last_year is None else last_year
     reference = NativeReference(checkout)

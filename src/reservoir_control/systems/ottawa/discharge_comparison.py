@@ -5,10 +5,11 @@ from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from reservoir_control.study_config import OTTAWA_EVIDENCE, load_settings
 from .historical_pilot import extract
 from .reconstruction import ROOT, digest
 
-EVIDENCE = ROOT/'configs/studies/ottawa/discharge_comparison_evidence.json'
+EVIDENCE = OTTAWA_EVIDENCE
 STATIONS = ('02LG007', '02LG006')
 
 
@@ -242,7 +243,7 @@ def main():
         straight_line_distance_km=location_distance(stations),
         flagged_first_date=rows.loc[flagged, 'DATE'].min(), flagged_last_date=rows.loc[flagged, 'DATE'].max(),
         difference_definition='02LG007 minus 02LG006, m3/s', no_series_average_or_transfer_inference=True)
-    table = station_table(stations); evidence = json.loads(EVIDENCE.read_text())
+    table = station_table(stations); evidence = load_settings(EVIDENCE, "discharge_comparison")
     args.output.mkdir(parents=True)
     rows.to_csv(args.output/'daily_comparison.csv', index=False)
     table.to_csv(args.output/'station_comparison.csv', index=False)
