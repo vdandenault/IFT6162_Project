@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Generic, Sequence, TypeVar
 
-from reservoir_control.core import DecisionTime, PlanningModel, Transition
+from reservoir_control.core.contracts import DecisionTime, PlanningModel, Transition
 
 State = TypeVar("State")
 Action = TypeVar("Action")

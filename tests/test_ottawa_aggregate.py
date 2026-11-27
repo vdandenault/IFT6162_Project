@@ -1,7 +1,7 @@
 import unittest
 
 from reservoir_control.core.contracts import DecisionTime
-from reservoir_control.systems.ottawa import (
+from reservoir_control.systems.ottawa.model import (
     AggregateStorageModel,
     OttawaForcing,
     OttawaParameters,

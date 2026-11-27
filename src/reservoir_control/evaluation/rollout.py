@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Callable, Mapping
 
-from reservoir_control.core import EnvironmentSession, EpisodeStart, EpisodeStep
+from reservoir_control.core.contracts import EnvironmentSession, EpisodeStart, EpisodeStep
 
 
 @dataclass(frozen=True)

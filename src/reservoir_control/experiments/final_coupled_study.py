@@ -8,6 +8,7 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
+import reservoir_control.systems.ottawa.forecasts as forecasts
 from reservoir_control.controllers.ppo.agent import PPOAgent, PPOConfig
 from reservoir_control.experiments.final_coupled_env import OBSERVATION_DIM, OFFSETS, HardCoupledEnv
 from reservoir_control.experiments.fixed_schedule_replay import (
@@ -22,7 +23,6 @@ from reservoir_control.systems.loslr.data import load_inputs
 from reservoir_control.systems.loslr.model import OntarioModel
 from reservoir_control.systems.loslr.native import NativeReference
 from reservoir_control.systems.loslr.physics import FLOW_SCALE
-from reservoir_control.systems.ottawa import forecasts
 
 LOG = logging.getLogger(__name__)
 

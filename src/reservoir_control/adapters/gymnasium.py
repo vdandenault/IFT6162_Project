@@ -1,6 +1,6 @@
 import gymnasium as gym
 
-from reservoir_control.core import EnvironmentSession
+from reservoir_control.core.contracts import EnvironmentSession
 
 
 class GymnasiumAdapter(gym.Env):

@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 from reservoir_control.adapters.planning import PlanningAdapter
-from reservoir_control.core import DecisionTime, EpisodeStart, EpisodeStep, Transition
+from reservoir_control.core.contracts import DecisionTime, EpisodeStart, EpisodeStep, Transition
 
 
 class SharedContractChecks(unittest.TestCase):
@@ -66,8 +66,7 @@ class SharedContractChecks(unittest.TestCase):
             adapter.rollout(initial, actions, forcing, [times[0], DecisionTime(3, 2020, 4, 1.0)])
 
     def test_episode_runner_does_not_invent_terminal_flags_or_call_other_controller(self):
-        from reservoir_control.evaluation import run_episode
-        from reservoir_control.evaluation.rollout import IncompleteEpisodeError
+        from reservoir_control.evaluation.rollout import IncompleteEpisodeError, run_episode
 
         class Session:
             def reset(self, *, seed=None, options=None):
