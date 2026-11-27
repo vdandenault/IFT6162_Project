@@ -1,0 +1,13 @@
+<section class="banner" aria-labelledby="project-question">
+  <div class="banner-inner container">
+    <div class="content">
+      <p class="eyebrow">{{ .subtitle }}</p>
+      <h1 id="project-question">{{ .title }}</h1>
+      <p class="intro">The replays pair historical Lake Ontario conditions with a synthetic Ottawa reservoir, inflow and travel time.</p>
+    </div>
+    <figure class="map-panel">
+      {{ partial "river-map.html" . }}
+      <figcaption>The St. Lawrence and Ottawa rivers meet at Lake St. Louis near Montréal.</figcaption>
+    </figure>
+  </div>
+</section>

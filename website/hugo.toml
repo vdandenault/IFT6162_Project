@@ -1,0 +1,5 @@
+baseURL = "/"
+locale = "en-CA"
+title = "Lake Ontario & the Ottawa River"
+theme = "hugo-story"
+disableKinds = ["taxonomy", "term", "RSS", "sitemap", "404"]

@@ -1,0 +1,95 @@
+.basin-map {
+  color: var(--map-ink);
+  display: block;
+  height: auto;
+  overflow: hidden;
+  width: 100%;
+}
+
+.basin-map-grid,
+.basin-map-tributaries,
+.basin-map-rivers,
+.basin-map-leader,
+.basin-map-key path {
+  fill: none;
+}
+
+.basin-map-grid {
+  opacity: 0.13;
+  stroke: currentcolor;
+  stroke-dasharray: 2 6;
+  stroke-width: 0.7;
+}
+
+.basin-map-tributaries {
+  opacity: 0.28;
+  stroke: var(--map-water);
+  stroke-width: 0.9;
+}
+
+.basin-map-minor-lakes {
+  fill: var(--map-water);
+  opacity: 0.28;
+}
+
+.basin-map-water {
+  fill: var(--map-water);
+}
+
+.basin-map-rivers {
+  stroke: var(--map-water);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.basin-map-lake-name {
+  fill: var(--map-ground);
+  font-family: var(--serif);
+  font-size: 29px;
+  font-style: italic;
+}
+
+.basin-map-river-names,
+.basin-map-place,
+.basin-map-key text {
+  fill: currentcolor;
+  paint-order: stroke;
+  stroke: var(--map-ground);
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.basin-map-river-names {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-style: italic;
+}
+
+.basin-map-place {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.basin-map-leader,
+.basin-map-key path {
+  stroke: currentcolor;
+  stroke-width: 1.4;
+}
+
+.basin-map-focus {
+  fill: var(--map-ground);
+  stroke: currentcolor;
+  stroke-width: 2.5;
+}
+
+.basin-map-key {
+  font-size: 16px;
+}
+
+@media (width <= 600px) {
+  .basin-map-river-names,
+  .basin-map-place {
+    font-size: 25px;
+  }
+}

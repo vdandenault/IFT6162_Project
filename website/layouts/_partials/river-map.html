@@ -1,0 +1,30 @@
+{{ $map := hugo.Data.river_map }}
+<svg class="basin-map" viewBox="0 0 640 444" role="img" aria-labelledby="basin-map-title basin-map-description" xmlns="http://www.w3.org/2000/svg">
+  <title id="basin-map-title">Lake Ontario, the Ottawa River and Lake St. Louis</title>
+  <desc id="basin-map-description">The St. Lawrence flows northeast from Lake Ontario. The Ottawa River approaches from the northwest. Their waters meet at Lake St. Louis near Montréal.</desc>
+
+  <g aria-hidden="true">
+    <path class="basin-map-grid" d="M98 0V444 M261 0V444 M424 0V444 M587 0V444 M0 65.7H640 M0 181H640 M0 296.3H640 M0 411.6H640"/>
+    <path class="basin-map-tributaries" d="{{ $map.tributaries }}"/>
+    <path class="basin-map-minor-lakes" fill-rule="evenodd" d="{{ $map.other_lakes }}"/>
+    <path class="basin-map-water" fill-rule="evenodd" d="{{ $map.estuary }}"/>
+    <path class="basin-map-rivers" d="{{ $map.main_rivers }}"/>
+    <path class="basin-map-water" fill-rule="evenodd" d="{{ $map.lake_ontario }}"/>
+
+    <text class="basin-map-lake-name" x="168" y="347" text-anchor="middle">Lake Ontario</text>
+    <g class="basin-map-river-names">
+      <text x="252" y="63" transform="rotate(19 252 63)" text-anchor="middle">Ottawa River</text>
+      <text x="435" y="224" transform="rotate(-34 435 224)" text-anchor="middle">St. Lawrence River</text>
+    </g>
+    <path class="basin-map-leader" d="M516 130L495 73H392"/>
+    <circle class="basin-map-focus" cx="519" cy="135" r="5"/>
+    <text class="basin-map-place" x="392" y="62">Lake St. Louis</text>
+
+    <g class="basin-map-key" text-anchor="middle">
+      <text x="600" y="29">N</text>
+      <path d="M600 56V37 M596 44L600 37L604 44"/>
+      <path d="M473 403V409H577V403"/>
+      <text x="525" y="396">100 km</text>
+    </g>
+  </g>
+</svg>

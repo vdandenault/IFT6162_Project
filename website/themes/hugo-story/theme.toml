@@ -1,0 +1,11 @@
+name = "Hugo Story"
+license = "CC BY 3.0"
+licenselink = "https://creativecommons.org/licenses/by/3.0/"
+homepage = "https://github.com/caressofsteel/hugo-story"
+
+[author]
+name = "CaressOfSteel"
+
+[original]
+author = "AJ at HTML5 UP"
+homepage = "https://html5up.net/story"

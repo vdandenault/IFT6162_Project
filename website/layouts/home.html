@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore how Lake Ontario releases and the Ottawa River interact in the 2017 and 2019 modeled flood springs.">
+  <title>{{ site.Title }} · Flood-year replay</title>
+  {{ $styles := slice (resources.Get "css/theme.css") (resources.Get "css/site.css") (resources.Get "css/map.css") | resources.Concat "css/site.css" | fingerprint }}
+  <link rel="stylesheet" href="{{ $styles.RelPermalink }}">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to project</a>
+  <header class="masthead">
+    <nav class="container navigation" aria-label="Page navigation">
+      <a class="wordmark" href="#main">Lake Ontario–Ottawa</a>
+    </nav>
+  </header>
+  <main id="main">
+    {{ partial "banner.html" hugo.Data.story.banner }}
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div><p><strong>Lake Ontario–Ottawa</strong> · IFT-6162, Fall 2026</p>
+        <p>Nadine Mohamed, Daniel Martineau and Vincent Dandenault</p>
+      </div>
+      <details>
+        <summary>Map, photographs and design credits</summary>
+        <p>Map drawn from public-domain <a href="https://www.naturalearthdata.com/">Natural Earth</a> geography. The map simplifies the rivers and shoreline.</p>
+        <p>Banner and spotlights adapted from <a href="https://github.com/caressofsteel/hugo-story">Hugo Story by CaressOfSteel</a> and <a href="https://html5up.net/story">Story by AJ at HTML5 UP</a> under <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Fonts are <a href="{{ "fonts/spectral-LICENSE.txt" | relURL }}">Spectral</a> and <a href="{{ "fonts/dm-sans-LICENSE.txt" | relURL }}">DM Sans</a>.</p>
+      </details>
+    </div>
+  </footer>
+</body>
+</html>

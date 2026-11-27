@@ -1,0 +1,28 @@
+:root {
+  /* The five swatches Daniel chose, shared with the poster. */
+  --mist: #c8d9ed;
+  --ice: #e1f1fd;
+  --spring: #c1d8f0;
+  --water: #4663ac;
+  --glacier: #d2deeb;
+  --paper: #fff;
+  --ink: #11283c;
+  --deep: #0e283d;
+  --muted: #435a6a;
+  --on-dark: var(--ice);
+  --map-water: #a8cee5;
+  --map-ground: var(--deep);
+  --map-ink: var(--ice);
+  --map-line: #50748a;
+  --hairline: #b9cbd6;
+  --chart-grid: #dbe5eb;
+  --baseline: #304757;
+  --controller: var(--water);
+  --limit: #764d21;
+  --limit-secondary: #856e78;
+  --focus: #086288;
+  --panel: #f4f8fa;
+  --spring-fill: var(--spring);
+  --serif: "Spectral", georgia, serif;
+  --sans: "DM Sans", arial, sans-serif;
+}
