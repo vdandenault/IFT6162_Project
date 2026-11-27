@@ -1,0 +1,16 @@
+{{ $run := transform.Unmarshal (os.ReadFile "static/replay.json") }}
+<section class="technology container" id="technology" tabindex="-1" aria-labelledby="technology-title">
+  <h2 id="technology-title">How the project is built</h2>
+  <div class="technology-columns">
+    <div>
+      <h3>Simulation and control</h3>
+      <p>Python 3.12 runs each controller against the same river simulator. pandas prepares the quarter-month records, NumPy represents release schedules and storage trajectories, and Gymnasium defines the release action space. SciPy checks whether Ottawa can meet the constraints and solves for its lowest-cost feasible release schedule.</p>
+      <p><a href="https://github.com/vdandenault/IFT6162_Project/blob/{{ $run.revision }}/pyproject.toml">Simulation dependencies</a> · <a href="https://github.com/vdandenault/IFT6162_Project/blob/{{ $run.revision }}/src/reservoir_control/systems/ottawa/hard_follower.py">Ottawa solver</a></p>
+    </div>
+    <div>
+      <h3>From verified runs to this page</h3>
+      <p>A Python exporter checks the saved runs and writes a small JSON file. Hugo uses its spring summaries for the flood-exposure comparison, builds static HTML from Story templates and typesets LaTeX with KaTeX. In the browser, JavaScript draws each trajectory from the same file. Chart.js renders the two May 2017 figures and their downloadable PNGs.</p>
+      <p>CSS variables set the shared palette. Node.js runs the preview and build tools. ESLint checks JavaScript and Stylelint checks CSS. <a href="{{ "replay.json" | relURL }}">Plotted data</a> · <a href="https://gohugo.io/">Hugo</a> · <a href="https://www.chartjs.org/">Chart.js</a></p>
+    </div>
+  </div>
+</section>

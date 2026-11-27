@@ -1,6 +1,6 @@
 # Lake Ontario–Ottawa website
 
-One Hugo Story page for the 2017 and 2019 flood-year replays. Hugo builds the static page.
+One Hugo Story page for the 2017 and 2019 flood-year replays. Python exports the checked results, Hugo builds the page, and the browser draws the river figures with Chart.js.
 
 ## Preview
 
@@ -22,4 +22,4 @@ node --run lint
 node --run build
 ```
 
-Stylelint checks the stylesheets. Hugo writes the static page and assets to `public/`. For a repository Pages site, pass its agreed base URL to the build, for example `node --run build -- --baseURL https://OWNER.github.io/REPOSITORY/`.
+Lint runs ESLint and Stylelint. Hugo writes the static page and assets to `public/`. For a repository Pages site, pass its agreed base URL to the build, for example `node --run build -- --baseURL https://OWNER.github.io/REPOSITORY/`.

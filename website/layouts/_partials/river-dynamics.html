@@ -1,0 +1,53 @@
+{{ $eq := hugo.Data.equations }}
+{{ if eq .id "lake-ontario" }}
+  <div class="river-details">
+    <div class="river-equations">
+      <h3 id="lake-ontario-balance">How the lake level changes</h3>
+      <p>The lake rises when more water comes in than goes out. The controller plans with a supply forecast. Once the step is over, the simulator updates the level with the realized supply and executed release.</p>
+      {{ partial "equation.html" $eq.lake_balance }}
+      <p class="model-note">The replay rounds each level change to six decimal places before adding it to the starting level.</p>
+    </div>
+    <div class="river-equations">
+      <h3 id="lake-ontario-outflow">How the manuscript models outflow</h3>
+      <p>Our manuscript models a reference outflow from the average lake level over the step. The operator can add to or subtract from that flow.</p>
+      {{ partial "equation.html" $eq.lake_rating }}
+      <p class="model-note">In this formulation, the end level and outflow depend on each other, so the two equations are solved together. In the flood replays below, the controller selects a total release and the water balance uses the value that passes the operating limits.</p>
+    </div>
+  </div>
+  <div class="river-details">
+    <div class="river-equations">
+      <h3>What the Lake Ontario operator values</h3>
+      <p>The controller penalizes high water on both shorelines, low Lake Ontario levels below 74.00 m and abrupt changes in release. A final term favors a Lake Ontario level near 74.80 m at year end.</p>
+      <p>The comparison also reports estimated flooded buildings, boating costs and hydropower value. These measures show the consequences of each policy in familiar units.</p>
+    </div>
+    {{ partial "river-figure.html" . }}
+  </div>
+{{ else }}
+  <div class="river-details">
+    <div class="river-equations">
+      <h3>How Ottawa stores water</h3>
+      <p>Water held in the modeled reservoir remains available for a later release. Once released, it spends one step in transit to Lake St. Louis.</p>
+      {{ partial "equation.html" $eq.ottawa_balance }}
+    </div>
+    <div class="river-equations">
+      <h3>What the Ottawa operator receives</h3>
+      <p>At decision {{ transform.ToMath "t" }}, Lake Ontario announces a <strong>sequence of total releases</strong>, written {{ transform.ToMath "\\mathbf{u}_t" }}. Each entry is a total flow in m³/s. The italic {{ transform.ToMath "u_t" }} in the manuscript’s rating equation denotes a single adjustment in tens of m³/s.</p>
+      <p>The schedule contains up to four planned releases, plus a fixed fifth commitment when the year has room for it. This covers the downstream arrival of the fourth Ottawa release.</p>
+      <p>A larger Lake Ontario release next period leaves less room for Ottawa water arriving then. Ottawa can respond now by keeping more water in storage.</p>
+      <h3>What the Ottawa operator values</h3>
+      <p>It favors storage near 3 billion m³, releases near 900 m³/s and gradual changes from one release to the next. It places extra weight on storage at the end of its planning horizon. These targets describe the synthetic operator used in the study.</p>
+    </div>
+  </div>
+  <div class="river-details">
+    {{ partial "river-figure.html" . }}
+    <div class="river-equations">
+      <h3>Reading the gauge at Pointe-Claire</h3>
+      <p>The simulator translates arriving flow into a water level at Lake St. Louis. Channel roughness affects how high the water stands for the same flow.</p>
+      <details class="extra-math">
+        <summary>Show the flow-to-level equation</summary>
+        {{ partial "equation.html" $eq.pointe_claire_stage }}
+        <p>The simulator rounds the resulting stage to the nearest centimetre.</p>
+      </details>
+    </div>
+  </div>
+{{ end }}

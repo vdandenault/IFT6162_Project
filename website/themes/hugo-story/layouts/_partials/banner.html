@@ -1,9 +1,23 @@
+{{ $run := transform.Unmarshal (os.ReadFile "static/replay.json") }}
+{{ $matches := 0 }}
+{{ $decisions := 0 }}
+{{ range $run.years }}
+  {{ $other := .policies.anticipating.lake_ontario_release_m3_s }}
+  {{ range $step, $flow := .policies.ordinary.lake_ontario_release_m3_s }}
+    {{ $decisions = add $decisions 1 }}
+    {{ if eq $flow (index $other $step) }}{{ $matches = add $matches 1 }}{{ end }}
+  {{ end }}
+{{ end }}
 <section class="banner" aria-labelledby="project-question">
   <div class="banner-inner container">
     <div class="content">
       <p class="eyebrow">{{ .subtitle }}</p>
       <h1 id="project-question">{{ .title }}</h1>
+      <p class="hero-answer">Anticipating Ottawa’s response produced the same Lake Ontario release as ordinary MPC on <strong>{{ $matches }} of {{ $decisions }} decision dates</strong> across the two full years.</p>
       <p class="intro">The replays pair historical Lake Ontario conditions with a synthetic Ottawa reservoir, inflow and travel time.</p>
+      <div class="banner-actions">
+        {{ partial "next-section.html" .next }}
+      </div>
     </div>
     <figure class="map-panel">
       {{ partial "river-map.html" . }}

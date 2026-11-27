@@ -1,0 +1,56 @@
+{{ $replay := transform.Unmarshal (os.ReadFile "static/replay.json") }}
+{{ $policies := (index $replay.years "2017").policies }}
+{{ $plan := $policies.plan2014 }}
+{{ $mpc := $policies.ordinary }}
+{{ $lake := eq .id "lake-ontario" }}
+{{/* The replay stores end levels in zero-based arrays. May's third and fourth steps are QMs 19 and 20. */}}
+{{ $mayThird := 18 }}
+{{ $mayFourth := 19 }}
+{{ $planRise := mul 100 (sub (index $plan.lake_ontario_level_m $mayFourth) (index $plan.lake_ontario_level_m $mayThird)) }}
+{{ $mpcRise := mul 100 (sub (index $mpc.lake_ontario_level_m $mayFourth) (index $mpc.lake_ontario_level_m $mayThird)) }}
+<figure class="river-graph" data-river="{{ .id }}">
+  <figcaption>
+    <h3 id="{{ .id }}-figure-title">{{ if $lake }}How much did Lake Ontario rise?{{ else }}Where did the water go?{{ end }}</h3>
+    <p class="figure-period">2017 replay · {{ if $lake }}Last quarter-month of May{{ else }}Four model periods per month{{ end }}</p>
+  </figcaption>
+  <div class="river-plot" hidden>
+    <canvas role="img" aria-labelledby="{{ .id }}-figure-title" aria-describedby="{{ .id }}-figure-note"></canvas>
+  </div>
+  <p class="figure-note" id="{{ .id }}-figure-note">
+    {{ if $lake }}
+      {{ $extraRelease := sub (index $mpc.lake_ontario_release_m3_s $mayFourth) (index $plan.lake_ontario_release_m3_s $mayFourth) }}
+      Both runs start this step at {{ printf "%.3f" (index $plan.lake_ontario_level_m $mayThird) }} m. Releasing {{ printf "%.0f" $extraRelease }} m³/s more
+      under ordinary MPC leaves Lake Ontario {{ printf "%.2f" (sub $planRise $mpcRise) }} cm lower at the end of the step.
+    {{ else }}
+      {{ $extraStorage := sub (index $mpc.ottawa_storage_m3 $mayThird) (index $plan.ottawa_storage_m3 $mayThird) }}
+      In May’s third quarter-month, Ottawa releases {{ lang.FormatNumber 0 (index $mpc.ottawa_release_m3_s $mayThird) }} m³/s under ordinary MPC and
+      {{ lang.FormatNumber 0 (index $plan.ottawa_release_m3_s $mayThird) }} m³/s under Plan 2014. This leaves {{ printf "%.1f" (div $extraStorage 1e6) }} million m³ more in storage under MPC.
+      Its smaller Ottawa release arrives one step later, offsetting the extra Lake Ontario release. Both runs then reach {{ printf "%.2f" (index $mpc.lake_st_louis_level_m $mayFourth) }} m at Pointe-Claire.
+    {{ end }}
+  </p>
+  <details class="figure-data" open>
+    <summary>View chart data</summary>
+    <table>
+      <caption>{{ if $lake }}Lake Ontario level rise (cm){{ else }}Modeled Ottawa storage (billion m³){{ end }}</caption>
+      <thead><tr><th scope="col">Quarter-month</th><th scope="col">Filtered Plan 2014</th><th scope="col">Ordinary MPC</th></tr></thead>
+      <tbody>
+        {{ if $lake }}
+          <tr><th scope="row">May 4/4</th>
+            {{ range slice $planRise $mpcRise }}<td data-value="{{ . }}">{{ printf "%.2f" . }}</td>{{ end }}
+          </tr>
+        {{ else }}
+          {{ range $offset, $period := slice "May 2/4" "May 3/4" "May 4/4" "June 1/4" }}
+            {{ $index := add 17 $offset }}
+            <tr><th scope="row">{{ $period }}</th>
+              {{ range slice $plan $mpc }}
+                {{ $storage := div (index .ottawa_storage_m3 $index) 1e9 }}
+                <td data-value="{{ $storage }}">{{ printf "%.4f" $storage }}</td>
+              {{ end }}
+            </tr>
+          {{ end }}
+        {{ end }}
+      </tbody>
+    </table>
+  </details>
+  <a class="figure-download" download="{{ .id }}-2017.png" hidden>Download {{ .label }} figure (PNG)</a>
+</figure>

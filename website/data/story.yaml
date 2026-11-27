@@ -1,3 +1,46 @@
 banner:
   subtitle: "IFT-6162 · Fall 2026"
   title: "Can Lake Ontario reduce flooding by anticipating Ottawa River releases?"
+  button: { label: "Explore the trajectories", link: "#lake-ontario-replay" }
+  next: { id: "overview", label: "The flood problem" }
+
+spotlights:
+  - id: lake-ontario
+    label: "Lake Ontario"
+    title: "Hold water or release it?"
+    content: "Holding water back can raise the lake along its shoreline. Releasing more sends water down the St. Lawrence River. The Plan 2014 rule curve gives us a reference release to compare with each controller’s decision."
+    style: "geography"
+    next: { id: "ottawa-river", label: "Ottawa River" }
+    image:
+      src: "images/lake-ontario.webp"
+      alt: "A low limestone ledge along the Lake Ontario shoreline, overlooking the open lake."
+      caption: "Lake Ontario shoreline, Sandbanks Provincial Park"
+      width: 1200
+      height: 800
+  - id: ottawa-river
+    label: "Ottawa River"
+    title: "Two flows meet at Lake St. Louis"
+    content: "Water arriving from the Ottawa River shares the downstream reach with Lake Ontario releases. We follow the level at Pointe-Claire on Lake St. Louis to see the combined effect."
+    note: "The experiments pair historical Lake Ontario conditions with a synthetic Ottawa reservoir. Its storage, inflows and travel time describe the study scenario."
+    style: "geography reverse"
+    next: { id: "ordinary-mpc", label: "Ordinary MPC" }
+    image:
+      src: "images/ottawa-river.webp"
+      alt: "Aerial view of the river channels near Île Perrot, where Ottawa and St. Lawrence waters meet."
+      caption: "Ottawa and St. Lawrence rivers near Île Perrot"
+      width: 1200
+      height: 800
+  - id: ordinary-mpc
+    label: "Forecast-based MPC"
+    title: "Plan with one Ottawa forecast"
+    content: "Every quarter-month, model predictive control (MPC) compares possible Lake Ontario release plans. The ordinary controller scores each one against the same forecast of Ottawa releases."
+    style: "method"
+    strategy: "ordinary"
+    next: { id: "anticipating-mpc", label: "Anticipating MPC" }
+  - id: anticipating-mpc
+    label: "Stackelberg MPC"
+    title: "Plan for Ottawa’s response"
+    content: "The anticipating controller asks how the Ottawa operator would respond to each candidate plan. Lake Ontario then announces its choice. In both experiments, the same modeled Ottawa operator responds to the chosen plan."
+    style: "method reverse"
+    strategy: "anticipating"
+    next: { id: "technology", label: "Project technology" }

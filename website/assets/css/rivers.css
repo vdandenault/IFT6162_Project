@@ -1,0 +1,180 @@
+.river-details {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(2rem, 6vw, 6rem);
+  margin-top: clamp(2rem, 4vw, 3.5rem);
+  padding-top: clamp(1.75rem, 3vw, 2.75rem);
+  border-top: 1px solid var(--hairline);
+}
+
+.river-details h3, .river-replay > h3, .overview h3, .technology h3 {
+  font: 400 clamp(1.55rem, 2.3vw, 2.15rem)/1.14 var(--serif);
+  letter-spacing: -.025em;
+}
+
+.content h3, .river-equations p + h3 {
+  margin-top: 1.6rem;
+}
+
+.river-equations p {
+  max-width: 54ch;
+  margin-top: .85rem;
+}
+
+.river-equations var {
+  font-family: var(--serif);
+  font-size: 1.06em;
+}
+
+.display-equation {
+  overflow-x: auto;
+  margin: 1rem 0 .7rem;
+  padding: .8rem .45rem;
+  border-inline-start: 3px solid var(--water);
+  background-color: var(--panel);
+  font-size: clamp(1.08rem, 1.65vw, 1.52rem);
+}
+
+.display-equation math {
+  margin-block: .4rem;
+}
+
+.symbols {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: .34rem .9rem;
+  margin: .8rem 0 0;
+  font-size: .94rem;
+}
+
+.symbols dt, .symbols dd, .model-facts dd {
+  margin: 0;
+}
+
+.symbols dt {
+  color: var(--water);
+}
+
+.model-facts {
+  margin-block: 1rem 0;
+}
+
+.model-facts dt {
+  margin-top: .85rem;
+  color: var(--water);
+  font-weight: 650;
+}
+
+.flood-photo img {
+  aspect-ratio: auto;
+}
+
+.technology {
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+.technology-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem clamp(2rem, 6vw, 6rem);
+  margin-top: 1.8rem;
+}
+
+.technology-columns p {
+  margin-top: .75rem;
+  max-width: 58ch;
+}
+
+.model-note, .figure-period {
+  color: var(--muted);
+}
+
+.extra-math {
+  margin-top: 1rem;
+  font-size: .96rem;
+}
+
+.extra-math summary, .figure-data summary, .figure-download {
+  color: var(--water);
+  font-weight: 600;
+}
+
+.extra-math summary {
+  padding-block: .4rem;
+}
+
+.river-graph {
+  border-block: 1px solid var(--hairline);
+  background: var(--panel);
+  padding: clamp(1rem, 2.25vw, 2rem);
+}
+
+.figure-period {
+  margin-top: .4rem;
+  font-size: .9rem;
+}
+
+.river-plot {
+  position: relative;
+  height: clamp(11rem, 17vw, 14rem);
+  margin-block: 1.15rem;
+}
+
+.figure-note {
+  margin-top: .9rem;
+  font-size: .98rem;
+}
+
+.figure-data, .figure-download {
+  margin-top: .5rem;
+  font-size: .9rem;
+}
+
+.figure-data summary, .figure-download {
+  padding-block: .4rem;
+}
+
+.figure-data table {
+  margin-block: .5rem;
+}
+
+.figure-download {
+  display: inline-block;
+}
+
+@media (width <= 48rem) {
+  .river-details, .technology-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .river-details {
+    gap: 1.75rem;
+    margin-top: .4rem;
+  }
+}
+
+@media (width <= 28rem) {
+  .river-graph {
+    margin-inline: -.5rem;
+  }
+
+  .river-plot {
+    margin-inline: -.5rem;
+  }
+
+  .display-equation {
+    font-size: 1rem;
+    padding-inline: .25rem;
+  }
+
+  .display-equation:has(mtable) {
+    font-size: clamp(.86rem, 4.25vw, 1rem);
+  }
+
+  .symbols {
+    gap: .35rem .6rem;
+  }
+}

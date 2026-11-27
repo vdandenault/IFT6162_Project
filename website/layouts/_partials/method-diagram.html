@@ -1,0 +1,14 @@
+<figure class="method-diagram {{ .strategy }}">
+  <div class="diagram-headers"><span>Lake Ontario plan</span><span>{{ if eq .strategy "ordinary" }}Ottawa forecast{{ else }}Predicted Ottawa response{{ end }}</span></div>
+  <div class="plan-branches">
+    <div class="plan-node">Higher release</div>
+    <div class="plan-node">Lower release</div>
+    {{ if eq .strategy "ordinary" }}
+      <div class="response-node shared">One forecast<br>for both plans</div>
+    {{ else }}
+      <div class="response-node">Response to higher release</div>
+      <div class="response-node">Response to lower release</div>
+    {{ end }}
+  </div>
+  <figcaption>Apply the chosen release · Observe both levels · Replan</figcaption>
+</figure>

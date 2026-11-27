@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explore how Lake Ontario releases and the Ottawa River interact in the 2017 and 2019 modeled flood springs.">
   <title>{{ site.Title }} · Flood-year replay</title>
-  {{ $styles := slice (resources.Get "css/theme.css") (resources.Get "css/site.css") (resources.Get "css/map.css") | resources.Concat "css/site.css" | fingerprint }}
+  {{ $styles := slice (resources.Get "css/theme.css") (resources.Get "css/site.css") (resources.Get "css/map.css") (resources.Get "css/rivers.css") | resources.Concat "css/site.css" | fingerprint }}
   <link rel="stylesheet" href="{{ $styles.RelPermalink }}">
+  {{ $figures := resources.Get "js/river-figures.js" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
+  <script defer src="{{ $figures.RelPermalink }}"></script>
   <link rel="icon" href="data:,">
 </head>
 <body>
@@ -14,10 +16,19 @@
   <header class="masthead">
     <nav class="container navigation" aria-label="Page navigation">
       <a class="wordmark" href="#main">Lake Ontario–Ottawa</a>
+      <div class="nav-links">
+        <a href="#overview">The problem</a>
+        <a href="#ordinary-mpc">Controllers</a>
+      </div>
     </nav>
   </header>
   <main id="main">
     {{ partial "banner.html" hugo.Data.story.banner }}
+    <div class="container spotlights">
+      {{ partial "overview.html" . }}
+      {{ range hugo.Data.story.spotlights }}{{ partial "spotlight.html" . }}{{ end }}
+    </div>
+    {{ partial "technology.html" . }}
   </main>
   <footer class="site-footer">
     <div class="container">
@@ -27,7 +38,9 @@
       <details>
         <summary>Map, photographs and design credits</summary>
         <p>Map drawn from public-domain <a href="https://www.naturalearthdata.com/">Natural Earth</a> geography. The map simplifies the rivers and shoreline.</p>
+        <p><a href="https://commons.wikimedia.org/wiki/File:Lakeview_Trail_Shoreline.jpg">Lake Ontario shoreline</a> by Jasonpettit (2020) and <a href="https://commons.wikimedia.org/wiki/File:Canal_de_Beauharnois,_Grande_Ile,_Saint_Lawrence_River,_Pointe-des-Cascades,_Ottawa_River,_Perrot_Island.jpg">Aerial view near Île Perrot</a> by Dicklyon (2018). Both photographs were cropped and converted to WebP. These versions retain their <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0 license</a>.</p>
         <p>Banner and spotlights adapted from <a href="https://github.com/caressofsteel/hugo-story">Hugo Story by CaressOfSteel</a> and <a href="https://html5up.net/story">Story by AJ at HTML5 UP</a> under <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Fonts are <a href="{{ "fonts/spectral-LICENSE.txt" | relURL }}">Spectral</a> and <a href="{{ "fonts/dm-sans-LICENSE.txt" | relURL }}">DM Sans</a>.</p>
+        <p>River charts use <a href="https://www.chartjs.org/">Chart.js</a>. <a href="{{ "js/chart-licenses.txt" | relURL }}">Chart library licenses</a></p>
       </details>
     </div>
   </footer>

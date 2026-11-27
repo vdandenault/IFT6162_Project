@@ -1,0 +1,9 @@
+<div class="display-equation">
+  {{ transform.ToMath .latex (dict "displayMode" true) }}
+</div>
+<dl class="symbols">
+  {{ range .symbols }}
+    <dt>{{ transform.ToMath (index . 0) }}</dt>
+    <dd>{{ index . 1 }}</dd>
+  {{ end }}
+</dl>

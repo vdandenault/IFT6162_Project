@@ -1,0 +1,46 @@
+# Each entry pairs display LaTeX with the symbol definitions printed below it.
+lake_balance:
+  latex: 'h_{t+1} = h_t + \frac{N_t - Q_t}{29{,}700}'
+  symbols:
+    - ['t', 'Quarter-month being simulated.']
+    - ['h_t,\ h_{t+1}', 'Lake Ontario levels at the start and end of the step (m, IGLD 1985).']
+    - ['N_t', 'Net total water supply to Lake Ontario during the step (m³/s).']
+    - ['Q_t', 'Total release from Lake Ontario during the step (m³/s).']
+    - ['29{,}700', 'Area divided by nominal step duration (m²/s). Converts net flow to level change.']
+
+lake_rating:
+  latex: |-
+    \begin{aligned}
+    Q_t ={}& 555.823\left(\frac{h_t+h_{t+1}}{2}-69.509\right)^{3/2} \\
+           & {}+10u_t
+    \end{aligned}
+  symbols:
+    - ['Q_t', 'Total modeled Lake Ontario outflow (m³/s).']
+    - ['h_t,\ h_{t+1}', 'Start and end levels in quarter-month t. Their average is the midpoint level (m, IGLD 1985).']
+    - ['69.509', 'Reference elevation (m). The rating applies when the midpoint level is at or above it.']
+    - ['555.823', 'Rating coefficient (metres to the three-halves power per second). It scales the flow associated with the depth above the reference elevation.']
+    - ['u_t', 'Scalar adjustment to the reference flow. One unit adds 10 m³/s at a fixed midpoint level.']
+
+ottawa_balance:
+  latex: 'S_{t+1} = S_t + \Delta t \left(i_t - r_t\right)'
+  symbols:
+    - ['S_t,\ S_{t+1}', 'Water stored at the start and end of quarter-month t (m³).']
+    - ['i_t', 'Net inflow into the modeled Ottawa reservoir (m³/s).']
+    - ['r_t', 'Ottawa release leaving the reservoir in this step (m³/s).']
+    - ['\Delta t', 'Duration of one step in the Ottawa model (657,000 s).']
+
+downstream_flow:
+  latex: 'q_t^D = Q_t + r_{t-1} + b_t'
+  symbols:
+    - ['q_t^D', 'Combined flow at Lake St. Louis in quarter-month t (m³/s). D denotes downstream.']
+    - ['Q_t', 'Lake Ontario release entering the St. Lawrence River in the current step (m³/s).']
+    - ['r_{t-1}', 'Modeled Ottawa release from the previous step, arriving now (m³/s).']
+    - ['b_t', 'Remaining downstream inflow in the study scenario (m³/s).']
+
+pointe_claire_stage:
+  latex: 'h_t^D = 16.57 + \left(\frac{\rho_t q_t^D}{604}\right)^{0.58}'
+  symbols:
+    - ['h_t^D', 'Water level at Pointe-Claire on Lake St. Louis in quarter-month t (m, IGLD 1985).']
+    - ['q_t^D', 'Combined downstream flow in the same step (m³/s).']
+    - ['\rho_t', 'Pointe-Claire roughness factor used for this step. The replay carries the previous value forward.']
+    - ['16.57,\ 604,\ 0.58', 'Elevation offset (m), flow scaling constant for m³/s input, and exponent of the simulator’s empirical rating.']
