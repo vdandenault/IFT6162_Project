@@ -1,18 +1,32 @@
-from argparse import ArgumentParser
 import json
+import logging
+from argparse import ArgumentParser
 from pathlib import Path
 from time import perf_counter
 
 import numpy as np
 import pandas as pd
 
-from reservoir_control.study_config import load_settings
 from reservoir_control.experiments.final_coupled_env import HardCoupledEnv
 from reservoir_control.experiments.final_coupled_study import (
-    ARMS, CONFIG, NativeReference, OntarioModel, annual_cases,
-    load_inputs, load_protocol, start_states, stress_cases,
+    ARMS,
+    CONFIG,
+    NativeReference,
+    OntarioModel,
+    annual_cases,
+    load_inputs,
+    load_protocol,
+    start_states,
+    stress_cases,
 )
-from reservoir_control.experiments.fixed_schedule_replay import digest, json_value, load_follower_config
+from reservoir_control.experiments.fixed_schedule_replay import (
+    digest,
+    json_value,
+    load_follower_config,
+)
+from reservoir_control.study_config import load_settings
+
+LOG = logging.getLogger(__name__)
 
 ARCHIVES = ("events", "reserved", "confirmation")
 COST_FIELDS = ["full_cost", "upstream_exposure_m_periods", "downstream_exposure_m_periods"]
@@ -179,6 +193,7 @@ def final_comparison(tables, archived_pairs):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(
         description="Audit response-aware ranking near downstream limits and assemble final comparisons."
     )
@@ -220,7 +235,8 @@ def main():
             found, options = screen_case(model, case, costs, external[external.case == name], settings)
             comparisons.extend({"sample": label, **row} for row in found)
             candidates.extend(options)
-        print(f"{label}: reproduced {len(batch)} rollouts, audited {sum(row['sample'] == label for row in comparisons)} decisions", flush=True)
+        decisions = sum(row["sample"] == label for row in comparisons)
+        LOG.info("%s: reproduced %d rollouts and audited %d decisions", label, len(batch), decisions)
     summary = pd.DataFrame(comparisons)
     summary.to_csv(output / "decisions.csv", index=False)
     with (output / "candidates.jsonl").open("w") as stream:
@@ -295,7 +311,7 @@ def main():
     (output / "provenance.json").write_text(json.dumps({
         "settings": settings, "archive_sha256": provenance, "selected_cases": selected,
     }, indent=2) + "\n")
-    print("\n".join(lines))
+    LOG.info("Saved anticipation results to %s", output)
 
 
 if __name__ == "__main__":

@@ -12,10 +12,10 @@ import numpy as np
 import pandas as pd
 
 from reservoir_control.study_config import ONTARIO_CONFIG, load_settings
-from .adapter import OntarioSession
-from .data import baseline_parameters, input_audit, load_inputs
-from .model import OntarioModel, Plan2014
-from .native import NativeReference, UPSTREAM_COMMIT, sha256
+from reservoir_control.systems.loslr.adapter import OntarioSession
+from reservoir_control.systems.loslr.data import baseline_parameters, input_audit, load_inputs
+from reservoir_control.systems.loslr.model import OntarioModel, Plan2014
+from reservoir_control.systems.loslr.native import UPSTREAM_COMMIT, NativeReference, sha256
 
 # Independent native imports execute in a child interpreter whose working
 # directory is the upstream checkout. Its legacy cwd/import behavior cannot
@@ -225,10 +225,14 @@ def main() -> None:
     parser.add_argument("--config", type=Path, help="Validated reference recipe; algorithm variants require new runner support")
     args = parser.parse_args()
     summary = run(args.output, args.checkout, args.last_year, args.config)
-    print(json.dumps({"output": str(args.output), "parity": summary["adapter_parity"]["complete"],
-                      "decisions": summary["adapter_parity"]["decisions"],
-                      "performance_indicators_complete": summary["performance_indicators"]["complete"],
-                      "events": summary["events"]}, indent=2))
+    json.dump({
+        "output": str(args.output),
+        "parity": summary["adapter_parity"]["complete"],
+        "decisions": summary["adapter_parity"]["decisions"],
+        "performance_indicators_complete": summary["performance_indicators"]["complete"],
+        "events": summary["events"],
+    }, sys.stdout, indent=2)
+    sys.stdout.write("\n")
 
 
 if __name__ == "__main__":

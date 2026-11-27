@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-
 import pandas as pd
 
 from reservoir_control.core.contracts import DecisionTime, Transition
-from .data import forcing_from_row
-from .model import OntarioModel, OntarioState, ReleaseRequest
+from reservoir_control.systems.loslr.data import forcing_from_row
+from reservoir_control.systems.loslr.model import OntarioModel, OntarioState, ReleaseRequest
 
 
 def decision_time(row, index: int) -> DecisionTime:

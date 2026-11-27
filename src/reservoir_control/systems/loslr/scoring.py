@@ -1,7 +1,9 @@
-from argparse import ArgumentParser
-from dataclasses import dataclass, asdict
 import hashlib
 import json
+import logging
+import sys
+from argparse import ArgumentParser
+from dataclasses import asdict, dataclass
 from math import isfinite
 from pathlib import Path
 
@@ -9,6 +11,8 @@ import numpy as np
 import pandas as pd
 
 from reservoir_control.study_config import ONTARIO_CONFIG, load_settings
+
+LOG = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_CONFIG = ONTARIO_CONFIG
 
@@ -82,6 +86,7 @@ def score_trajectories(frame, settings=ScoreSettings()):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(
         description="Apply one declared physical score to Ontario controller trajectories."
     )
@@ -120,8 +125,8 @@ def main():
         outputs_sha256={path.name: digest(path) for path in args.output.glob('*.csv')},
     )
     (args.output / 'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False) + '\n')
-    print(annual[['controller', 'year', 'score', 'ontario_excess_m_periods', 'pointe_claire_excess_m_periods']].round(3).to_string(index=False))
-    print(f'Saved shared scores to {args.output}')
+    annual.to_csv(sys.stdout, index=False)
+    LOG.info("Saved shared scores to %s", args.output)
 
 
 if __name__ == '__main__':

@@ -1,25 +1,39 @@
+import json
+import logging
 from argparse import ArgumentParser
 from collections import Counter
 from itertools import product
-import json
 from pathlib import Path
 
-from gymnasium.spaces import Box
 import numpy as np
 import pandas as pd
+from gymnasium.spaces import Box
 
-from reservoir_control.study_config import load_settings
-from reservoir_control.systems.loslr.operator import AdjustFlow
-from reservoir_control.systems.loslr.physics import FLOW_SCALE
 from reservoir_control.experiments.final_coupled_env import HardCoupledEnv
 from reservoir_control.experiments.final_coupled_study import (
-    CONFIG, NativeReference, OntarioModel, annual_cases, load_inputs, load_protocol, start_states,
+    CONFIG,
+    NativeReference,
+    OntarioModel,
+    annual_cases,
+    load_inputs,
+    load_protocol,
+    start_states,
 )
 from reservoir_control.experiments.fixed_schedule_replay import (
-    FollowerTolerances, TransitState, digest, json_value, load_follower_config, make_problem,
+    FollowerTolerances,
+    TransitState,
+    digest,
+    json_value,
+    load_follower_config,
+    make_problem,
 )
 from reservoir_control.experiments.report_final_coupled import playback, plt
+from reservoir_control.study_config import load_settings
 from reservoir_control.systems.loslr.adapter import decision_time
+from reservoir_control.systems.loslr.operator import AdjustFlow
+from reservoir_control.systems.loslr.physics import FLOW_SCALE
+
+LOG = logging.getLogger(__name__)
 
 REFERENCE = (5e9, 1)
 ARMS = ("external_mpc", "stackelberg_mpc")
@@ -123,7 +137,7 @@ def closed_loop(model, cases, variants, costs):
                     "max_water_balance_residual_m3": max((abs(row["ottawa_system_balance_residual_m3"]) for row in executed), default=0.),
                     "terminal_transit_m3": executed[-1]["ottawa_end_transit_m3"] if complete else None,
                 })
-        print("closed loop", capacity, delay, flush=True)
+        LOG.info("Closed-loop replay: capacity=%g m³, delay=%d periods", capacity, delay)
     return results
 
 
@@ -214,6 +228,7 @@ def plot_flood_years(traces, costs, output):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(
         description="Check response-aware ranking across storage and one-step routing assumptions."
     )
@@ -262,7 +277,7 @@ def main():
     (args.output / "settings.json").write_text(json.dumps({
         "design": design, "paired_variants": selected, "source_sha256": {str(p): digest(p) for p in sources},
     }, default=json_value, indent=2) + "\n")
-    print((args.output / "report.md").read_text())
+    LOG.info("Saved ranking results to %s", args.output)
 
 
 if __name__ == "__main__":

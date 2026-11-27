@@ -1,22 +1,27 @@
+import json
 import logging
 from argparse import ArgumentParser
 from dataclasses import asdict, replace
-import json
 from pathlib import Path
 from time import perf_counter
 
 import numpy as np
 import pandas as pd
 
-from reservoir_control.study_config import load_settings
-from reservoir_control.systems.loslr.physics import FLOW_SCALE
-from reservoir_control.experiments.final_coupled_env import HardCoupledEnv, OBSERVATION_DIM, OFFSETS
-from reservoir_control.experiments.fixed_schedule_replay import CONFIG, digest, json_value, load_follower_config
 from reservoir_control.controllers.ppo.agent import PPOAgent, PPOConfig
+from reservoir_control.experiments.final_coupled_env import OBSERVATION_DIM, OFFSETS, HardCoupledEnv
+from reservoir_control.experiments.fixed_schedule_replay import (
+    CONFIG,
+    digest,
+    json_value,
+    load_follower_config,
+)
+from reservoir_control.study_config import load_settings
 from reservoir_control.systems.loslr.coupled import load_protocol, start_states
 from reservoir_control.systems.loslr.data import load_inputs
 from reservoir_control.systems.loslr.model import OntarioModel
 from reservoir_control.systems.loslr.native import NativeReference
+from reservoir_control.systems.loslr.physics import FLOW_SCALE
 from reservoir_control.systems.ottawa import forecasts
 
 LOG = logging.getLogger(__name__)

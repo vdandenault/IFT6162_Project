@@ -10,8 +10,13 @@ import numpy as np
 import pandas as pd
 
 from reservoir_control.study_config import REPO_ROOT
-
-from .native import BASELINE_CONFIG, INPUT_FILE, POLICIES_FILE, NativeReference, default_checkout
+from reservoir_control.systems.loslr.native import (
+    BASELINE_CONFIG,
+    INPUT_FILE,
+    POLICIES_FILE,
+    NativeReference,
+    default_checkout,
+)
 
 # Upstream uses this balance convention, not variable Gregorian quarter lengths.
 BALANCE_CONVERSION = 2970.0

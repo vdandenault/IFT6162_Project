@@ -1,15 +1,20 @@
 from dataclasses import dataclass, replace
+
 import numpy as np
+
 from reservoir_control.controllers.mpc.bilevel import NestedResponseSearch
 from reservoir_control.study_config import COUPLED_CONFIG, load_settings
-from reservoir_control.systems.ottawa.model import (
-    OttawaParameters, OttawaState, OttawaForcing, AggregateStorageModel,
-)
+from reservoir_control.systems.loslr.causal import CausalOntarioSession
+from reservoir_control.systems.loslr.data import forcing_from_row
+from reservoir_control.systems.loslr.model import OntarioModel, Plan2014, ReleaseRequest
+from reservoir_control.systems.loslr.planning import OntarioPlanningAdapter
 from reservoir_control.systems.ottawa.follower import OttawaFollower
-from .causal import CausalOntarioSession
-from .data import forcing_from_row
-from .model import OntarioModel, Plan2014, ReleaseRequest
-from .planning import OntarioPlanningAdapter
+from reservoir_control.systems.ottawa.model import (
+    AggregateStorageModel,
+    OttawaForcing,
+    OttawaParameters,
+    OttawaState,
+)
 
 CONFIG = COUPLED_CONFIG
 DURATION = 365*86400/48

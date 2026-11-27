@@ -1,20 +1,29 @@
+import json
+import logging
 from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import replace
 from itertools import product
-import json
 from math import ceil
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from reservoir_control.systems.loslr.operator import ONTARIO_COST_COMPONENTS, ontario_stage_costs
-from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
-from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
 from reservoir_control.experiments.fixed_schedule_replay import (
-    CONFIG, FollowerTolerances, digest, json_value, load_follower_config, replay, solve_hard_follower,
+    CONFIG,
+    FollowerTolerances,
+    digest,
+    json_value,
+    load_follower_config,
+    replay,
+    solve_hard_follower,
 )
+from reservoir_control.systems.loslr.operator import ONTARIO_COST_COMPONENTS, ontario_stage_costs
+from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
+from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
+
+LOG = logging.getLogger(__name__)
 
 ONTARIO_HORIZON = 4
 COMPACT_OFFSETS = (-300, -200, -100, -50, 50, 100, 200, 300)
@@ -458,6 +467,7 @@ def run_policy(trajectory, config, scenario, policy, audit, family, *,
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(
         description="Compare Ottawa-blind and response-aware Ontario MPC on one synthetic replay."
     )
@@ -567,8 +577,8 @@ def main():
     for filename, value in (("summary.json", summary), ("ottawa_plans.json", plans)):
         (args.output / filename).write_text(json.dumps(value, indent=2, default=json_value) + "\n")
     for policy, info in summary["policies"].items():
-        print(f"{policy}: {info['status']}, {info['executed_periods']}/{len(trajectory)} periods")
-    print(f"Matched periods: {matched}. Results in {args.output}")
+        LOG.info("%s: %s, %d/%d periods", policy, info["status"], info["executed_periods"], len(trajectory))
+    LOG.info("Matched periods: %d. Results in %s", matched, args.output)
 
 
 if __name__ == "__main__":

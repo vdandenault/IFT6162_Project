@@ -1,7 +1,8 @@
-from argparse import ArgumentParser
 import csv
-from dataclasses import asdict
 import json
+import logging
+from argparse import ArgumentParser
+from dataclasses import asdict
 from math import isclose
 from pathlib import Path
 
@@ -10,20 +11,26 @@ import pandas as pd
 from core.mechanism.base import MDPState
 from gymnasium.spaces import Box
 
-from reservoir_control.systems.loslr.operator import AdjustFlow, ONTARIO_COST_COMPONENTS, ontario_stage_costs
-from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
+from reservoir_control.systems.loslr.operator import (
+    ONTARIO_COST_COMPONENTS,
+    AdjustFlow,
+    ontario_stage_costs,
+)
 from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
+from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
 from reservoir_control.systems.loslr.solvers.rule_curve import FORCING_COLUMNS
 from reservoir_control.systems.ottawa.hard_follower_study import (
     CONFIG,
-    load_follower_config,
     FollowerTolerances,
     TransitState,
     digest,
+    load_follower_config,
     make_problem,
     solve_hard_follower,
     validate_config,
 )
+
+LOG = logging.getLogger(__name__)
 
 LOOKAHEAD = 5
 PERIODS = 12
@@ -249,6 +256,7 @@ def json_value(value):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(
         description="Replay an Ontario discharge commitment against the hard Ottawa follower."
     )
@@ -304,7 +312,7 @@ def main():
         writer.writerows(records)
     for filename, value in (("summary.json", summary), ("ottawa_plans.json", plans)):
         (args.output / filename).write_text(json.dumps(value, default=json_value, indent=2) + "\n")
-    print(f"{summary['status']}: {len(executed)}/{PERIODS} periods. Results in {args.output}")
+    LOG.info("%s: %d/%d periods. Results in %s", summary["status"], len(executed), PERIODS, args.output)
 
 
 if __name__ == "__main__":

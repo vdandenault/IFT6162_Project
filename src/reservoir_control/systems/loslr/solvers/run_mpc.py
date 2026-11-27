@@ -1,5 +1,6 @@
-from argparse import ArgumentParser
 import json
+import logging
+from argparse import ArgumentParser
 from pathlib import Path
 
 import numpy as np
@@ -10,10 +11,13 @@ from reservoir_control.systems.loslr.solvers.mpc_beam import MPCBeamSearchCfg
 from reservoir_control.systems.loslr.solvers.mpc_mppi import MPCMPPICfg
 from reservoir_control.systems.loslr.solvers.mpc_shooting import MPCShootingCfg
 
+LOG = logging.getLogger(__name__)
+
 SOLVERS = {"shooting": MPCShootingCfg, "beam": MPCBeamSearchCfg, "mppi": MPCMPPICfg}
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(
         description="Run the merged Lake Ontario simulator with shooting, beam or MPPI MPC."
     )
@@ -62,7 +66,7 @@ def main():
         "running_cost": result["running_cost"].tolist(),
     }
     (args.output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    print(f"Saved {summary['executed_steps']} Ontario periods to {args.output}")
+    LOG.info("Saved %d Ontario periods to %s", summary["executed_steps"], args.output)
 
 
 if __name__ == "__main__":

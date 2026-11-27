@@ -1,14 +1,19 @@
-from pathlib import Path
 import argparse
 import json
+import sys
+from pathlib import Path
 
 import pandas as pd
 
-from .adapter import OntarioSession, decision_time
-from .baseline import adapter_trace, archived_glrrm_comparison, event_summary
-from .data import SupplyForecast, forcing_from_row, load_inputs
-from .model import DecisionInputs, OntarioModel, Plan2014
-from .native import NativeReference, sha256
+from reservoir_control.systems.loslr.adapter import OntarioSession, decision_time
+from reservoir_control.systems.loslr.baseline import (
+    adapter_trace,
+    archived_glrrm_comparison,
+    event_summary,
+)
+from reservoir_control.systems.loslr.data import SupplyForecast, forcing_from_row, load_inputs
+from reservoir_control.systems.loslr.model import DecisionInputs, OntarioModel, Plan2014
+from reservoir_control.systems.loslr.native import NativeReference, sha256
 
 
 class CausalOntarioSession(OntarioSession):
@@ -138,7 +143,7 @@ def main():
     causal.to_csv(trace, index=False)
     summary["trace_sha256"] = sha256(trace)
     (args.output / "summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
-    print(json.dumps(summary, indent=2, allow_nan=False))
+    sys.stdout.write(json.dumps(summary, indent=2, allow_nan=False) + "\n")
 
 
 if __name__ == "__main__":

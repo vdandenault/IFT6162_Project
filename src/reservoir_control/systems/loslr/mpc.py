@@ -1,17 +1,18 @@
 import argparse
-from copy import copy
 import json
+import sys
+from copy import copy
 from pathlib import Path
 from time import perf_counter
 
 import pandas as pd
 
 from reservoir_control.controllers.mpc.receding_horizon import RecedingHorizonSearch
-from .planning import MPCSettings, OntarioPlanningAdapter
-from .causal import CausalOntarioSession
-from .model import OntarioModel, Plan2014
-from .data import load_inputs
-from .native import NativeReference, sha256
+from reservoir_control.systems.loslr.causal import CausalOntarioSession
+from reservoir_control.systems.loslr.data import load_inputs
+from reservoir_control.systems.loslr.model import OntarioModel, Plan2014
+from reservoir_control.systems.loslr.native import NativeReference, sha256
+from reservoir_control.systems.loslr.planning import MPCSettings, OntarioPlanningAdapter
 
 
 def summarize(frame, settings):
@@ -139,7 +140,7 @@ def main():
         "results": summarize(rows, settings),
     }
     (args.output / "summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
-    print(json.dumps(summary["results"], indent=2, allow_nan=False))
+    sys.stdout.write(json.dumps(summary["results"], indent=2, allow_nan=False) + "\n")
 
 
 if __name__ == "__main__":

@@ -1,16 +1,15 @@
+import json
+import sys
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 from itertools import product
-import json
 from pathlib import Path
-import sys
 
 import numpy as np
 import pandas as pd
 from scipy.optimize import lsq_linear
 
 from reservoir_control.evaluation.provenance import digest
-
 from reservoir_control.systems.ottawa.hydrometric import LICENCE, address, check_records, fetch
 
 FIRST, LAST = 2000, 2025

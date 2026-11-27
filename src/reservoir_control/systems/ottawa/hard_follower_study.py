@@ -1,15 +1,22 @@
+import json
+import sys
 from argparse import ArgumentParser
 from dataclasses import asdict
-import json
 from pathlib import Path
-import sys
+
 import numpy as np
 import pandas as pd
+
 from reservoir_control.evaluation.provenance import digest
 from reservoir_control.study_config import COUPLED_CONFIG, REPO_ROOT, load_settings
-from reservoir_control.systems.ottawa.hard_follower import (HardFollowerProblem, FollowerWeights, FollowerTolerances,
-                            solve_hard_follower, InvalidFollowerInput)
 from reservoir_control.systems.ottawa.forecasts import inflow_forecast
+from reservoir_control.systems.ottawa.hard_follower import (
+    FollowerTolerances,
+    FollowerWeights,
+    HardFollowerProblem,
+    InvalidFollowerInput,
+    solve_hard_follower,
+)
 from reservoir_control.systems.ottawa.routing import TransitState
 
 CONFIG = COUPLED_CONFIG

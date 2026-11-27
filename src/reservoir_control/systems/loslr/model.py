@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 import numpy as np
 
 from reservoir_control.core.contracts import DecisionTime, Transition
-from .data import BALANCE_CONVERSION, Forcing, SupplyForecast, baseline_parameters
-from .native import NativeReference
+from reservoir_control.systems.loslr.data import (
+    BALANCE_CONVERSION,
+    Forcing,
+    SupplyForecast,
+    baseline_parameters,
+)
+from reservoir_control.systems.loslr.native import NativeReference
 
 
 @dataclass(frozen=True)

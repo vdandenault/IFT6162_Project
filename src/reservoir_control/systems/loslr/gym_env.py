@@ -1,7 +1,8 @@
 import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
-from .coupled import CoupledSession, f_limit_target
+from gymnasium import spaces
+
+from reservoir_control.systems.loslr.coupled import CoupledSession, f_limit_target
 
 
 class OntarioOttawaEnv(gym.Env):
