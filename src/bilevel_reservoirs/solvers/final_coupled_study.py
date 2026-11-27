@@ -149,11 +149,14 @@ def train(env, seed, budget, out, *, checkpoint_steps=()):
     agent.save(out / "final.pt")
 
 
-def evaluate(model, cases, costs, agents, destination, *, recovery_mode="original"):
+def evaluate(model, cases, costs, agents, destination, *, recovery_mode="original", controllers=ARMS):
     env = HardCoupledEnv(model, cases, costs, native_costs=True, recovery_mode=recovery_mode)
+    policies = [(arm, None) for arm in controllers if arm != "ppo"]
+    if "ppo" in controllers:
+        policies.extend(("ppo", agent) for agent in agents)
     trajectories, results = [], []
     for index, case in enumerate(cases):
-        for arm, agent in [*( (arm, None) for arm in ARMS[:-1]), *(("ppo", agent) for agent in agents)]:
+        for arm, agent in policies:
             started = perf_counter()
             obs, _ = env.reset(options={"case": index})
             done = False
@@ -186,7 +189,7 @@ def evaluate(model, cases, costs, agents, destination, *, recovery_mode="origina
                 "request_interventions": sum((row["intervention_m3_s"] or 0.) > 1e-5 for row in executed),
                 "runtime_seconds": perf_counter() - started,
             })
-        print(f"{case['name']}: " + ", ".join(r["status"] for r in results[-(3 + len(agents)):]), flush=True)
+        print(f"{case['name']}: " + ", ".join(r["status"] for r in results[-len(policies):]), flush=True)
     pd.DataFrame(trajectories).to_csv(destination / "trajectories.csv", index=False)
     pd.DataFrame(results).to_csv(destination / "runs.csv", index=False)
 
@@ -196,6 +199,7 @@ def main():
     parser.add_argument("--mode", choices=("smoke", "train", "development", "reserved", "stress"), required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--training-root", type=Path)
+    parser.add_argument("--controller", choices=ARMS, help="Evaluate one controller (default: all four)")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--recovery", choices=("original", "audit", "reserve", "profiles", "proactive_profiles",
                                                "peak_protected"), default="original")
@@ -206,6 +210,9 @@ def main():
     costs = {**protocol, "incomplete_penalty": design["incomplete_penalty"]}
     base = json.loads(CONFIG.read_text())
     training = args.mode in ("smoke", "train")
+    controllers = (args.controller,) if args.controller else ARMS
+    if training and args.controller:
+        parser.error("--controller applies only to evaluation")
     if training and args.recovery not in ("original", "profiles"):
         parser.error("PPO training supports the original or profiles execution contract")
     if args.event_only and args.mode != "development":
@@ -214,8 +221,8 @@ def main():
         parser.error("--stress-design applies to stress")
     if training and args.mode == "train" and args.seed not in protocol["seeds"]:
         parser.error("Select one declared PPO seed with --seed")
-    if not training and args.training_root is None:
-        parser.error("Evaluation requires --training-root")
+    if not training and "ppo" in controllers and args.training_root is None:
+        parser.error("PPO evaluation requires --training-root")
     years = (list(range(protocol["training_years"][0], protocol["training_years"][1] + 1)) if training else
              sorted(set(range(protocol["development_years"][0], protocol["development_years"][1]+1))
                     | set(protocol["development_events"])) if args.mode == "development" else
@@ -235,6 +242,7 @@ def main():
     if args.stress_design:
         sources.append(args.stress_design)
     plan = {"mode": args.mode, "recovery": args.recovery, "years": years, "case_names": [case["name"] for case in cases],
+            "controllers": ("ppo",) if training else controllers,
             "design": design, "training_budget": budget, "ppo": asdict(PPO), "seeds": protocol["seeds"],
             "candidate_offsets_m3_s": OFFSETS, "costs": costs, "upstream": reference.provenance(),
             "sources_sha256": {str(path): digest(path) for path in sources}}
@@ -243,12 +251,14 @@ def main():
         train(HardCoupledEnv(model, cases, costs, recovery_mode=args.recovery),
               args.seed or protocol["seeds"][0], budget, args.output / "agent")
     else:
-        import torch
-        torch.set_num_threads(1)
-        agents = [PPOAgent.load(args.training_root / f"seed_{seed}/agent/final.pt") for seed in protocol["seeds"]]
-        if any(agent.steps != budget for agent in agents):
-            raise ValueError("The saved PPO endpoint does not match the frozen budget")
-        evaluate(model, cases, costs, agents, args.output, recovery_mode=args.recovery)
+        agents = []
+        if "ppo" in controllers:
+            import torch
+            torch.set_num_threads(1)
+            agents = [PPOAgent.load(args.training_root / f"seed_{seed}/agent/final.pt") for seed in protocol["seeds"]]
+            if any(agent.steps != budget for agent in agents):
+                raise ValueError("The saved PPO endpoint does not match the frozen budget")
+        evaluate(model, cases, costs, agents, args.output, recovery_mode=args.recovery, controllers=controllers)
 
 
 if __name__ == "__main__":
