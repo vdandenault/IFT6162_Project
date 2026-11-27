@@ -1,5 +1,3 @@
-"""Compare Ontario MPC and the causal rule curve on matched historical years."""
-
 import argparse
 from copy import copy
 import json
@@ -109,7 +107,9 @@ def compare(reference, frame, years, settings):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Compare Ontario MPC and the causal rule curve on matched historical years."
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--checkout", type=Path)
     parser.add_argument("--years", type=int, nargs="+", default=[1995, 2017, 2019])

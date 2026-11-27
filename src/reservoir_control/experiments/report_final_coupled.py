@@ -1,4 +1,3 @@
-"""Assemble matched results, learning curves, and a local Ontario–Ottawa replay."""
 from argparse import ArgumentParser
 from importlib.resources import files
 import json
@@ -203,7 +202,9 @@ def playback(root, tables, seeds, output, *, trajectory_paths=None):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Assemble matched results, learning curves, and a local Ontario–Ottawa replay."
+    )
     parser.add_argument("--root", type=Path, default=Path("results/loslr"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--playback", type=Path, required=True)

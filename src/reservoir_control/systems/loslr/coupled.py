@@ -1,4 +1,3 @@
-"""Ontario–Ottawa research coupling and planning adapter, separate from algorithms."""
 from dataclasses import dataclass, replace
 import numpy as np
 from reservoir_control.controllers.mpc.bilevel import NestedResponseSearch

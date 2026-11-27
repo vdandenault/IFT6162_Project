@@ -1,5 +1,3 @@
-"""Compare the saved Plan2014 baseline, refactored RuleCurve, and MPC shooting in W&B."""
-
 from __future__ import annotations
 
 import logging
@@ -148,8 +146,11 @@ def make_agent(mechanism_id: str) -> OntarioConfig:
 
 def load_baseline_pkl() -> tuple[pd.DataFrame, np.ndarray]:
     baseline = DATA_PATH / "baseline"
-    data_all = pd.read_pickle(baseline / "legacy_outSim.pkl").reset_index(drop=True)
-    costs_all = pd.read_pickle(baseline / "output.pkl").reset_index(drop=True)
+    trajectory, costs_path = (baseline / name for name in ("legacy_outSim.pkl", "output.pkl"))
+    if not trajectory.is_file() or not costs_path.is_file():
+        raise FileNotFoundError("The optional legacy comparison requires both local baseline pickles")
+    data_all = pd.read_pickle(trajectory).reset_index(drop=True)
+    costs_all = pd.read_pickle(costs_path).reset_index(drop=True)
 
     if len(data_all) != len(costs_all) or len(data_all) < N_STEPS:
         raise ValueError("baseline_pkl trajectory and costs must have equal, sufficient lengths")

@@ -1,7 +1,3 @@
-"""Offline recoverability diagnosis of the seven archived noisy H5 failures.
-
-Never generates forecasts or supplies true future inflows to the replayed policy.
-"""
 from argparse import ArgumentParser
 from copy import deepcopy
 from dataclasses import asdict
@@ -321,7 +317,14 @@ def write_report(frame,checks,details,output):
 
 
 def main():
-    parser=ArgumentParser(description=__doc__);parser.add_argument('--archive',type=Path,default=ARCHIVE)
+    parser=ArgumentParser(
+        description=(
+            "Offline recoverability diagnosis of the seven archived noisy H5 failures.\n"
+            "\n"
+            "Never generates forecasts or supplies true future inflows to the replayed policy.\n"
+        )
+    )
+    parser.add_argument('--archive',type=Path,default=ARCHIVE)
     parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
     run(args.archive.resolve(),args.output.resolve())
 

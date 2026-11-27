@@ -1,10 +1,3 @@
-"""Pure SI storage balance; no default Ottawa calibration or response policy.
-
-The caller supplies net inflow, useful storage/release bounds and the effective
-time convention. No clipping or implicit spill repairs an infeasible balance.
-See docs/OTTAWA_MODEL_SPEC.md before coupling this model to historical SLON.
-"""
-
 from dataclasses import dataclass
 from math import isfinite
 

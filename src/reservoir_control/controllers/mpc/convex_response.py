@@ -1,8 +1,3 @@
-"""Strictly convex QP response, KKT diagnostics and local active-set sensitivity.
-
-Minimize 0.5 x' H x + g' x subject to A x <= b. System adapters supply
-all units, physics and objectives. Derivatives apply only within a stable active set.
-"""
 from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import minimize, nnls

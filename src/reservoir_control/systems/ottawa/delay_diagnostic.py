@@ -1,8 +1,3 @@
-"""Offline perfect-forecast diagnosis of the unchanged one_period_delay study.
-
-Independent LP retains explicit storage variables and balance equalities, unlike
-production QP storage elimination. This is diagnostic code, not a new controller.
-"""
 from argparse import ArgumentParser
 from copy import deepcopy
 from dataclasses import asdict
@@ -295,7 +290,14 @@ def write_report(c,case,checks,failed,comparison,horizons,witness,original_plans
 
 
 def main():
-    parser=ArgumentParser(description=__doc__)
+    parser=ArgumentParser(
+        description=(
+            "Offline perfect-forecast diagnosis of the unchanged one_period_delay study.\n"
+            "\n"
+            "Independent LP retains explicit storage variables and balance equalities, unlike\n"
+            "production QP storage elimination. This is diagnostic code, not a new controller.\n"
+        )
+    )
     parser.add_argument('--config',type=Path,default=CONFIG)
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args(); run(args.config.resolve(),args.output.resolve())

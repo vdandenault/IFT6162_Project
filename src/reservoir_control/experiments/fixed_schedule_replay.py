@@ -1,5 +1,3 @@
-"""Replay an Ontario discharge commitment against the hard Ottawa follower."""
-
 from argparse import ArgumentParser
 import csv
 from dataclasses import asdict
@@ -251,7 +249,9 @@ def json_value(value):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Replay an Ontario discharge commitment against the hard Ottawa follower."
+    )
     parser.add_argument("--trajectory", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--scenario", default="one_period_delay_feasible")

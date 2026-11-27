@@ -1,5 +1,3 @@
-"""Paths and section loading for repository study settings."""
-
 import json
 from pathlib import Path
 

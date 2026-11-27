@@ -1,4 +1,3 @@
-"""Check response-aware ranking across storage and one-step routing assumptions."""
 from argparse import ArgumentParser
 from collections import Counter
 from itertools import product
@@ -215,7 +214,9 @@ def plot_flood_years(traces, costs, output):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Check response-aware ranking across storage and one-step routing assumptions."
+    )
     parser.add_argument("--archive-root", type=Path, default=Path("results/loslr"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--playback", type=Path, required=True)

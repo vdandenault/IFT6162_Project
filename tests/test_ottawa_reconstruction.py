@@ -1,4 +1,3 @@
-"""Synthetic unit fixtures only: no invented Baskatong historical observations."""
 from copy import deepcopy
 import json
 from pathlib import Path

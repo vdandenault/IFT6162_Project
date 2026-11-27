@@ -1,4 +1,3 @@
-"""Isolated forecast-driven planning without a Gymnasium dependency."""
 from copy import deepcopy
 from typing import Generic, Sequence, TypeVar
 from reservoir_control.core import DecisionTime, PlanningModel, Transition

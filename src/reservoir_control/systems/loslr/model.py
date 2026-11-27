@@ -1,4 +1,3 @@
-"""State-explicit adapter to the native Ontario balance, Bv7 limits and routing."""
 from __future__ import annotations
 
 from dataclasses import dataclass

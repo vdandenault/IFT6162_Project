@@ -1,4 +1,3 @@
-"""Reference parity and interface isolation for the external LOSLR dependency."""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -175,17 +174,10 @@ class LoslrParityTests(unittest.TestCase):
             OntarioModel(self.reference).transition(state, 6000, forcing_from_row(row),
                                                    replace(decision_time(row, 0), duration_seconds=3600))
 
-    def test_import_exception_restores_paths(self):
+    def test_native_import_failure_leaves_global_paths_unchanged(self):
         path = sys.path[:]
-        class FailingLoader:
-            def create_module(self, spec):
-                return None
-            def exec_module(self, module):
-                sys.path.append("unexpected-native-path")
-                raise RuntimeError("native failed")
-        import importlib.util
-        spec = importlib.util.spec_from_loader("_loslr_failed", FailingLoader())
-        with patch("importlib.util.spec_from_file_location", return_value=spec):
+        source = b'import sys\nsys.path.append("unexpected-native-path")\nraise RuntimeError("native failed")'
+        with patch.object(self.reference, "verify_file", return_value=source):
             with self.assertRaisesRegex(RuntimeError, "native failed"):
                 self.reference.load("functions/limits/Bv7_glamUpdates.py")
         self.assertEqual(sys.path, path)

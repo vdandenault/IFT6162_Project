@@ -1,5 +1,3 @@
-"""Nominal MPC with single direct shooting."""
-
 from __future__ import annotations
 
 from copy import deepcopy
@@ -11,6 +9,7 @@ from core.mechanism.base import MDPState
 from core.optimizers.base import Optimizer
 from scipy.optimize import minimize
 
+from reservoir_control.systems.loslr.data import read_trace
 from reservoir_control.systems.loslr.operator import Ontario
 from reservoir_control.systems.loslr.simulator import LoslrEnv
 from reservoir_control.systems.loslr.native import native_reference
@@ -69,7 +68,7 @@ class MPCShooting(Optimizer):
         ):
             raise ValueError("Invalid objective weights")
 
-        self.data = pd.read_table(config.input_path)
+        self.data = read_trace(config.input_path)
         fcstNA = self.data["forNTS"].notna()
         fcstNA.iloc[: self.t_0] = True
         self.data = self.data.loc[fcstNA, :].reset_index(drop=True)

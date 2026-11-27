@@ -1,5 +1,3 @@
-"""Validate offline reach flow and Pointe-Claire headroom with frozen gauges."""
-
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 from itertools import product
@@ -232,7 +230,9 @@ def write_report(output, scores, periods, options, coefficients):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Validate offline reach flow and Pointe-Claire headroom with frozen gauges."
+    )
     parser.add_argument("--downstream", type=Path, required=True, help="Frozen downstream observation output")
     parser.add_argument("--raw", type=Path, help="Use saved HYDAT responses")
     parser.add_argument("--output", type=Path, required=True)

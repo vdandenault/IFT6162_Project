@@ -1,5 +1,3 @@
-"""Audit response-aware ranking near downstream limits and assemble final comparisons."""
-
 from argparse import ArgumentParser
 import json
 from pathlib import Path
@@ -181,7 +179,9 @@ def final_comparison(tables, archived_pairs):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Audit response-aware ranking near downstream limits and assemble final comparisons."
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = Path("results/loslr")

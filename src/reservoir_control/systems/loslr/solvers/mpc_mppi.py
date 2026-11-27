@@ -1,5 +1,3 @@
-"""Nominal MPC with model predictive path integral control."""
-
 from __future__ import annotations
 
 from copy import deepcopy

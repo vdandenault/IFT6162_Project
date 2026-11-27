@@ -1,4 +1,3 @@
-"""Gymnasium application interface, separate from optimization and physics."""
 import gymnasium as gym
 from reservoir_control.core import EnvironmentSession
 

@@ -1,4 +1,3 @@
-"""A common score must retain physical components and reject unmatched records."""
 import unittest
 
 import numpy as np

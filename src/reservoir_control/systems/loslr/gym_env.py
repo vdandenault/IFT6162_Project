@@ -1,4 +1,3 @@
-"""Gymnasium adapter for the coupled Ontario task; PPO remains system-independent."""
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np

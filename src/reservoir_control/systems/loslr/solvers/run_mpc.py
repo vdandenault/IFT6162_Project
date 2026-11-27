@@ -1,5 +1,3 @@
-"""Run the merged Lake Ontario simulator with shooting, beam or MPPI MPC."""
-
 from argparse import ArgumentParser
 import json
 from pathlib import Path
@@ -16,7 +14,9 @@ SOLVERS = {"shooting": MPCShootingCfg, "beam": MPCBeamSearchCfg, "mppi": MPCMPPI
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Run the merged Lake Ontario simulator with shooting, beam or MPPI MPC."
+    )
     parser.add_argument("--solver", choices=SOLVERS, default="shooting")
     parser.add_argument("--lookahead", type=int, choices=range(1, 5), default=4,
                         help="Prediction window in quarter-months (default: 4)")

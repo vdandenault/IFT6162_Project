@@ -1,5 +1,3 @@
-"""baseline plan 2014"""
-
 from __future__ import annotations
 
 import tomllib
@@ -13,6 +11,7 @@ import pandas as pd
 from core.mechanism.base import MDPState
 from core.optimizers.base import Optimizer, OptimizerConfig
 
+from reservoir_control.systems.loslr.data import read_policies, read_trace, trace_path
 from reservoir_control.systems.loslr.native import native_reference
 from reservoir_control.systems.loslr.simulator import LoslrEnv
 
@@ -119,21 +118,14 @@ class RuleCurveCfg(OptimizerConfig):
             cfg = tomllib.load(config)
         self.releaseFunInputs = cfg["releaseFunction"]
         self.dvName = cfg["decisionVariables"]["dvName"]
-        self.input_path = (
-            self.data_path
-            / "input"
-            / cfg["experimentalDesign"]["trace"]
-            / self.trace
-            / f"{self.forecast_lead_time}_{self.forecast_skill}.txt"
-        )
+        trace_name = Path(cfg["experimentalDesign"]["trace"]) / self.trace / f"{self.forecast_lead_time}_{self.forecast_skill}"
+        self.input_path = trace_path(self.data_path, trace_name)
         self.policy_ids = [id] if isinstance(id, int) else list(id)
 
         if not self.policy_ids:
             raise ValueError("At least one policy ID is required")
 
-        policies = pd.read_csv(
-            self.data_path / "baseline" / "satisficingPolicies.csv", index_col="ID"
-        )
+        policies = read_policies(self.data_path)
         self.pars = {
             pid: formatDecisionVariables(
                 policies.loc[pid, self.dvName].tolist(), **self.releaseFunInputs
@@ -176,7 +168,7 @@ class RuleCurve(Optimizer):
         self.september_rule = septemberRule if config.september_rule else "off"
         self.pids = deque(config.policy_ids)
         self.pars = config.pars
-        self.data = pd.read_table(config.input_path)
+        self.data = read_trace(config.input_path)
         fcstNA = self.data["forNTS"].notna()
         fcstNA.iloc[: self.t_0] = True
         self.data = self.data.loc[fcstNA].reset_index(drop=True)

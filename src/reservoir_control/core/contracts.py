@@ -1,4 +1,3 @@
-"""Explicit model and application boundaries; no calendar or solver assumptions."""
 from dataclasses import dataclass, field
 from math import isfinite
 from typing import Any, Generic, Mapping, Protocol, TypeVar

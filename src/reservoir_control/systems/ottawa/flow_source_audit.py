@@ -1,5 +1,3 @@
-"""Check actual HYDAT daily coverage for prospective Ottawa routing benchmarks."""
-
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -52,7 +50,9 @@ def check_records(payload, station, field, window):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Check actual HYDAT daily coverage for prospective Ottawa routing benchmarks."
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output

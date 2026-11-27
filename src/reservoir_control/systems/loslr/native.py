@@ -1,25 +1,22 @@
-"""Scoped access to the unmodified, pinned LOSLR reference implementation.
-
-The upstream project is deliberately an external checkout, not vendored code.
-Its legacy absolute utility imports and path side effects are contained here.
-"""
 from __future__ import annotations
 
 import builtins
 import hashlib
-import importlib.util
 import subprocess
 import sys
-import threading
 from functools import cache
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 UPSTREAM_URL = "https://github.com/ksemmendinger/loslr_regulation_optimization"
 UPSTREAM_COMMIT = "8b8de9e89487552f8590f4d42d87484e5edc6872"
 BASELINE_CONFIG = "output/data/baseline/Plan2014_GLRRM/config.toml"
 INPUT_FILE = "input/historic/1900_2020/12month_sqAR.txt"
-_LOCK = threading.RLock()
+LEGACY_INPUT_FILE = "input/historic/1961_2020/12month_sqAR.txt"
+POLICIES_FILE = (
+    "output/data/ruleCurve_Bv7_offSepRule_netAnnualAverage_12month_sqAR_9dv_7obj_1961_2020_75000nfe/"
+    "satisficingPolicies.csv"
+)
 
 
 def sha256(path: Path) -> str:
@@ -55,7 +52,7 @@ class NativeReference:
         # Reject changed tracked implementation/data throughout these paths.
         check = subprocess.run(["git", "-C", str(self.root), "diff", "--quiet", "HEAD", "--",
                                 "functions", "optimizationSimulation.py", "objectiveFunctions",
-                                BASELINE_CONFIG, INPUT_FILE])
+                                BASELINE_CONFIG, INPUT_FILE, LEGACY_INPUT_FILE, POLICIES_FILE])
         if check.returncode:
             raise ValueError("Native checkout has modified tracked implementation or inputs")
         self._modules: dict[str, ModuleType] = {}
@@ -70,55 +67,47 @@ class NativeReference:
         if relative in self._modules:
             return self._modules[relative]
         path = (self.root / relative).resolve()
-        if not path.is_relative_to(self.root):
-            raise ValueError("Native module must lie inside the pinned checkout")
-        self._verify_file(relative)
-        original_import = builtins.__import__
+        source = self.verify_file(relative)
+        module = ModuleType("_loslr_reference_" + relative.removesuffix(".py").replace("/", "_"))
+        module.__file__ = str(path)
+        # Upstream uses sys.path.append(".") to find functions.utils.
+        # Give it a private path list and resolve that import directly.
+        local_sys = SimpleNamespace(path=sys.path.copy())
 
         def native_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "sys":
+                return local_sys
             if name == "functions.utils":
                 return self.utils
-            return original_import(name, globals, locals, fromlist, level)
+            return builtins.__import__(name, globals, locals, fromlist, level)
 
-        spec = importlib.util.spec_from_file_location(
-            "_loslr_reference_" + relative.replace("/", "_").replace(".", "_"), path
-        )
-        assert spec is not None and spec.loader is not None
-        module = importlib.util.module_from_spec(spec)
         module.__dict__["__builtins__"] = {**vars(builtins), "__import__": native_import}
-        # Native files append '.' themselves. Restore even if execution fails;
-        # no native module name or absolute 'functions' alias enters sys.modules.
-        with _LOCK:
-            original_path = sys.path[:]
-            try:
-                spec.loader.exec_module(module)
-            finally:
-                sys.path[:] = original_path
+        exec(compile(source, module.__file__, "exec", dont_inherit=True), module.__dict__)
         self._modules[relative] = module
         return module
 
-    def _verify_file(self, relative: str) -> None:
+    def verify_file(self, relative: str) -> bytes:
+        path = (self.root / relative).resolve()
+        if not path.is_relative_to(self.root):
+            raise ValueError("Native file must lie inside the pinned checkout")
+        source = path.read_bytes()
         expected = subprocess.check_output(
             ["git", "-C", str(self.root), "show", f"{UPSTREAM_COMMIT}:{relative}"]
         )
-        if (self.root / relative).read_bytes() != expected:
+        if source != expected:
             raise ValueError(f"Native file differs from pinned source: {relative}")
-
-    def verify_inputs(self) -> None:
-        for relative in (BASELINE_CONFIG, INPUT_FILE):
-            self._verify_file(relative)
+        return source
 
     def provenance(self) -> dict:
-        self.verify_inputs()
-        for relative in self._modules:
-            self._verify_file(relative)
+        verified = {p: hashlib.sha256(self.verify_file(p)).hexdigest()
+                    for p in (*self._modules, BASELINE_CONFIG, INPUT_FILE)}
         pi_files = subprocess.check_output(
             ["git", "-C", str(self.root), "ls-files", "objectiveFunctions/legacyPIs"], text=True
         ).splitlines()
-        files = [*self._modules, BASELINE_CONFIG, INPUT_FILE, *pi_files]
+        hashes = {p: sha256(self.root / p) for p in pi_files} | verified
         return {
             "url": UPSTREAM_URL,
             "commit": UPSTREAM_COMMIT,
-            "files": {p: sha256(self.root / p) for p in sorted(files)},
+            "files": dict(sorted(hashes.items())),
             "licensing": "No repository license identified; external checkout only, redistribution unresolved",
         }

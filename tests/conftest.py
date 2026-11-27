@@ -1,5 +1,3 @@
-"""Collect the optional MetaMARL tests when the Ontario group is installed."""
-
 from importlib.util import find_spec
 from pathlib import Path
 

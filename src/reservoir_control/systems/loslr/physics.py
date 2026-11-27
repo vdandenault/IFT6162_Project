@@ -1,9 +1,3 @@
-"""Differentiable Lake Ontario transition for adjustment-based planning.
-
-Levels are in metres, net total supply is in m³/s, and the adjustment is
-in LOSLR native units (one unit equals 10 m³/s).
-"""
-
 from math import isfinite
 
 import jax

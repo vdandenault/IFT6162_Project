@@ -1,8 +1,3 @@
-"""Uncalibrated Baskatong daily-mean scenario model, separate from reconstruction.
-
-Offline only. Effective input is reconstructed once from observations for each
-storage mapping and discharge proxy, then held fixed across release experiments.
-"""
 from argparse import ArgumentParser
 from dataclasses import dataclass
 import json
@@ -399,7 +394,14 @@ as recorded in the preserved original manifest/station metadata.
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description=(
+            "Uncalibrated Baskatong daily-mean scenario model, separate from reconstruction.\n"
+            "\n"
+            "Offline only. Effective input is reconstructed once from observations for each\n"
+            "storage mapping and discharge proxy, then held fixed across release experiments.\n"
+        )
+    )
     parser.add_argument('--pilot', type=Path, default=ROOT/'results/ottawa/baskatong_1970_observed_v1')
     parser.add_argument('--config', type=Path, default=CONFIG)
     parser.add_argument('--output', type=Path, required=True)

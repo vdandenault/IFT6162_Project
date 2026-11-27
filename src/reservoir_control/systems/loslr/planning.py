@@ -1,5 +1,3 @@
-"""Ontario physics, candidate releases and objectives for the MPC planning adapter."""
-
 from dataclasses import dataclass, replace
 from math import floor, isfinite
 

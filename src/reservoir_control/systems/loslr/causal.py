@@ -1,5 +1,3 @@
-"""Plan 2014 rule-curve benchmark with past-only decision inputs."""
-
 from pathlib import Path
 import argparse
 import json
@@ -79,7 +77,9 @@ def replay(reference, frame):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Plan 2014 rule-curve benchmark with past-only decision inputs."
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--checkout", type=Path)
     args = parser.parse_args()

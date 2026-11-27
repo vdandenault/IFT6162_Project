@@ -1,4 +1,3 @@
-"""Strict source verification for frozen experiments."""
 import hashlib
 from pathlib import Path
 from typing import Mapping

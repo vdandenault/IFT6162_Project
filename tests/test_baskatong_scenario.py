@@ -1,4 +1,3 @@
-"""Synthetic fixtures validate scenario accounting, not Baskatong calibration."""
 import unittest
 import numpy as np
 import pandas as pd

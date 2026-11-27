@@ -1,4 +1,3 @@
-"""Small FP32 PPO with bounded tanh-Gaussian requests and explicit GAE masks."""
 from dataclasses import dataclass,asdict
 import math
 import numpy as np

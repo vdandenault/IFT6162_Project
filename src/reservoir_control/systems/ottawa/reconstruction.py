@@ -1,8 +1,3 @@
-"""Daily, observation-based reservoir balance; no controller or training dependency.
-
-No downloader is provided for the restricted ORRPB observation service. Inputs
-must have a documented processing licence and explicit measurement conventions.
-"""
 from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import dataclass
@@ -346,7 +341,14 @@ def report(metadata, summary):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description=(
+            "Daily, observation-based reservoir balance; no controller or training dependency.\n"
+            "\n"
+            "No downloader is provided for the restricted ORRPB observation service. Inputs\n"
+            "must have a documented processing licence and explicit measurement conventions.\n"
+        )
+    )
     parser.add_argument('--metadata', type=Path, default=DEFAULT_METADATA)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--levels', type=Path)

@@ -1,4 +1,3 @@
-"""Run native Plan 2014, verify the adapter, and write an auditable baseline."""
 from __future__ import annotations
 
 import argparse
@@ -121,7 +120,7 @@ def event_summary(frame: pd.DataFrame, years: list[int]) -> dict:
 
 def archived_glrrm_comparison(reference: NativeReference, native: pd.DataFrame) -> dict:
     relative = "output/data/baseline/Plan2014_GLRRM/simulation/historic/1900_2020/sim.csv"
-    reference._verify_file(relative)
+    reference.verify_file(relative)
     archived = pd.read_csv(reference.root / relative)
     joined = native.merge(archived, on=["Year", "QM"], suffixes=("_python", "_glrrm"), validate="one_to_one")
     differences = {}
@@ -217,7 +216,9 @@ def run(output: Path, checkout: Path | None = None, last_year: int | None = None
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Run native Plan 2014, verify the adapter, and write an auditable baseline."
+    )
     parser.add_argument("--output", type=Path, default=Path("results/loslr/native_baseline_v1"))
     parser.add_argument("--checkout", type=Path)
     parser.add_argument("--last-year", type=int, help="Optional 1900..2020 override of recipe endpoint")

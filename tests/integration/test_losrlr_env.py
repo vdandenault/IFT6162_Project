@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from core.mechanism.base import MDPState
 
+from reservoir_control.systems.loslr.data import read_policies, read_trace, trace_path
 from reservoir_control.systems.loslr.simulator import LoslrEnv
 from reservoir_control.systems.loslr.native import native_reference
 
@@ -94,7 +95,7 @@ def config():
 def data(config):
     trace = config["experimentalDesign"]["trace"]
     optimized_input = config["experimentalDesign"]["inputFile"]
-    data = pd.read_table(DATA_PATH / "input" / trace / f"{optimized_input}.txt")
+    data = read_trace(trace_path(DATA_PATH, Path(trace) / optimized_input))
     fcstNA = data["forNTS"].notna()
     fcstNA.iloc[:START_STEP] = True
     data = data.loc[fcstNA, :].reset_index(drop=True)
@@ -115,7 +116,7 @@ def legacy(config, data):
     decision_variables = config["decisionVariables"]
     release_fun_inputs = config["releaseFunction"]
     pars = formatDecisionVariables(
-        pd.read_csv(DATA_PATH / "baseline" / "satisficingPolicies.csv", index_col="ID")
+        read_policies(DATA_PATH)
         .loc[POLICY_ID, decision_variables["dvName"]]
         .tolist(),
         **release_fun_inputs,
@@ -136,11 +137,6 @@ def legacy(config, data):
         )
 
     return legacy.iloc[START_STEP:].reset_index(drop=True)
-
-
-@pytest.fixture(scope="module")
-def reference():
-    return pd.read_pickle(DATA_PATH / "baseline" / "legacy_outSim.pkl")
 
 
 @pytest.fixture

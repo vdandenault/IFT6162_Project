@@ -1,18 +1,44 @@
-"""Reference data and parameter audit; supplied forecasts are not causal evidence."""
 from __future__ import annotations
 
 import tomllib
 from dataclasses import dataclass
+from io import BytesIO
+from pathlib import Path
 from typing import Mapping
 
 import numpy as np
 import pandas as pd
 
-from .native import BASELINE_CONFIG, INPUT_FILE, NativeReference
+from reservoir_control.study_config import REPO_ROOT
+
+from .native import BASELINE_CONFIG, INPUT_FILE, POLICIES_FILE, NativeReference, default_checkout
 
 # Upstream uses this balance convention, not variable Gregorian quarter lengths.
 BALANCE_CONVERSION = 2970.0
 PERIODS_PER_YEAR = 48
+
+
+def trace_path(data_root: Path, name: Path) -> Path:
+    """Prefer a project's CSV input, then resolve legacy tab-separated traces."""
+    local = data_root / "input" / name
+    for suffix in (".csv", ".txt"):
+        path = local.with_suffix(suffix)
+        if path.is_file():
+            return path
+    if data_root.resolve() == REPO_ROOT / "data":
+        return (default_checkout() / "input" / name).with_suffix(".txt")
+    return local.with_suffix(".csv")
+
+
+def read_trace(path: Path) -> pd.DataFrame:
+    return pd.read_csv(path, sep="," if path.suffix == ".csv" else "\t")
+
+
+def read_policies(data_root: Path) -> pd.DataFrame:
+    path = data_root / "baseline" / "satisficingPolicies.csv"
+    if not path.is_file() and data_root.resolve() == REPO_ROOT / "data":
+        path = default_checkout() / POLICIES_FILE
+    return pd.read_csv(path, index_col="ID")
 
 
 def quarter_start(year, qm):
@@ -41,8 +67,7 @@ class Forcing:
 
 
 def baseline_parameters(reference: NativeReference) -> dict[str, float]:
-    reference._verify_file(BASELINE_CONFIG)
-    config = tomllib.loads((reference.root / BASELINE_CONFIG).read_text())
+    config = tomllib.loads(reference.verify_file(BASELINE_CONFIG).decode("utf-8"))
     section = config["decisionVariables"]
     original = dict(zip(section["dvName"], section["baselineValue"], strict=True))
     # Native current ruleCurve.py reduced the older baseline's parameter schema.
@@ -63,8 +88,7 @@ def baseline_parameters(reference: NativeReference) -> dict[str, float]:
 def load_inputs(reference: NativeReference, last_year: int | None = None) -> pd.DataFrame:
     if last_year is not None and not 1900 <= last_year <= 2020:
         raise ValueError("last_year must be in the supplied simulation range1900..2020")
-    reference._verify_file(INPUT_FILE)
-    frame = pd.read_csv(reference.root / INPUT_FILE, sep="\t")
+    frame = pd.read_csv(BytesIO(reference.verify_file(INPUT_FILE)), sep="\t")
     if last_year is not None:
         frame = frame.loc[frame.Year <= last_year].copy()
     frame = frame.reset_index(drop=True)

@@ -1,4 +1,3 @@
-"""Apply one declared physical score to Ontario controller trajectories."""
 from argparse import ArgumentParser
 from dataclasses import dataclass, asdict
 import hashlib
@@ -83,7 +82,9 @@ def score_trajectories(frame, settings=ScoreSettings()):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Apply one declared physical score to Ontario controller trajectories."
+    )
     parser.add_argument('--input', type=Path, action='append', help='Repeat for additional controller CSVs')
     parser.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
     parser.add_argument('--output', type=Path, required=True)

@@ -58,7 +58,10 @@ def config():
 
 @pytest.fixture(scope="session")
 def reference():
-    return pd.read_pickle(DATA_PATH / "baseline" / "legacy_outSim.pkl")
+    path = DATA_PATH / "baseline" / "legacy_outSim.pkl"
+    if not path.is_file():
+        pytest.skip("The local legacy Ontario comparison is unavailable")
+    return pd.read_pickle(path)
 
 
 @pytest.fixture(scope="session")

@@ -1,5 +1,3 @@
-"""Compare Ottawa-blind and response-aware Ontario MPC on one synthetic replay."""
-
 from argparse import ArgumentParser
 from collections import Counter
 from dataclasses import replace
@@ -460,7 +458,9 @@ def run_policy(trajectory, config, scenario, policy, audit, family, *,
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Compare Ottawa-blind and response-aware Ontario MPC on one synthetic replay."
+    )
     parser.add_argument("--trajectory", type=Path, required=True, help="Original H4 trajectory with forecast leads")
     parser.add_argument("--fixed-schedule", type=Path, required=True)
     parser.add_argument("--candidates", choices=("compact", "grid", "limits"), default="grid")

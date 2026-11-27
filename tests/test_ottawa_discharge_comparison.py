@@ -1,4 +1,3 @@
-"""Synthetic comparison fixtures only, not replacement historical observations."""
 import unittest
 import numpy as np
 from reservoir_control.systems.ottawa.discharge_comparison import align, statistics

@@ -1,4 +1,3 @@
-"""Read-only comparison of the saved 1970 Baskatong/Mercier discharge records."""
 from argparse import ArgumentParser
 import json
 from math import asin, cos, radians, sin, sqrt
@@ -222,7 +221,9 @@ contributing agencies listed above. Review date: {evidence['review_date']}.
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Read-only comparison of the saved 1970 Baskatong/Mercier discharge records."
+    )
     parser.add_argument('--pilot', type=Path, default=ROOT/'results/ottawa/baskatong_1970_observed_v1')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()

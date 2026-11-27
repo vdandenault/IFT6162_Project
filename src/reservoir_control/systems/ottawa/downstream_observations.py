@@ -1,5 +1,3 @@
-"""Acquire and check daily Cornwall–LaSalle flows and Pointe-Claire levels."""
-
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 import json
@@ -252,7 +250,9 @@ def report(data, annual, quarters, datum, fit):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Acquire and check daily Cornwall–LaSalle flows and Pointe-Claire levels."
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--raw", type=Path, help="Use the original local source responses")
     args = parser.parse_args()

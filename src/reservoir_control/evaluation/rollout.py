@@ -1,4 +1,3 @@
-"""Bounded episode runner; physical metric aggregation remains system-specific."""
 from copy import deepcopy
 from dataclasses import dataclass
 from math import isfinite

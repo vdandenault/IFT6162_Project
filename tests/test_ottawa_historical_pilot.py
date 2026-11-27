@@ -1,4 +1,3 @@
-"""Parser checks use synthetic TEST records, never substitute historical observations."""
 import unittest
 from reservoir_control.systems.ottawa.historical_pilot import extract, symbol, requests_for
 

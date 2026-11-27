@@ -1,10 +1,3 @@
-"""Standalone hard-constrained Ottawa follower for an executable leader schedule.
-
-Separate from follower.py's legacy soft-penalty request-response experiment.
-Storage variables are eliminated algebraically, leaving an equivalent strictly
-convex release QP. Returned storage includes S[0] and is independently checked.
-No Ontario physics, downstream slack, emergency action or simulation is hidden here.
-"""
 from dataclasses import dataclass, field
 from time import perf_counter
 import numpy as np

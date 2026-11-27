@@ -25,8 +25,11 @@ constraints, and feasibility and recovery checks.
 | [`src/reservoir_control/controllers/`](src/reservoir_control/controllers/) | Shared MPC and PPO algorithms |
 | [`src/reservoir_control/experiments/`](src/reservoir_control/experiments/) | Coupled runner, comparisons, and replay |
 | [`configs/`](configs/) | Three settings files for coupled runs, Ontario-only runs, and Ottawa gauge evidence |
-| [`data/`](data/) and [`external/`](external/) | Reference data and pinned dependencies |
+| [`data/`](data/) and [`external/`](external/) | Local baseline settings and pinned LOSLR reference data |
 | [`tests/`](tests/) and `results/` | Automated checks and locally generated outputs |
+
+Use CSV for new local traces. The pinned LOSLR submodule supplies the
+original tab-separated inputs and policy table.
 
 ## Controllers
 

@@ -1,4 +1,3 @@
-"""Replay session and state construction; training reward is deliberately undefined."""
 from __future__ import annotations
 
 

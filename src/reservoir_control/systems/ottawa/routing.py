@@ -1,8 +1,3 @@
-"""Explicit volume-preserving integer-period plug-flow routing for synthetic demos.
-
-A delay is an experiment assumption, not an Ottawa travel-time estimate.
-Queue entries are volumes due in successive future periods, never flow rates.
-"""
 from dataclasses import dataclass
 import numpy as np
 

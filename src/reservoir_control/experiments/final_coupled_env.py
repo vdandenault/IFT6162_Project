@@ -1,5 +1,3 @@
-"""Shared Gymnasium and hard-follower execution for the final paired study."""
-
 from dataclasses import replace
 from itertools import product
 

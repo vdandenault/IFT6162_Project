@@ -1,4 +1,3 @@
-"""Coupled model conservation, causal timing, QP optimality and PPO boundaries."""
 from dataclasses import replace
 import unittest
 import numpy as np

@@ -1,5 +1,3 @@
-"""Train and evaluate four Ontario controllers under one hard Ottawa execution contract."""
-
 from argparse import ArgumentParser
 from dataclasses import asdict, replace
 import json
@@ -195,7 +193,9 @@ def evaluate(model, cases, costs, agents, destination, *, recovery_mode="origina
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Train and evaluate four Ontario controllers under one hard Ottawa execution contract."
+    )
     parser.add_argument("--mode", choices=("smoke", "train", "development", "reserved", "stress"), required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--training-root", type=Path)

@@ -1,8 +1,3 @@
-"""Acquire actual Baskatong/Mercier daily records for the fixed 1970 pilot.
-
-Uses the official ECCC OGC API and the existing daily processing functions.
-Only date-labelled daily means are claimed; no fabricated boundary observations.
-"""
 from argparse import ArgumentParser
 from collections import Counter
 from datetime import datetime, timezone
@@ -233,7 +228,14 @@ coverage, not calibrated inflow or suitability for a reservoir network.
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description=(
+            "Acquire actual Baskatong/Mercier daily records for the fixed 1970 pilot.\n"
+            "\n"
+            "Uses the official ECCC OGC API and the existing daily processing functions.\n"
+            "Only date-labelled daily means are claimed; no fabricated boundary observations.\n"
+        )
+    )
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--raw-dir', type=Path, help='Reuse a verified local acquisition instead of network access')
     args = parser.parse_args()

@@ -99,6 +99,6 @@ wandb/
 
 # Local archives and generated output
 /output/
-/data/baseline/legacy_outSim_1step.pkl
+/data/baseline/*.pkl
 /data/baseline/rule_curve_0.csv
 /data/baseline/onlyPhysicalLimits.toml

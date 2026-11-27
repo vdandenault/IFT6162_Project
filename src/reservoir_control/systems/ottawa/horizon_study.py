@@ -1,4 +1,3 @@
-"""Matched-forecast horizon sensitivity, preserving the hard-follower formulation."""
 from argparse import ArgumentParser
 from copy import deepcopy
 import json
@@ -291,7 +290,10 @@ def write_report(summary,pairs,common,output):
 
 
 def main():
-    parser=ArgumentParser(description=__doc__);parser.add_argument('--config',type=Path,default=CONFIG)
+    parser=ArgumentParser(
+        description="Matched-forecast horizon sensitivity, preserving the hard-follower formulation."
+    )
+    parser.add_argument('--config',type=Path,default=CONFIG)
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args();run(args.config.resolve(),args.output.resolve())
 

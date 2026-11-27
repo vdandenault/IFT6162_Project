@@ -1,4 +1,3 @@
-"""Standalone synthetic receding-horizon hard-follower demonstrations, no leader."""
 from argparse import ArgumentParser
 from dataclasses import asdict
 import json
@@ -297,7 +296,9 @@ def run_study(config, output, mode, *, lookahead=None):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description="Standalone synthetic receding-horizon hard-follower demonstrations, no leader."
+    )
     parser.add_argument('--config', type=Path, default=CONFIG)
     parser.add_argument('--forecast', choices=('perfect','noisy'), required=True)
     parser.add_argument('--lookahead', type=int, help='Prediction window in periods (default: configured horizon)')

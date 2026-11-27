@@ -1,4 +1,3 @@
-"""Receding-horizon beam search using an application planning adapter."""
 from typing import Any, Iterable, Protocol, Sequence
 
 

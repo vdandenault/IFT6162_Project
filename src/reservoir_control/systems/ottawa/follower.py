@@ -1,4 +1,3 @@
-"""Aggregated Ottawa best response; parameters are declared research assumptions."""
 from dataclasses import dataclass
 import numpy as np
 from reservoir_control.controllers.mpc.convex_response import solve_response

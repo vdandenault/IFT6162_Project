@@ -1,4 +1,3 @@
-"""Shared adapter, planning and rollout contracts."""
 import subprocess
 import sys
 import unittest
