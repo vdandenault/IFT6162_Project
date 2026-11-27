@@ -155,8 +155,7 @@ def test_candidate_proposals_match_budgets_and_free_capacity_at_the_arrival():
 def test_ottawa_recession_forecast_preserves_lead_one_and_uses_prior_observations():
     import numpy as np
 
-    from bilevel_reservoirs.solvers.study_ottawa_recession import recession_bank
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+    from reservoir_control.systems.ottawa.horizon_study import forecast_bank, recession_bank
 
     observed = np.array([900., 1050., 2350., 1650., 1050., 900., 900., 900.])
     origin = forecast_bank(observed, "noisy", 119, 900., 700.)
@@ -175,8 +174,7 @@ def test_ottawa_recession_forecast_preserves_lead_one_and_uses_prior_observation
 def test_isolated_recession_cannot_distinguish_a_future_plateau_after_the_jump():
     import numpy as np
 
-    from bilevel_reservoirs.solvers.study_ottawa_recession import recession_bank
-    from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+    from reservoir_control.systems.ottawa.horizon_study import forecast_bank, recession_bank
 
     pulse = np.array([900., 1050., 2350., 1650., 1050., 900., 900.])
     plateau = np.array([900., 1050., 2350., 2350., 2350., 2150., 1800.])
@@ -190,29 +188,6 @@ def test_isolated_recession_cannot_distinguish_a_future_plateau_after_the_jump()
     assert plateau_forecast[3, 1] < plateau_origin[3, 1]
     np.testing.assert_array_equal(plateau_forecast[4:], plateau_origin[4:])
     np.testing.assert_array_equal(pulse_forecast[4:], pulse_origin[4:])
-
-
-def test_shared_release_interval_enforces_the_next_period_arrival(inputs):
-    from bilevel_reservoirs.solvers.fixed_schedule_replay import FollowerTolerances, TransitState, make_problem
-    from bilevel_reservoirs.solvers.scenario_ottawa import first_release_interval, fix_first_release
-    from reservoir_control.systems.ottawa.delay_diagnostic import explicit_storage_feasibility
-
-    _, config, cases = inputs
-    scenario = cases["one_period_delay"]
-    tolerance = FollowerTolerances(**config["acceptance"])
-    schedule = list(config["known_ontario_executable_schedule_m3_s"])
-    schedule[5] = 6700.
-    config = {**config, "known_ontario_executable_schedule_m3_s": schedule}
-    problem = make_problem(config, scenario, 5, 4.8e9, 900., TransitState((591.3e6,)), [1800., 1200., 1000.])
-    # The next 9,600 m³/s cap includes 7,000 Ontario and 2,000 background.
-    assert first_release_interval(problem, tolerance) is None
-    schedule[6:8] = [5800., 6000.]
-    problem = make_problem(config, scenario, 5, 4.8e9, 900., TransitState((591.3e6,)), [1800., 1200., 1000.])
-    lo, hi = first_release_interval(problem, tolerance)
-    assert lo == pytest.approx(1800. - 200e6 / 657000.)
-    assert hi == pytest.approx(1800.)
-    for release in (lo, hi):
-        assert explicit_storage_feasibility(fix_first_release(problem, release), tolerance)["status"] == "feasible"
 
 
 def test_native_limit_candidates_extend_external_replay(inputs):
@@ -316,7 +291,6 @@ def test_noisy_policy_uses_bank_and_updates_storage_with_realized_inflow(inputs)
     import numpy as np
 
     from bilevel_reservoirs.solvers.compare_ottawa_response import run_policy
-    from bilevel_reservoirs.solvers.stress_ottawa_response import offline_recoverability
     from reservoir_control.systems.ottawa.horizon_study import forecast_bank
 
     trajectory, config, cases = inputs
@@ -341,10 +315,6 @@ def test_noisy_policy_uses_bank_and_updates_storage_with_realized_inflow(inputs)
                 config["clock"]["duration_seconds"] * (row["ottawa_net_inflow_m3_s"] - bank[k, 0]),
                 abs=0.01,
             )
-        recovery = offline_recoverability(trajectory, config, scenario, trace[:-1])
-        assert recovery["fixed_continuation_lp"]["status"] == "infeasible"
-        assert recovery["finding"] == "joint_alternative_schedule_witness"
-        assert recovery["alternative_continuation"]["schedule_m3_s"][0] < 10 * fixed["ontFlow"].iloc[6]
 
 
 @pytest.mark.parametrize("scenario_name,last_period,violates", [

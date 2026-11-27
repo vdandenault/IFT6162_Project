@@ -13,7 +13,6 @@ from scipy.optimize import lsq_linear
 from .downstream_observations import CAP, FIRST, LAST, SHIFT
 from .flow_source_audit import LICENCE, address, check_records, fetch
 from .reconstruction import digest
-from .routing_validation import years
 
 GAUGES = {"britannia": "02KF005", "prairies": "02OA004"}
 FIT = (2000, 2009)
@@ -22,6 +21,10 @@ DEVELOPMENT = (FIT[0], SELECT[1])
 HOLDOUT = (2021, 2025)
 LAGS = range(8)
 NEAR_CAP = .10
+
+
+def years(index, bounds):
+    return (index.year >= bounds[0]) & (index.year <= bounds[1])
 
 
 def gauge_queries():

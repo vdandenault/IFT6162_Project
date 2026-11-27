@@ -1,6 +1,3 @@
-[submodule "external/gym4real"]
-	path = external/gym4real
-	url = https://github.com/vdandenault/gym4ReaL.git
 [submodule "external/loslr_regulation_optimization"]
 	path = external/loslr_regulation_optimization
 	url = https://github.com/ksemmendinger/loslr_regulation_optimization.git

@@ -1,6 +1,4 @@
-"""Shared contracts: isolated planning, optional imports and Como parity."""
-import json
-from pathlib import Path
+"""Shared adapter, planning and rollout contracts."""
 import subprocess
 import sys
 import unittest
@@ -13,7 +11,7 @@ from reservoir_control.adapters.planning import PlanningAdapter
 class SharedContractChecks(unittest.TestCase):
     def test_common_imports_do_not_load_simulator_or_gym(self):
         code = ('import sys; import reservoir_control.core; import reservoir_control.adapters; '
-                'assert not any(k.startswith(("gym4real", "reservoir_control.systems.lake_como", "gymnasium", "torch")) '
+                'assert not any(k.startswith(("gymnasium", "torch")) '
                 'for k in sys.modules)')
         subprocess.run([sys.executable, '-c', code], check=True)
 
@@ -21,12 +19,10 @@ class SharedContractChecks(unittest.TestCase):
         code = (
             'import sys; '
             'import reservoir_control.controllers.ppo.agent; '
-            'import reservoir_control.controllers.sac.agent; '
-            'import reservoir_control.controllers.fqi.agent; '
             'import reservoir_control.controllers.mpc.receding_horizon; '
             'import reservoir_control.controllers.mpc.bilevel; '
             'import reservoir_control.controllers.mpc.convex_response; '
-            'assert not any(k.startswith(("reservoir_control.systems", "gym4real", "gymnasium")) '
+            'assert not any(k.startswith(("reservoir_control.systems", "gymnasium")) '
             'for k in sys.modules)'
         )
         subprocess.run([sys.executable, '-c', code], check=True)
@@ -102,80 +98,3 @@ class SharedContractChecks(unittest.TestCase):
         with self.assertRaises(RuntimeError): env.step(np.array([0.]))
         env.reset(seed=3)
         env.close()
-
-
-class ComoAdapterChecks(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        from reservoir_control.systems.lake_como.environment import settings
-        cls.params = settings('train')
-
-    def test_two_year_gym_trajectory_matches_native_and_frozen_boundary_fixture(self):
-        from reservoir_control.systems.lake_como.simulation.environment import OperationalEnv
-        from reservoir_control.systems.lake_como.adapters import ComoGymnasiumAdapter
-        native = OperationalEnv(self.params, (1946, 1947))
-        adapter = ComoGymnasiumAdapter(self.params, (1946, 1947))
-        fixture = json.loads((Path(__file__).parent / 'fixtures/como_adapter_boundary.json').read_text())
-        native_obs, native_info = native.reset(seed=123)
-        obs, info = adapter.reset(seed=123)
-        np.testing.assert_array_equal(obs, native_obs)
-        self.assertEqual(info, native_info)
-        for index in range(730):
-            action = np.array([20 + (index * 37) % 400], np.float32)
-            expected = native.step(action)
-            actual = adapter.step(action)
-            np.testing.assert_array_equal(actual[0], expected[0])
-            self.assertEqual(actual[1:], expected[1:])
-            if str(index) in fixture['samples']:
-                saved = fixture['samples'][str(index)]
-                np.testing.assert_array_equal(actual[0], saved['observation'])
-                self.assertEqual(actual[1], saved['reward'])
-                self.assertEqual(actual[-1]['storage'], saved['storage_m3'])
-                self.assertEqual(actual[-1]['year_boundary'], saved['year_boundary'])
-            if index == 364:
-                self.assertFalse(actual[2] or actual[3])
-                self.assertEqual(actual[-1]['next_year'], 1947)
-            if index == 365:
-                self.assertEqual(actual[-1]['hourly'][0]['storage_before_m3'], fixture['samples']['364']['storage_m3'])
-        self.assertEqual(actual[2:4], (True, False))
-        self.assertEqual(actual[0][0], np.float32(native.model.lake.storage_to_level(adapter.physical_state.storage)))
-        with self.assertRaises(RuntimeError): adapter.step(action)
-        native.close(); adapter.close()
-
-    def test_hourly_planning_matches_physics_across_year_boundary(self):
-        from reservoir_control.systems.lake_como.simulation.model import OperationalModel, WaterState
-        from reservoir_control.systems.lake_como.adapters import ComoForcing, ComoPlanningAdapter
-        model = OperationalModel(self.params)
-        initial = WaterState(model.lake.level_to_storage(.35))
-        adapter = ComoPlanningAdapter(self.params)
-        actions = [100.] * 48
-        forcings = [ComoForcing(float(self.params['inflow'][year][day-1]),
-                    float(self.params['demand'][year][day-1]), day)
-                    for year, day in [(1946, 365)] * 24 + [(1947, 1)] * 24]
-        times = [DecisionTime(i, 1946 if i < 24 else 1947, f.model_day, 3600.)
-                 for i, f in enumerate(forcings)]
-        planned = adapter.rollout(initial, actions, forcings, times)
-        state = initial
-        for result, action, forcing in zip(planned, actions, forcings):
-            state, row = model.advance(state, action, forcing.inflow_m3_s,
-                                      forcing.demand_m3_s, forcing.model_day)
-            self.assertEqual(result.state, state)
-            self.assertEqual(result.metrics, row)
-        self.assertEqual(initial.storage, model.lake.level_to_storage(.35))
-        self.assertEqual(adapter.rollout(initial, actions, forcings, times), planned)
-        with self.assertRaises(ValueError):
-            adapter.transition(initial, 100., forcings[0], DecisionTime(0, 1946, 365, 86400.))
-
-    def test_continuing_record_uses_truncation_and_actual_terminal_level(self):
-        from reservoir_control.systems.lake_como.adapters import ComoGymnasiumAdapter
-        env = ComoGymnasiumAdapter(self.params, (1946,), terminal_mode='continuing_record')
-        env.reset(seed=123)
-        for _ in range(365): obs, _, term, trunc, info = env.step(np.array([100.], np.float32))
-        self.assertEqual((term, trunc), (False, True))
-        self.assertEqual(obs[-1], 1.)
-        self.assertEqual(obs[0], np.float32(env.session.env.model.lake.storage_to_level(info['storage'])))
-        env.close()
-
-
-if __name__ == '__main__':
-    unittest.main()

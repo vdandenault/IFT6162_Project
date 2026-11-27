@@ -17,7 +17,7 @@ from reservoir_control.systems.loslr.coupled import CONFIG as CHRONOLOGY, load_p
 from reservoir_control.systems.loslr.data import load_inputs
 from reservoir_control.systems.loslr.model import OntarioModel
 from reservoir_control.systems.loslr.native import NativeReference
-from reservoir_control.systems.ottawa.horizon_study import forecast_bank
+from reservoir_control.systems.ottawa.horizon_study import forecast_bank, recession_bank
 
 DESIGN = CHRONOLOGY.with_name("final_coupled_v1.json")
 ARMS = ("rule_curve", "external_mpc", "stackelberg_mpc", "ppo")
@@ -99,8 +99,6 @@ def stress_cases(root, frame, states, base, design_path=None):
                     stem = f"{pair['name']}_{shape}_{seed}"
                     inflows = pair[shape]
                     if design_path:
-                        from bilevel_reservoirs.solvers.study_ottawa_recession import recession_bank
-
                         noise = base["forecast_noise"]
                         raw = forecast_bank(inflows, "noisy", seed, noise["initial_observed_inflow_estimate_m3_s"],
                                             noise["standard_deviation_m3_s"])

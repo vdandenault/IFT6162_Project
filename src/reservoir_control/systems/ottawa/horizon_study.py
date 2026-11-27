@@ -37,6 +37,23 @@ def forecast_bank(realized, mode, seed, initial_estimate, sigma, maximum_horizon
     return bank
 
 
+def recession_bank(observed, persistence, *, jump_minimum_m3_s=None):
+    """Keep lead one, then let positive departures from recent history decay."""
+    if len(observed) != len(persistence):
+        raise ValueError("Observation series and forecast bank must share the same clock")
+    bank = np.array(persistence, copy=True)
+    decay = 1.0 - np.exp2(-np.arange(bank.shape[1]))
+    for decision in range(2, len(observed)):
+        last = observed[decision - 1]
+        earlier = observed[max(0, decision - 4):decision - 1]
+        if jump_minimum_m3_s is not None and last - max(earlier) < jump_minimum_m3_s:
+            continue
+        departure = max(0.0, last - float(np.median(earlier)))
+        bank[decision] -= departure * decay
+    bank.flags.writeable = False
+    return bank
+
+
 def classify(summary,plans,c,horizon,wall_seconds):
     s=dict(summary); s['horizon']=horizon
     reached=s['complete']
@@ -269,7 +286,7 @@ def write_report(summary,pairs,common,output):
         'Reports/plots: `completion.png`, `perfect_delay.png`, `cost_and_timing.png`. Per-run executed traces and full horizon plans (including every solve time, residual, and final queue) are under `runs/`. '
         'The same seed reuses its perturbation pattern across scenarios, so counts are descriptive rather than independent statistical trials. '
         'The original config and archived study outputs were checked unchanged.', '',
-        '```sh','uv run --group reproduction python -m reservoir_control.systems.ottawa.horizon_study --output results/ottawa/horizon_sensitivity_rerun','```']
+        '```sh','uv run --locked python -m reservoir_control.systems.ottawa.horizon_study --output results/ottawa/horizon_sensitivity_rerun','```']
     (output/'report.md').write_text('\n'.join(lines)+'\n')
 
 

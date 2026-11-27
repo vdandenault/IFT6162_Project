@@ -289,7 +289,7 @@ def write_report(c,case,checks,failed,comparison,horizons,witness,original_plans
         'The diagnosis does not prove absence of all possible implementation defects.', '',
         'Original source configuration and earlier result bundles were fingerprinted unchanged. No slacks, relaxed bounds, changed weights, leader optimization or controller changes were introduced.', '',
         '## Reproduce offline','', '```sh',
-        'uv run --group reproduction python -m reservoir_control.systems.ottawa.delay_diagnostic --output results/ottawa/delay_diagnostic_rerun',
+        'uv run --locked python -m reservoir_control.systems.ottawa.delay_diagnostic --output results/ottawa/delay_diagnostic_rerun',
         '```', '', 'Use a fresh output directory. `diagnostic.png` compares storage, releases, downstream flows and retained transit.']
     (output/'report.md').write_text('\n'.join(lines)+'\n')
 

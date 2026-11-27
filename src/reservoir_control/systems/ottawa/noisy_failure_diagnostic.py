@@ -316,7 +316,7 @@ def write_report(frame,checks,details,output):
         'No controller defaults, constraints, weights, forecasts, operating policy, or archived results were modified. '
         'The study horizon is explicitly H5 while the controller default remains H4. '
         'These seven selected synthetic failures do not support general robustness or causality claims.', '',
-        '```sh','uv run --group reproduction python -m reservoir_control.systems.ottawa.noisy_failure_diagnostic --output results/ottawa/noisy_h5_diagnostic_rerun','```']
+        '```sh','uv run --locked python -m reservoir_control.systems.ottawa.noisy_failure_diagnostic --output results/ottawa/noisy_h5_diagnostic_rerun','```']
     (output/'report.md').write_text('\n'.join(lines)+'\n')
 
 

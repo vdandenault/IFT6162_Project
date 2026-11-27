@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 import numpy as np
 import pandas as pd
 
-from reservoir_control.systems.loslr.slon_warning import quarter_start
+from reservoir_control.systems.loslr.data import quarter_start
 from .flow_source_audit import LICENCE, address, check_records, fetch
 from .reconstruction import digest
 

@@ -1,9 +1,0 @@
-{
-  "horizon_days": 7,
-  "max_iterations": 35,
-  "ftol": 0.000001,
-  "finite_difference_step": 0.0001,
-  "discount_factor": 0.995,
-  "level_violation_scale_m": 0.05,
-  "terminal_level_weight": 0.0
-}

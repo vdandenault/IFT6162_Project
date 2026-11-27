@@ -96,3 +96,10 @@ backup_*
 
 # Wandb
 wandb/
+
+# Local archives and generated output
+/output/
+/external/gym4real/
+/data/baseline/legacy_outSim_1step.pkl
+/data/baseline/rule_curve_0.csv
+/data/baseline/onlyPhysicalLimits.toml

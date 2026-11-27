@@ -15,6 +15,12 @@ BALANCE_CONVERSION = 2970.0
 PERIODS_PER_YEAR = 48
 
 
+def quarter_start(year, qm):
+    month, quarter = divmod(qm - 1, 4)
+    # Legacy IJC quarter-month day boundaries (Plan 1958-A, section II).
+    return pd.Timestamp(year, month + 1, (1, 8, 15, 22)[quarter] if month == 1 else (1, 9, 16, 24)[quarter])
+
+
 @dataclass(frozen=True)
 class SupplyForecast:
     nts_m3_s: tuple[float, float, float, float]

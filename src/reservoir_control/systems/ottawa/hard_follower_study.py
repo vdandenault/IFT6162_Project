@@ -284,7 +284,7 @@ def run_study(config, output, mode, *, lookahead=None):
         '`plans.json` contains every horizon, acceptance residual and failure reason; CSV traces and PNGs contain executed trajectories.', '',
         'Old observation/diagnostic bundle fingerprints were checked unchanged. The strict reconstruction and legacy soft follower are untouched.', '',
         '## Reproduce offline', '', '```sh',
-        f'uv run --group reproduction python -m reservoir_control.systems.ottawa.hard_follower_study --forecast {mode} --lookahead {c["horizon"]}{config_arg} --output results/ottawa/hard_follower_v1_{mode}_rerun',
+        f'uv run --locked python -m reservoir_control.systems.ottawa.hard_follower_study --forecast {mode} --lookahead {c["horizon"]}{config_arg} --output results/ottawa/hard_follower_v1_{mode}_rerun',
         '```', '', 'Use a new output directory; existing results are never overwritten.']
     (output/'report.md').write_text('\n'.join(lines)+'\n')
     print(pd.DataFrame(summaries)[['scenario','policy','seed','status','executed_steps']].to_string(index=False))
