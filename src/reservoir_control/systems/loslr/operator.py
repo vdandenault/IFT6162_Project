@@ -16,6 +16,13 @@ from reservoir_control.systems.loslr.native import native_reference
 
 planLimits = native_reference().limits.planLimits
 
+ONTARIO_COST_COMPONENTS = (
+    "upstream_coastal",
+    "downstream_coastal",
+    "negative_energy_value",
+    "recreational_boating",
+)
+
 
 def load_indicator(name: str):
     reference = native_reference()
@@ -43,14 +50,6 @@ def legacy_series_getitem(self, key):
         return self.iloc[key]
 
     return original_series_getitem(self, key)
-
-
-ONTARIO_COST_COMPONENTS = (
-    "upstream_coastal",
-    "downstream_coastal",
-    "negative_energy_value",
-    "recreational_boating",
-)
 
 
 def ontario_stage_costs(data):

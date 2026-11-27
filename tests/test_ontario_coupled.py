@@ -12,6 +12,7 @@ from reservoir_control.systems.loslr.coupled import (
     start_states,
 )
 from reservoir_control.systems.loslr.data import load_inputs
+from reservoir_control.systems.loslr.gym_env import OntarioOttawaEnv
 from reservoir_control.systems.loslr.model import OntarioModel
 from reservoir_control.systems.loslr.native import NativeReference
 from reservoir_control.systems.ottawa.follower import OttawaFollower
@@ -96,8 +97,6 @@ class CoupledIntegrationTests(unittest.TestCase):
         self.assertAlmostEqual(row["release_m3_s"], a.test_plan.predicted_releases[0])
 
     def test_gym_complete_annual_boundary_and_reward(self):
-        from reservoir_control.systems.loslr.gym_env import OntarioOttawaEnv
-
         env = OntarioOttawaEnv(self.model, self.frame, self.states, self.c, [1901])
         obs, _ = env.reset(seed=123)
         self.assertEqual(obs.shape, (64,))
@@ -116,8 +115,6 @@ class CoupledIntegrationTests(unittest.TestCase):
             env.step(np.array([0.0]))
 
     def test_final_data_year_preserves_terminal_observation(self):
-        from reservoir_control.systems.loslr.gym_env import OntarioOttawaEnv
-
         states = start_states(self.model, self.frame, [1902])
         env = OntarioOttawaEnv(self.model, self.frame, states, self.c, [1902])
         env.reset(seed=123)

@@ -3,6 +3,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
+import reservoir_control.systems.ottawa.hard_follower as module
 from reservoir_control.study_config import load_follower_config
 from reservoir_control.systems.ottawa.hard_follower import (
     FollowerWeights,
@@ -110,8 +111,6 @@ def test_delayed_volume_and_horizon_queue():
 
 
 def test_solver_failure_and_residual_gate(monkeypatch):
-    import reservoir_control.systems.ottawa.hard_follower as module
-
     def fail(*args):
         raise RuntimeError("test failure")
 
@@ -129,8 +128,6 @@ def test_solver_failure_and_residual_gate(monkeypatch):
 
 
 def test_approximate_status_requires_physical_checks(monkeypatch):
-    import reservoir_control.systems.ottawa.hard_follower as module
-
     original = module.solve_response
 
     def approximate(*args):

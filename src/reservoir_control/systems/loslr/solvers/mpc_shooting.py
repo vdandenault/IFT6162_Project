@@ -118,7 +118,7 @@ class MPCShooting(Optimizer):
 
                 return cost if np.isfinite(cost) else np.inf
             except (ValueError, FloatingPointError, OverflowError):
-                return np.inf # Invalid hydraulic candidate is infeasible.
+                return np.inf  # Invalid hydraulic candidate is infeasible.
 
         result = minimize(
             rollout,

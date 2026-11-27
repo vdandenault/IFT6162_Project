@@ -1,5 +1,6 @@
 import tomllib
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
@@ -231,8 +232,6 @@ def test_loslr_numerical_stability(env, forcing, legacy):
 
 
 def test_adjustment_mode_reconciles_jax_level_with_applied_flow(data):
-    from types import SimpleNamespace
-
     env = LoslrEnv(world=None, mechanism_id=None, agents_cfg_dict={}, horizon=1)
     calls = []
 

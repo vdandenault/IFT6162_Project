@@ -3,6 +3,7 @@ from time import perf_counter
 
 import numpy as np
 import pandas as pd
+import torch
 
 from reservoir_control.controllers.ppo.agent import PPOAgent, PPOConfig
 from reservoir_control.experiments.final_coupled_env import OBSERVATION_DIM, HardCoupledEnv
@@ -22,8 +23,6 @@ PPO = PPOConfig(
 
 
 def train(env, seed, budget, out, *, checkpoint_steps=()):
-    import torch
-
     torch.set_num_threads(1)
     out.mkdir(parents=True, exist_ok=False)
     agent = PPOAgent(PPO, action_low=-2000.0, action_high=2000.0, seed=seed)

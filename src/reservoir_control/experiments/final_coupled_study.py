@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 from dataclasses import asdict
 from pathlib import Path
 
+import torch
+
 import reservoir_control.systems.ottawa.forecasts as forecasts
 from reservoir_control.controllers.ppo.agent import PPOAgent
 from reservoir_control.evaluation.provenance import digest, json_value
@@ -136,8 +138,6 @@ def main():
     else:
         agents = []
         if "ppo" in controllers:
-            import torch
-
             torch.set_num_threads(1)
             agents = [
                 PPOAgent.load(args.training_root / f"seed_{seed}/agent/final.pt")

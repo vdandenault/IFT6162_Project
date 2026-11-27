@@ -56,10 +56,16 @@ original tab-separated inputs and policy table.
 | Stackelberg MPC     |      0.4581 |                             0.8334 |
 | PPO, five-seed mean |      0.4768 |                             0.8105 |
 
+External-ranked and Stackelberg MPC executed identical Ontario and Ottawa
+releases across all 18 matched years. Anticipating Ottawa changed predicted
+Pointe-Claire levels, and all 2,307 eligible schedules in the audit stayed
+at or below the modeled flood threshold under both forecasts, so the
+downstream penalty was zero and the ranking stayed the same.
+
 Across 18 matched annual replays, all four controllers completed every
-run with zero modeled Lake St. Louis exposure. Both MPC variants chose
-the same releases. They lowered average cost by about 1% and increased
-average Ontario exposure slightly. In the separate 2017 and 2019
+run with zero modeled Lake St. Louis exposure. Both MPC variants lowered
+average cost by about 1% and increased average Ontario exposure slightly.
+In the separate 2017 and 2019
 replays, both cost and Ontario exposure fell relative to Plan 2014.
 Cost combines flood exposure, Ontario low water, release changes, and
 end-of-year level. Gauge validation found about 11 cm of stage error

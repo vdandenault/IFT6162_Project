@@ -8,7 +8,10 @@ from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
+import pandas as pd
+
 from reservoir_control.adapters.planning import PlanningAdapter
+from reservoir_control.controllers.mpc.receding_horizon import RecedingHorizonSearch
 from reservoir_control.study_config import ONTARIO_CONFIG
 from reservoir_control.systems.loslr.adapter import OntarioSession, decision_time, initial_state
 from reservoir_control.systems.loslr.baseline import (
@@ -18,9 +21,11 @@ from reservoir_control.systems.loslr.baseline import (
     run,
     study_recipe,
 )
+from reservoir_control.systems.loslr.causal import CausalOntarioSession
 from reservoir_control.systems.loslr.data import baseline_parameters, forcing_from_row, load_inputs
 from reservoir_control.systems.loslr.model import OntarioModel, Plan2014
 from reservoir_control.systems.loslr.native import NativeReference, default_checkout
+from reservoir_control.systems.loslr.planning import MPCSettings, OntarioPlanningAdapter
 
 
 @unittest.skipUnless(
@@ -33,8 +38,6 @@ class LoslrParityTests(unittest.TestCase):
         cls.frame = load_inputs(cls.reference)
 
     def test_causal_release_is_invariant_to_current_and_future_forcing(self):
-        from reservoir_control.systems.loslr.causal import CausalOntarioSession
-
         model = OntarioModel(self.reference)
         original = CausalOntarioSession(model, self.frame)
         modified = self.frame.copy()
@@ -61,10 +64,6 @@ class LoslrParityTests(unittest.TestCase):
         )
 
     def test_mpc_projection_matches_execution_at_forecast_forcing(self):
-        from reservoir_control.controllers.mpc.receding_horizon import RecedingHorizonSearch
-        from reservoir_control.systems.loslr.causal import CausalOntarioSession
-        from reservoir_control.systems.loslr.planning import OntarioPlanningAdapter
-
         model = OntarioModel(self.reference)
         session = CausalOntarioSession(model, self.frame)
         decision, time = session.information()
@@ -89,10 +88,6 @@ class LoslrParityTests(unittest.TestCase):
         self.assertEqual(plan.steps[0].state.level_m, realized.state.level_m)
 
     def test_mpc_reports_fallback_across_year_boundary(self):
-        from reservoir_control.controllers.mpc.receding_horizon import RecedingHorizonSearch
-        from reservoir_control.systems.loslr.causal import CausalOntarioSession
-        from reservoir_control.systems.loslr.planning import MPCSettings, OntarioPlanningAdapter
-
         model = OntarioModel(self.reference)
         session = CausalOntarioSession(model, self.frame)
         decision, time = session.information()
@@ -167,8 +162,9 @@ class LoslrParityTests(unittest.TestCase):
 
     def test_full_period_native_parity_including_year_carryover_and_events(self):
         n = self.reference
-        native = (
-            n.simulation.simulation(
+        # The pinned simulator writes into arrays obtained through Series.values.
+        with patch.object(pd.Series, "values", property(lambda series: series.to_numpy(copy=True))):
+            native = n.simulation.simulation(
                 self.frame.copy(deep=True),
                 {},
                 n.release.getReleaseFunctionInputs,
@@ -180,9 +176,7 @@ class LoslrParityTests(unittest.TestCase):
                 n.routing.stLawrenceRouting,
                 baseline_parameters(n),
             )
-            .iloc[48:]
-            .reset_index(drop=True)
-        )
+        native = native.iloc[48:].reset_index(drop=True)
         adapted = adapter_trace(n, self.frame)
         comparison = compare_traces(native, adapted)
         self.assertTrue(comparison["complete"], comparison)

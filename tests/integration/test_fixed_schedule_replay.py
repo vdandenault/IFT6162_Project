@@ -1,10 +1,19 @@
 from pathlib import Path
 
+import numpy as np
 import pytest
+from gymnasium.spaces import Box
 
+from reservoir_control.experiments.coupled_forecast import (
+    forecast_f_ceiling,
+    forecast_forcing,
+    native_step,
+)
 from reservoir_control.experiments.fixed_schedule_replay import replay
 from reservoir_control.study_config import REPO_ROOT, load_follower_config
 from reservoir_control.systems.loslr.data import read_trace, trace_path
+from reservoir_control.systems.loslr.operator import AdjustFlow
+from reservoir_control.systems.ottawa.forecasts import forecast_bank, recession_bank
 
 pytestmark = pytest.mark.integration
 
@@ -75,10 +84,6 @@ def test_valid_fixed_schedule_executes_and_preserves_terminal_transit(inputs):
 
 
 def test_ottawa_recession_forecast_preserves_lead_one_and_uses_prior_observations():
-    import numpy as np
-
-    from reservoir_control.systems.ottawa.forecasts import forecast_bank, recession_bank
-
     observed = np.array([900.0, 1050.0, 2350.0, 1650.0, 1050.0, 900.0, 900.0, 900.0])
     origin = forecast_bank(observed, "noisy", 119, 900.0, 700.0)
     revised = recession_bank(observed, origin)
@@ -95,10 +100,6 @@ def test_ottawa_recession_forecast_preserves_lead_one_and_uses_prior_observation
 
 
 def test_isolated_recession_cannot_distinguish_a_future_plateau_after_the_jump():
-    import numpy as np
-
-    from reservoir_control.systems.ottawa.forecasts import forecast_bank, recession_bank
-
     pulse = np.array([900.0, 1050.0, 2350.0, 1650.0, 1050.0, 900.0, 900.0])
     plateau = np.array([900.0, 1050.0, 2350.0, 2350.0, 2350.0, 2150.0, 1800.0])
     pulse_origin = forecast_bank(pulse, "noisy", 129, 900.0, 700.0)
@@ -114,15 +115,6 @@ def test_isolated_recession_cannot_distinguish_a_future_plateau_after_the_jump()
 
 
 def test_forecast_f_ceiling_brackets_native_limit(inputs):
-    from gymnasium.spaces import Box
-
-    from reservoir_control.experiments.coupled_forecast import (
-        forecast_f_ceiling,
-        forecast_forcing,
-        native_step,
-    )
-    from reservoir_control.systems.loslr.operator import AdjustFlow
-
     trajectory, _, _ = inputs
     rows = trajectory.iloc[2:].to_dict("records")
     state = (74.444, 612.0, 1.0)

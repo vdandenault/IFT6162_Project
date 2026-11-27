@@ -8,6 +8,15 @@ from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
 
 ONTARIO_HORIZON = 4
 
+# Beginning-of-period level tiers from the pinned native Bv7 F limit.
+F_LIMIT_TIERS = (
+    (75.30, 22.10, 11523.848),
+    (75.37, 22.20, 11885.486),
+    (75.50, 22.33, 12362.610),
+    (75.60, 22.40, 12622.784),
+    (float("inf"), 22.48, 12922.906),
+)
+
 
 def native_step(forcing, supply, flow, state, limits):
     """Use the same forecast-level and native-limit check as fixed execution."""
@@ -33,16 +42,6 @@ def forecast_forcing(rows, lead, non_ontario, future_roughness=None):
         "stlouisontOut": non_ontario,
         "slonFlow_QM1": non_ontario,
     }
-
-
-# Beginning-of-period level tiers from the pinned native Bv7 F limit.
-F_LIMIT_TIERS = (
-    (75.30, 22.10, 11523.848),
-    (75.37, 22.20, 11885.486),
-    (75.50, 22.33, 12362.610),
-    (75.60, 22.40, 12622.784),
-    (float("inf"), 22.48, 12922.906),
-)
 
 
 def forecast_f_ceiling(level, roughness, commitment):

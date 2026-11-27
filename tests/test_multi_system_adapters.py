@@ -2,10 +2,14 @@ import subprocess
 import sys
 import unittest
 
+import gymnasium as gym
 import numpy as np
 
+from reservoir_control.adapters.gymnasium import GymnasiumAdapter
 from reservoir_control.adapters.planning import PlanningAdapter
 from reservoir_control.core.contracts import DecisionTime, EpisodeStart, EpisodeStep, Transition
+from reservoir_control.evaluation.provenance import verify_sources
+from reservoir_control.evaluation.rollout import IncompleteEpisodeError, run_episode
 
 
 class SharedContractChecks(unittest.TestCase):
@@ -30,8 +34,6 @@ class SharedContractChecks(unittest.TestCase):
         subprocess.run([sys.executable, "-c", code], check=True)
 
     def test_frozen_source_verification_rejects_missing_sources(self):
-        from reservoir_control.evaluation.provenance import verify_sources
-
         with self.assertRaisesRegex(ValueError, "Frozen source is missing"):
             verify_sources({"/missing/source.py": "original-digest"})
 
@@ -66,8 +68,6 @@ class SharedContractChecks(unittest.TestCase):
             adapter.rollout(initial, actions, forcing, [times[0], DecisionTime(3, 2020, 4, 1.0)])
 
     def test_episode_runner_does_not_invent_terminal_flags_or_call_other_controller(self):
-        from reservoir_control.evaluation.rollout import IncompleteEpisodeError, run_episode
-
         class Session:
             def reset(self, *, seed=None, options=None):
                 self.count = 0
@@ -86,10 +86,6 @@ class SharedContractChecks(unittest.TestCase):
             run_episode(session, lambda obs, info: 1.0, max_steps=1)
 
     def test_gym_boundary_preserves_terminal_observation_and_requires_reset(self):
-        import gymnasium as gym
-
-        from reservoir_control.adapters.gymnasium import GymnasiumAdapter
-
         class Session:
             def reset(self, *, seed=None, options=None):
                 return EpisodeStart(np.array([1.0], np.float32))
