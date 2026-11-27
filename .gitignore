@@ -1,0 +1,126 @@
+*.pdf
+
+# Local environment and generated artifacts
+.venv/
+.venv-ontario/
+__pycache__/
+.ipynb_checkpoints/
+results/
+
+# Local explanatory notes and images
+/background/
+/docs/
+
+# macOS metadata
+.DS_Store
+._*
+
+# Python bytecode and tooling caches
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.hypothesis/
+
+# Python virtual environments and local configuration
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Python packaging and build output
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# Test, coverage, and profiling output
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.prof
+*.lprof
+
+# Local reports and generated audit output
+/reports/
+
+# Additional packaging output
+*.so
+.Python
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+.installed.cfg
+*.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+*.ipynb
+
+# Experiment outputs
+/experiments/
+
+# Backup files and directories
+*_backup_*
+backup_*
+*.tar.gz
+*.zip
+
+# Visualization outputs
+*.png
+*.jpg
+*.svg
+
+# Wandb
+wandb/
+
+# Local archives and generated output
+/output/
+/data/baseline/*.pkl
+/data/baseline/rule_curve_0.csv
+/data/baseline/onlyPhysicalLimits.toml
+
+# Completed Ottawa diagnostic runners kept for local replay
+/configs/ottawa_evidence.json
+/src/reservoir_control/systems/ottawa/baskatong_scenario.py
+/src/reservoir_control/systems/ottawa/delay_diagnostic.py
+/src/reservoir_control/systems/ottawa/discharge_comparison.py
+/src/reservoir_control/systems/ottawa/downstream_observations.py
+/src/reservoir_control/systems/ottawa/flow_source_audit.py
+/src/reservoir_control/systems/ottawa/hard_follower_study.py
+/src/reservoir_control/systems/ottawa/historical_pilot.py
+/src/reservoir_control/systems/ottawa/horizon_study.py
+/src/reservoir_control/systems/ottawa/noisy_failure_diagnostic.py
+/src/reservoir_control/systems/ottawa/reconstruction.py
+
+# Completed coupled studies and local reporting tools
+/src/reservoir_control/experiments/compare_ottawa_response.py
+/src/reservoir_control/experiments/final_coupled_playback.html
+/src/reservoir_control/experiments/replay_fixed_schedule_cli.py
+/src/reservoir_control/experiments/report_final_coupled.py
+/src/reservoir_control/experiments/study_downstream_anticipation.py
+/src/reservoir_control/experiments/study_ottawa_ranking_sensitivity.py
+/tests/integration/legacy_ottawa_comparison_cases.py
