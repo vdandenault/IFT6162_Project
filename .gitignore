@@ -115,3 +115,11 @@ wandb/
 /src/reservoir_control/systems/ottawa/horizon_study.py
 /src/reservoir_control/systems/ottawa/noisy_failure_diagnostic.py
 /src/reservoir_control/systems/ottawa/reconstruction.py
+
+# Completed coupled studies and local reporting tools
+/src/reservoir_control/experiments/compare_ottawa_response.py
+/src/reservoir_control/experiments/final_coupled_playback.html
+/src/reservoir_control/experiments/replay_fixed_schedule_cli.py
+/src/reservoir_control/experiments/report_final_coupled.py
+/src/reservoir_control/experiments/study_ottawa_ranking_sensitivity.py
+/tests/integration/legacy_ottawa_comparison_cases.py

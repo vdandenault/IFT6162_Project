@@ -3,11 +3,12 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from reservoir_control.systems.ottawa.follower_problem import load_follower_config, make_problem
+from reservoir_control.study_config import load_follower_config
 from reservoir_control.systems.ottawa.hard_follower import (
     FollowerWeights,
     HardFollowerProblem,
     InvalidFollowerInput,
+    make_problem,
     solve_hard_follower,
 )
 from reservoir_control.systems.ottawa.routing import TransitState

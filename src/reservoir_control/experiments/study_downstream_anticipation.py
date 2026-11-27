@@ -7,6 +7,7 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
+from reservoir_control.evaluation.provenance import digest
 from reservoir_control.experiments.final_coupled_env import HardCoupledEnv
 from reservoir_control.experiments.final_coupled_study import (
     ARMS,
@@ -19,12 +20,8 @@ from reservoir_control.experiments.final_coupled_study import (
     start_states,
     stress_cases,
 )
-from reservoir_control.experiments.fixed_schedule_replay import (
-    digest,
-    json_value,
-    load_follower_config,
-)
-from reservoir_control.study_config import load_settings
+from reservoir_control.experiments.fixed_schedule_replay import json_value
+from reservoir_control.study_config import load_follower_config, load_settings
 
 LOG = logging.getLogger(__name__)
 

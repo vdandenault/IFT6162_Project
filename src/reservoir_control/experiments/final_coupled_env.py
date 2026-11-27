@@ -5,23 +5,20 @@ import gymnasium as gym
 import numpy as np
 from gymnasium.spaces import Box
 
-from reservoir_control.experiments.compare_ottawa_response import (
+from reservoir_control.experiments.coupled_forecast import (
     ONTARIO_HORIZON,
     capped_follower,
     forecast_forcing,
     forecast_trajectory,
     native_step,
 )
-from reservoir_control.experiments.fixed_schedule_replay import (
-    FollowerTolerances,
-    replay_steps,
-    solve_hard_follower,
-)
+from reservoir_control.experiments.fixed_schedule_replay import replay_steps
 from reservoir_control.systems.loslr.adapter import decision_time
 from reservoir_control.systems.loslr.coupled import f_limit_target, operating_cost
 from reservoir_control.systems.loslr.data import SupplyForecast
 from reservoir_control.systems.loslr.model import Plan2014
 from reservoir_control.systems.loslr.physics import FLOW_SCALE
+from reservoir_control.systems.ottawa.hard_follower import FollowerTolerances, solve_hard_follower
 
 OFFSETS = (0, -400, 400, -800, 800, -1200, 1200, -2000, 2000)
 OBSERVATION_DIM = 77
@@ -76,7 +73,7 @@ class HardCoupledEnv(gym.Env):
         self.context = next(self.generator)
         return self.observation(), {"case": self.case["name"]}
 
-    def observation(self):
+    def observation(self, *, neutral=None):
         k, problem, level, previous, ice, _ = self.context
         row = self.rows[k]
         s = self.state
@@ -98,7 +95,7 @@ class HardCoupledEnv(gym.Env):
             (len(self.rows) - k) / 48,
             float(self.guard_next),
             f_limit_target(level) - 22.1,
-            self.neutral_request() / 10000,
+            (self.neutral_request() if neutral is None else neutral) / 10000,
             *(value / 10000 for value in supply),
             *(
                 np.pad(problem.net_inflow_m3_s, (0, 5 - len(problem.net_inflow_m3_s)), mode="edge")
@@ -138,7 +135,6 @@ class HardCoupledEnv(gym.Env):
             problem.routing_matrix @ np.full(horizon, self.config["reference_release_m3_s"])
             + problem.in_transit_contribution_m3_s
         )
-        schedules = {}
         n = min(horizon, ONTARIO_HORIZON)
         requests = [(neutral + offset, *([neutral] * (n - 1))) for offset in OFFSETS]
         if profiles:
@@ -157,14 +153,16 @@ class HardCoupledEnv(gym.Env):
                 )
                 for first, target, ramp in product(sorted(starts), targets, (400, 700))
             )
+        tail = tuple(problem.ontario_executable_release_m3_s[n:])
+        schedules = set()
         for request in requests:
             state = level, previous, ice
             window = []
-            for j in range(min(horizon, ONTARIO_HORIZON)):
+            for j, requested in enumerate(request):
                 non_ontario = arrival[j] + problem.other_downstream_m3_s[j]
                 forcing = forecast_forcing(rows, j, non_ontario)
                 room = problem.downstream_capacity_m3_s[j] - non_ontario
-                flow = min(max(request[j], 0.0), room) / FLOW_SCALE
+                flow = min(max(requested, 0.0), room) / FLOW_SCALE
                 for _ in range(8):
                     if not 0 <= flow <= room / FLOW_SCALE + 1e-7:
                         break
@@ -180,10 +178,9 @@ class HardCoupledEnv(gym.Env):
                     break
                 if len(window) != j + 1:
                     break
-            if len(window) == min(horizon, ONTARIO_HORIZON):
-                schedule = (*window, *problem.ontario_executable_release_m3_s[len(window) :])
-                schedules.setdefault(schedule, None)
-        return rows, arrival, schedules
+            if len(window) == n:
+                schedules.add((*window, *tail))
+        return rows, arrival, sorted(schedules)
 
     def screen(self, problem, requested, neutral, arm, *, profiles=False, candidate_audit=None):
         k, _, level, previous, ice, mechanism = self.context
@@ -358,12 +355,15 @@ class HardCoupledEnv(gym.Env):
 
     def apply(self, arm, residual=0.0):
         k, base, level, previous, _, _ = self.context
-        previous_observation = self.observation()
         neutral = self.neutral_request()
+        previous_observation = self.observation(neutral=neutral)
         requested = max(0.0, neutral + residual)
         choice, recovery, stage, probes = self.plan(arm, requested, neutral)
         self.guard_next = recovery and choice is not None
-        following_context = next_context(self.generator, choice)
+        try:
+            following_context = self.generator.send(choice)
+        except StopIteration:
+            following_context = None
         row = self.records[-1]
         executed = row["status"] == "executed"
         violation = executed and row["ottawa_storage_violation_m3"] > self.tolerance.storage_m3
@@ -432,10 +432,3 @@ class HardCoupledEnv(gym.Env):
         ):
             raise ValueError("Expected a finite scalar residual within ±2000 m³/s")
         return self.apply("ppo", float(action[0]))
-
-
-def next_context(generator, choice):
-    try:
-        return generator.send(choice)
-    except StopIteration:
-        return None

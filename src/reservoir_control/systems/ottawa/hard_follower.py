@@ -41,6 +41,34 @@ class HardFollowerProblem:
     weights: FollowerWeights = FollowerWeights()
 
 
+def make_problem(config, scenario, step, storage, previous, transit, forecast):
+    """Build the follower inputs for one configured decision window."""
+    horizon = len(forecast)
+    window = slice(step, step + horizon)
+    durations = np.full(horizon, config["clock"]["duration_seconds"])
+    routing_matrix, arrivals = transit.forecast(durations)
+    return HardFollowerProblem(
+        initial_storage_m3=storage,
+        previous_release_m3_s=previous,
+        net_inflow_m3_s=forecast,
+        ontario_executable_release_m3_s=config["known_ontario_executable_schedule_m3_s"][window],
+        other_downstream_m3_s=config["known_other_downstream_forecast_m3_s"][window],
+        routing_matrix=routing_matrix,
+        in_transit_contribution_m3_s=arrivals,
+        downstream_capacity_m3_s=scenario["downstream_capacity_m3_s"][window],
+        storage_minimum_m3=np.full(horizon + 1, config["storage_minimum_m3"]),
+        storage_maximum_m3=np.full(horizon + 1, config["storage_maximum_m3"]),
+        release_minimum_m3_s=np.full(horizon, config["release_minimum_m3_s"]),
+        release_maximum_m3_s=np.full(horizon, config["release_maximum_m3_s"]),
+        storage_target_m3=np.full(horizon + 1, config["storage_target_m3"]),
+        release_target_m3_s=np.full(horizon, config["release_target_m3_s"]),
+        duration_seconds=durations,
+        storage_scale_m3=config["storage_scale_m3"],
+        flow_scale_m3_s=config["flow_scale_m3_s"],
+        weights=FollowerWeights(**config["weights"]),
+    )
+
+
 @dataclass(frozen=True)
 class FollowerTolerances:
     storage_m3: float = 0.01

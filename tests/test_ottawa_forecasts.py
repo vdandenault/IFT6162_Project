@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from reservoir_control.systems.ottawa.follower_problem import load_follower_config
+from reservoir_control.study_config import load_follower_config
 from reservoir_control.systems.ottawa.forecasts import forecast_bank
 
 

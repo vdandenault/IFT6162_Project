@@ -23,7 +23,7 @@ constraints, and feasibility and recovery checks.
 | --- | --- |
 | [`src/reservoir_control/systems/`](src/reservoir_control/systems/) | Ontario simulator and Plan 2014 rules in `loslr/`, Ottawa storage and the hard-constrained follower in `ottawa/` |
 | [`src/reservoir_control/controllers/`](src/reservoir_control/controllers/) | Shared MPC and PPO algorithms |
-| [`src/reservoir_control/experiments/`](src/reservoir_control/experiments/) | Coupled runner, comparisons, and replay |
+| [`src/reservoir_control/experiments/`](src/reservoir_control/experiments/) | Coupled training and evaluation, Gymnasium environment, and forecast and replay code |
 | [`configs/`](configs/) | Settings for coupled and Ontario-only runs |
 | [`data/`](data/) and [`external/`](external/) | Local baseline settings and pinned LOSLR reference data |
 | [`tests/`](tests/) and `results/` | Automated checks and locally generated outputs |

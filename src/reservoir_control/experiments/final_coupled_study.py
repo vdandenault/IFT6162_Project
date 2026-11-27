@@ -10,14 +10,11 @@ import pandas as pd
 
 import reservoir_control.systems.ottawa.forecasts as forecasts
 from reservoir_control.controllers.ppo.agent import PPOAgent, PPOConfig
+from reservoir_control.evaluation.provenance import digest
 from reservoir_control.experiments.final_coupled_env import OBSERVATION_DIM, OFFSETS, HardCoupledEnv
-from reservoir_control.experiments.fixed_schedule_replay import (
-    CONFIG,
-    digest,
-    json_value,
-    load_follower_config,
-)
-from reservoir_control.study_config import load_settings
+from reservoir_control.experiments.fixed_schedule_replay import json_value
+from reservoir_control.study_config import COUPLED_CONFIG as CONFIG
+from reservoir_control.study_config import load_follower_config, load_settings
 from reservoir_control.systems.loslr.coupled import load_protocol, start_states
 from reservoir_control.systems.loslr.data import load_inputs
 from reservoir_control.systems.loslr.model import OntarioModel
@@ -389,20 +386,18 @@ def main():
         parser.error("Select one declared PPO seed with --seed")
     if not training and "ppo" in controllers and args.training_root is None:
         parser.error("PPO evaluation requires --training-root")
-    years = (
-        list(range(protocol["training_years"][0], protocol["training_years"][1] + 1))
-        if training
-        else sorted(
-            set(range(protocol["development_years"][0], protocol["development_years"][1] + 1))
-            | set(protocol["development_events"])
-        )
-        if args.mode == "development"
-        else protocol["reserved_test_years"]
-        if args.mode == "reserved"
-        else [1961, 2017, 2019]
-    )
-    if args.event_only:
+    if training:
+        first, last = protocol["training_years"]
+        years = list(range(first, last + 1))
+    elif args.event_only:
         years = protocol["development_events"]
+    elif args.mode == "development":
+        first, last = protocol["development_years"]
+        years = sorted(set(range(first, last + 1)).union(protocol["development_events"]))
+    elif args.mode == "reserved":
+        years = protocol["reserved_test_years"]
+    else:
+        years = [1961, 2017, 2019]
     reference = NativeReference()
     frame = load_inputs(reference)
     model = OntarioModel(reference)
@@ -417,6 +412,7 @@ def main():
     sources = [
         CONFIG,
         Path(__file__),
+        Path(__file__).with_name("coupled_forecast.py"),
         Path(__file__).with_name("final_coupled_env.py"),
         Path(__file__).with_name("fixed_schedule_replay.py"),
         Path(forecasts.__file__),

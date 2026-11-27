@@ -1,17 +1,11 @@
-import csv
-import json
-import logging
-from argparse import ArgumentParser
 from dataclasses import asdict
 from math import isclose
-from pathlib import Path
 
 import numpy as np
-import pandas as pd
 from core.mechanism.base import MDPState
 from gymnasium.spaces import Box
 
-from reservoir_control.evaluation.provenance import digest
+from reservoir_control.study_config import validate_follower_config
 from reservoir_control.systems.loslr.data import FORCING_COLUMNS
 from reservoir_control.systems.loslr.operator import (
     ONTARIO_COST_COMPONENTS,
@@ -20,16 +14,12 @@ from reservoir_control.systems.loslr.operator import (
 )
 from reservoir_control.systems.loslr.physics import CONVERSION, FLOW_SCALE
 from reservoir_control.systems.loslr.simulator import LoslrEnv, round_d
-from reservoir_control.systems.ottawa.follower_problem import (
-    CONFIG,
-    load_follower_config,
+from reservoir_control.systems.ottawa.hard_follower import (
+    FollowerTolerances,
     make_problem,
-    validate_config,
+    solve_hard_follower,
 )
-from reservoir_control.systems.ottawa.hard_follower import FollowerTolerances, solve_hard_follower
 from reservoir_control.systems.ottawa.routing import TransitState
-
-LOG = logging.getLogger(__name__)
 
 LOOKAHEAD = 5
 PERIODS = 12
@@ -88,7 +78,7 @@ def replay_steps(
     if not np.isfinite(schedule).all() or (schedule < 0).any():
         raise ValueError("Ontario commitments must be finite and nonnegative")
     config = {**config, "known_ontario_executable_schedule_m3_s": (schedule * FLOW_SCALE).tolist()}
-    validate_config(config)
+    validate_follower_config(config)
 
     env = LoslrEnv(
         world=None,
@@ -114,18 +104,15 @@ def replay_steps(
     inflows = np.asarray(scenario["realized_net_inflow_m3_s"], dtype=float)
 
     for k, forcing in enumerate(trajectory.to_dict("records")):
-        flow = float(schedule[k])
-        committed = flow * FLOW_SCALE
         level = float(mdp.state["ontLevelBOQ"][k])
         background = config["known_other_downstream_forecast_m3_s"][k]
         capacity = scenario["downstream_capacity_m3_s"][k]
-        forecast = inflows[k : k + LOOKAHEAD]
-        if ottawa_forecast_bank is not None:
-            forecast = np.asarray(ottawa_forecast_bank[k, : len(forecast)], dtype=float)
-            if (
-                len(forecast) != min(LOOKAHEAD, expected_periods - k)
-                or not np.isfinite(forecast).all()
-            ):
+        horizon = min(LOOKAHEAD, expected_periods - k)
+        if ottawa_forecast_bank is None:
+            forecast = inflows[k : k + horizon]
+        else:
+            forecast = np.asarray(ottawa_forecast_bank[k, :horizon], dtype=float)
+            if len(forecast) != horizon or not np.isfinite(forecast).all():
                 raise ValueError("Ottawa forecast bank does not cover the decision window")
         problem = make_problem(config, scenario, k, storage, previous_release, queue, forecast)
         selected = yield k, problem, level, previous_flow, previous_ice, mechanism
@@ -340,75 +327,3 @@ def json_value(value):
     if isinstance(value, np.generic):
         return value.item()
     raise TypeError(f"Cannot serialize {type(value).__name__}")
-
-
-def main():
-    logging.basicConfig(level=logging.INFO)
-    parser = ArgumentParser(
-        description="Replay an Ontario discharge commitment against the hard Ottawa follower."
-    )
-    parser.add_argument("--trajectory", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--scenario", default="one_period_delay_feasible")
-    parser.add_argument(
-        "--repair-offline",
-        action="store_true",
-        help="Find a fixed test schedule using repeated perfect-information replays",
-    )
-    args = parser.parse_args()
-    if args.output.exists():
-        parser.error("--output must be a fresh directory")
-    config = load_follower_config()
-    scenarios = {case["id"]: case for case in config["scenarios"]}
-    if args.scenario not in scenarios:
-        parser.error(f"--scenario must be one of {', '.join(scenarios)}")
-    trajectory = pd.read_csv(args.trajectory)
-    # Match the initial history constants used by the standalone Ontario MPC.
-    history = {"previous_flow": 595.0, "previous_ice": 2.0}
-    scenario = scenarios[args.scenario]
-    if args.repair_offline:
-        trajectory, edits = repair_offline(trajectory, config, scenario, **history)
-    records, plans = replay(trajectory, config, scenario, **history)
-    executed = [row for row in records if row["status"] == "executed"]
-    stopped = records[-1] if len(executed) < PERIODS else None
-    summary = {
-        "status": stopped["status"] if stopped else "completed",
-        "executed_periods": len(executed),
-        "requested_periods": PERIODS,
-        "first_conflict": stopped,
-        "ottawa_lookahead": LOOKAHEAD,
-        "scenario": args.scenario,
-        "ottawa_information": "perfect forecasts",
-        "downstream_background": "synthetic; replaces historical St. Louis non-Ontario input",
-        "initial_ontario_previous_release_m3_s": 595.0 * FLOW_SCALE,
-        "initial_ontario_previous_ice": 2.0,
-        "terminal_ottawa_queue_m3": (
-            executed[-1]["ottawa_end_queue_m3"] if executed else records[0]["ottawa_start_queue_m3"]
-        ),
-        "input_sha256": {
-            str(path): digest(path) for path in (args.trajectory, CONFIG, Path(__file__))
-        },
-    }
-    args.output.mkdir(parents=True, exist_ok=False)
-    if args.repair_offline:
-        schedule = args.output / "fixed_schedule.csv"
-        trajectory.to_csv(schedule, index=False)
-        summary.update(
-            schedule_construction="offline first-rejection repair with perfect Ottawa forecasts",
-            schedule_sha256=digest(schedule),
-            offline_edits=edits,
-        )
-    columns = list(dict.fromkeys(field for row in records for field in row))
-    with (args.output / "joint_trace.csv").open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns)
-        writer.writeheader()
-        writer.writerows(records)
-    for filename, value in (("summary.json", summary), ("ottawa_plans.json", plans)):
-        (args.output / filename).write_text(json.dumps(value, default=json_value, indent=2) + "\n")
-    LOG.info(
-        "%s: %d/%d periods. Results in %s", summary["status"], len(executed), PERIODS, args.output
-    )
-
-
-if __name__ == "__main__":
-    main()
