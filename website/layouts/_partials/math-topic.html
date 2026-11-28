@@ -1,0 +1,6 @@
+{{ $equation := index hugo.Data.equations .key }}
+{{ $heading := $equation.id | default (printf "%s-%s" .section ($equation.title | anchorize)) }}
+<section class="math-topic"{{ with .anchor }} id="{{ . }}"{{ end }} aria-labelledby="{{ $heading }}">
+  <h3 id="{{ $heading }}">{{ $equation.title }}</h3>
+  {{ partial "equation.html" $equation }}
+</section>

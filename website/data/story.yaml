@@ -6,41 +6,45 @@ banner:
 
 spotlights:
   - id: lake-ontario
-    label: "Lake Ontario"
-    title: "Hold water or release it?"
-    content: "Holding water back can raise the lake along its shoreline. Releasing more sends water down the St. Lawrence River. The Plan 2014 rule curve gives us a reference release to compare with each controller’s decision."
+    title: "Lake Ontario"
+    subtitle: "Hold water or release it?"
+    content: "At Moses–Saunders Dam, how much can a release change the lake level in a single quarter-month? With the same incoming supply, another 297 m³/s of outflow lowers the modeled end level by one centimetre."
     style: "geography"
     next: { id: "ottawa-river", label: "Ottawa River" }
     image:
       src: "images/lake-ontario.webp"
       alt: "A low limestone ledge along the Lake Ontario shoreline, overlooking the open lake."
       caption: "Lake Ontario shoreline, Sandbanks Provincial Park"
+      photographer: "Jasonpettit"
+      source: "https://commons.wikimedia.org/wiki/File:Lakeview_Trail_Shoreline.jpg"
       width: 1200
       height: 800
   - id: ottawa-river
-    label: "Ottawa River"
-    title: "Two flows meet at Lake St. Louis"
-    content: "Water arriving from the Ottawa River shares the downstream reach with Lake Ontario releases. We follow the level at Pointe-Claire on Lake St. Louis to see the combined effect."
+    title: "Ottawa River"
+    subtitle: "Two flows meet at Lake St. Louis"
+    content: "The Ottawa operator can store incoming water or release it. Its release reaches Lake St. Louis one decision later. How much room will be left there when that water arrives?"
     note: "The experiments pair historical Lake Ontario conditions with a synthetic Ottawa reservoir. Its storage, inflows and travel time describe the study scenario."
     style: "geography reverse"
-    next: { id: "ordinary-mpc", label: "Ordinary MPC" }
+    next: { id: "ordinary-mpc", label: "Forecast-based MPC" }
     image:
       src: "images/ottawa-river.webp"
       alt: "Aerial view of the river channels near Île Perrot, where Ottawa and St. Lawrence waters meet."
       caption: "Ottawa and St. Lawrence rivers near Île Perrot"
+      photographer: "Dicklyon"
+      source: "https://commons.wikimedia.org/wiki/File:Canal_de_Beauharnois,_Grande_Ile,_Saint_Lawrence_River,_Pointe-des-Cascades,_Ottawa_River,_Perrot_Island.jpg"
       width: 1200
       height: 800
   - id: ordinary-mpc
-    label: "Forecast-based MPC"
-    title: "Plan with one Ottawa forecast"
-    content: "Every quarter-month, model predictive control (MPC) compares possible Lake Ontario release plans. The ordinary controller scores each one against the same forecast of Ottawa releases."
+    title: "Forecast-based MPC"
+    subtitle: "Plan with one Ottawa forecast"
+    content: "Give Lake Ontario one forecast of Ottawa water arriving at Lake St. Louis. It scores every release schedule against that forecast, then checks whether Ottawa can operate within the downstream capacity left by the proposed schedule."
     style: "method"
     strategy: "ordinary"
-    next: { id: "anticipating-mpc", label: "Anticipating MPC" }
+    next: { id: "anticipating-mpc", label: "Stackelberg MPC" }
   - id: anticipating-mpc
-    label: "Stackelberg MPC"
-    title: "Plan for Ottawa’s response"
-    content: "The anticipating controller asks how the Ottawa operator would respond to each candidate plan. Lake Ontario then announces its choice. In both experiments, the same modeled Ottawa operator responds to the chosen plan."
+    title: "Stackelberg MPC"
+    subtitle: "Plan for Ottawa’s response"
+    content: "What would Ottawa release if Lake Ontario announced this schedule? For each candidate, solve the Ottawa reservoir problem with that Lake Ontario plan as an input. Route Ottawa’s chosen releases to Lake St. Louis and use the predicted stage to score the candidate."
     style: "method reverse"
     strategy: "anticipating"
-    next: { id: "replay", label: "Flood-year results" }
+    next: { id: "replay", label: "Model outcomes" }

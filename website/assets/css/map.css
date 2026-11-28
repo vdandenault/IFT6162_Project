@@ -83,6 +83,24 @@
   stroke-width: 2.5;
 }
 
+.dam-marker {
+  color: var(--map-ink);
+}
+
+.dam-symbol {
+  fill: var(--map-ground);
+  stroke: currentcolor;
+  stroke-width: 3;
+}
+
+.dam-marker:hover text, .dam-marker:focus text {
+  text-decoration: underline;
+}
+
+.dam-marker:hover .dam-symbol, .dam-marker:focus .dam-symbol {
+  fill: var(--map-ink);
+}
+
 .basin-map-key {
   font-size: 16px;
 }

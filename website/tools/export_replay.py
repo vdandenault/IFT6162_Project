@@ -80,6 +80,25 @@ def period_metrics(rows, lake_limit):
     return metrics
 
 
+def may_flow_components(rows):
+    """Check the one-step arrival and confluence balance, then select the late-May example."""
+    prior_release = float(rows[0]["ottawa_start_transit_m3"]) / 657_000
+    for row in rows:
+        arrival = float(row["ottawa_arrival_m3_s"])
+        total = float(row["ontario_applied_m3_s"]) + arrival + float(row["background_m3_s"])
+        if (
+            abs(arrival - prior_release) > 1e-5
+            or abs(total - float(row["st_louis_flow_m3_s"])) > 1e-5
+        ):
+            raise ValueError(f"Routing mismatch in {row['case']}, quarter-month {row['period']}")
+        prior_release = float(row["ottawa_executed_release_m3_s"])
+    may_end = rows[19]  # Fourth quarter-month of May.
+    return {
+        name: round(float(may_end[name]), 6)
+        for name in ("ottawa_arrival_m3_s", "background_m3_s", "st_louis_flow_m3_s")
+    }
+
+
 def checked_case(rows, summary, lake_limit):
     """Reconcile an entire episode before selecting the public series and April–June impacts."""
     periods = list(range(1, 49))
@@ -124,6 +143,7 @@ def checked_case(rows, summary, lake_limit):
             values if name == "lake_ontario_release_m3_s" else [round(v, 6) for v in values]
         )
     record.update(
+        may_end_flow=may_flow_components(rows),
         annual_cost=round(checks["full_cost"], 9),
         annual_ottawa_service_shortfall_million_m3=round(
             checks["ottawa_service_shortfall_million_m3"], 6

@@ -1,0 +1,24 @@
+{
+  "revision": "9cc82675ef5c95661b4973c38832d4fcbec010a0",
+  "trace_sha256": {
+    "plan2014": "95991bd4c7a52cf494207b9aee4710ac87580314d557ab98a63e48992ecdc352",
+    "ordinary": "0e52692dbfd7aec74b769bf497bbd78632746eacd19e24381dd1a5678b7f7792",
+    "anticipating": "e568628779ee6e0c0e2fc3577821a86ff4cd225f4c6b8ccce539eaadea932026"
+  },
+  "years": {
+    "2017": {
+      "dates": 48,
+      "schedules": 176,
+      "changed_stage": 122,
+      "positive_penalty": 0,
+      "changed_score": 0
+    },
+    "2019": {
+      "dates": 48,
+      "schedules": 117,
+      "changed_stage": 22,
+      "positive_penalty": 0,
+      "changed_score": 0
+    }
+  }
+}

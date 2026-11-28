@@ -1,0 +1,31 @@
+{{ $policies := (index .years "2017").policies }}
+<figure class="river-graph" data-river="confluence">
+  <figcaption>
+    <h3 id="confluence-title">What reached Lake St. Louis?</h3>
+    <p class="figure-period">2017 replay · Last quarter-month of May</p>
+  </figcaption>
+  <div class="river-plot confluence-plot" hidden>
+    <canvas role="img" aria-labelledby="confluence-title" aria-describedby="confluence-note"></canvas>
+  </div>
+  {{ $plan := $policies.plan2014 }}
+  {{ $mpc := $policies.ordinary }}
+  <p class="figure-note" id="confluence-note">Lake Ontario released {{ lang.FormatNumber 0 (sub (index $mpc.lake_ontario_release_m3_s 19) (index $plan.lake_ontario_release_m3_s 19)) }} m³/s more under forecast-based MPC.
+    Ottawa had released {{ lang.FormatNumber 0 (sub $plan.may_end_flow.ottawa_arrival_m3_s $mpc.may_end_flow.ottawa_arrival_m3_s) }} m³/s less one step earlier.
+    Each policy delivered the same total of {{ lang.FormatNumber 0 $mpc.may_end_flow.st_louis_flow_m3_s }} m³/s at Lake St. Louis.</p>
+  <details class="figure-data" open>
+    <summary>View chart data</summary>
+    <table>
+      <caption>Flow at Lake St. Louis (m³/s)</caption>
+      <thead><tr><th scope="col">Source</th><th scope="col">Filtered Plan 2014</th><th scope="col">Forecast-based MPC</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Lake Ontario</th>{{ range slice $plan $mpc }}{{ $q := index .lake_ontario_release_m3_s 19 }}<td data-value="{{ $q }}">{{ lang.FormatNumber 0 $q }}</td>{{ end }}</tr>
+        {{ range slice (slice "Ottawa arrival" "ottawa_arrival_m3_s") (slice "Other inflow" "background_m3_s") }}
+          {{ $key := index . 1 }}
+          <tr><th scope="row">{{ index . 0 }}</th>{{ range slice $plan $mpc }}{{ $q := index .may_end_flow $key }}<td data-value="{{ $q }}">{{ lang.FormatNumber 0 $q }}</td>{{ end }}</tr>
+        {{ end }}
+      </tbody>
+      <tfoot><tr><th scope="row">Combined flow</th>{{ range slice $plan $mpc }}<td>{{ lang.FormatNumber 0 .may_end_flow.st_louis_flow_m3_s }}</td>{{ end }}</tr></tfoot>
+    </table>
+  </details>
+  <a class="figure-download" download="lake-st-louis-2017.png" hidden>Download confluence figure (PNG)</a>
+</figure>

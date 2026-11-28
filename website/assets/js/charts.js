@@ -60,7 +60,7 @@ export function renderChart(figure, scale, data, baseline, policy, label, quarte
   const width = Math.max(240, Math.round(svg.getBoundingClientRect().width));
   const height = Math.max(150, Math.round(svg.getBoundingClientRect().height));
   const left = isLevel ? 39 : 48;
-  const right = width - 83;
+  const right = width - (width < 410 ? 104 : 138);
   const top = 15;
   const bottom = height - 26;
   const count = baseline[field].length;
@@ -97,7 +97,7 @@ export function renderChart(figure, scale, data, baseline, policy, label, quarte
       ` · Stage targets ${format(ref[quarter])} m (Plan 2014) and ${format(target[quarter])} m (${label})`;
   }
   const rows = [
-    { values: policy[field], label, style: "controller" },
+    { values: policy[field], label: width < 410 ? label.replace(" MPC", "") : label, style: "controller" },
     { values: baseline[field], label: "Plan 2014", style: "baseline" }
   ];
   for (const row of rows) {

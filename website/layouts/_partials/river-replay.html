@@ -13,7 +13,7 @@
   <p class="replay-status" role="status">Loading trajectories…</p>
   <noscript><p><a href="{{ "replay.json" | relURL }}">Open the trajectory data</a> or enable JavaScript for playback.</p></noscript>
   <div data-replay-panel hidden>
-    {{ partial "replay-controls.html" (dict "id" .id "label" .label "timeline" true) }}
+    {{ partial "replay-controls.html" (dict "id" .id "label" .title "timeline" true) }}
     <div class="charts">
       {{ range $fields }}
         <figure class="chart" data-field="{{ .field }}" data-unit="{{ .unit }}">

@@ -1,36 +1,39 @@
 {{ $run := transform.Unmarshal (os.ReadFile "static/replay.json") }}
 <section class="spotlight overview" id="overview" tabindex="-1" aria-labelledby="overview-title">
   <div class="content">
-    <p class="eyebrow">The flood problem</p>
-    <h2 id="overview-title">One release, two shorelines</h2>
+    <hgroup>
+      <h2 id="overview-title">The flood problem</h2>
+      <p>When both rivers run high</p>
+    </hgroup>
     <p>When Lake Ontario runs high, releasing more water can spare its shoreline. That water travels down the St. Lawrence to Lake St. Louis near Montréal, where the Ottawa River also arrives. Can the two operators make better use of the room downstream by planning together?</p>
-    <h3 id="plan-2014">What is Plan 2014?</h3>
+    <h3 id="plan-2014" tabindex="-1">What is Plan 2014?</h3>
     <p>Plan 2014 is the International Joint Commission’s plan for regulating Lake Ontario outflow through the Moses–Saunders Dam. It sets weekly releases using lake levels, water supplies and conditions along the river. <a href="https://www.ijc.org/en/loslrb/who/regulation">How the regulation board sets outflows</a></p>
     <p>Our baseline, <strong>filtered Plan 2014</strong>, starts from the simulator’s rule-curve proposal. It passes through the native release limits and the same Ottawa feasibility check as the two model predictive controllers (MPCs).</p>
   </div>
   <figure class="site-photo flood-photo">
     <img src="{{ "images/gatineau-flood-2019.webp" | relURL }}" width="1200" height="728" alt="The Ottawa River reaches the porches of a row of homes, with floodwater visible between the houses." loading="lazy">
-    <figcaption>Homes on the Gatineau shore of the Ottawa River, 12 May 2019. <a href="https://commons.wikimedia.org/wiki/File:Flooding_along_the_Ottawa_River_(46936716435).jpg">Photograph by Ross Dunn</a>, resized and converted to WebP under <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>.</figcaption>
+    <figcaption>Homes on the Gatineau shore of the Ottawa River, 12 May 2019. <a href="https://commons.wikimedia.org/wiki/File:Flooding_along_the_Ottawa_River_(46936716435).jpg">Ross Dunn</a>, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>.</figcaption>
   </figure>
-  <div class="river-details">
+  <div class="river-details" id="confluence">
     <div class="river-equations">
       <h3>Where the rivers meet</h3>
       <p>In the study, each Ottawa release takes one quarter-month to reach Lake St. Louis. Water already on its way at the start of the year counts toward the first arrival.</p>
       {{ partial "equation.html" hugo.Data.equations.downstream_flow }}
     </div>
-    <div class="model-context">
-      <h3>Inside the simulation</h3>
+    {{ partial "confluence-figure.html" $run }}
+  </div>
+  <div class="river-details study-design">
+    <h3>How we replay a flood spring</h3>
       <dl class="model-facts">
-        <dt>Simulator</dt>
-        <dd>The Lake Ontario–St. Lawrence River regulation simulator supplies the lake balance, release limits and downstream water levels. The team adds a synthetic Ottawa reservoir and two MPCs. <a href="https://github.com/ksemmendinger/loslr_regulation_optimization/tree/{{ $run.native_revision }}">Original simulator</a> · <a href="https://github.com/vdandenault/IFT6162_Project/tree/{{ $run.revision }}">Coupled study</a> · <a href="#technology">Project technology</a></dd>
-        <dt>Clock</dt>
-        <dd>Four decisions per month, 48 per year. Each operator executes the first planned release, observes the next state and replans. April through June spans steps 13–24.</dd>
-        <dt>Competing objectives</dt>
-        <dd>High water threatens both shorelines. Low water affects recreational boating, and flow through turbines supplies hydropower. The study compares flood exposure, affected buildings, boating costs and hydropower value.</dd>
-        <dt>Hard limits in these runs</dt>
-        <dd>Releases must satisfy the native Lake Ontario rules, Ottawa storage and outlet bounds, and a combined downstream flow ceiling. Lake Ontario levels above 75.50 m incur a cost. The team’s next comparison calls for both MPCs to enforce forecast stage limits at both shorelines.</dd>
+        <div><dt>Simulator</dt>
+          <dd>The Lake Ontario–St. Lawrence River simulator supplies the lake balance, release limits and gauge levels. We add a synthetic Ottawa reservoir and two controllers. <a href="https://github.com/ksemmendinger/loslr_regulation_optimization/tree/{{ $run.native_revision }}">Original simulator</a> · <a href="https://github.com/vdandenault/IFT6162_Project/tree/{{ $run.revision }}">Coupled study</a></dd></div>
+        <div><dt>Time step</dt>
+          <dd>Four decisions per month, 48 per year. The operators execute the first planned releases, observe the next state and replan. Spring covers April through June, steps 13–24.</dd></div>
+        <div><dt>Competing objectives</dt>
+          <dd>High water threatens homes on both shorelines. Low water affects recreational boating. Water routed through turbines generates electricity. We report flood exposure, affected buildings, boating costs and hydropower value.</dd></div>
+        <div><dt>Hard limits in these runs</dt>
+          <dd>Releases must satisfy the native Lake Ontario rules, Ottawa storage and outlet bounds, and a combined downstream flow ceiling. Lake Ontario levels above 75.50 m incur a cost. Enforcing forecast stage limits at both shorelines is a separate experiment.</dd></div>
       </dl>
-    </div>
   </div>
   {{ partial "next-section.html" (dict "id" "lake-ontario" "label" "Lake Ontario") }}
 </section>

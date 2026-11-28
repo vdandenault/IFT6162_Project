@@ -13,7 +13,7 @@
     <div class="content">
       <p class="eyebrow">{{ .subtitle }}</p>
       <h1 id="project-question">{{ .title }}</h1>
-      <p class="hero-answer">Anticipating Ottawa’s response produced the same Lake Ontario release as ordinary MPC on <strong>{{ $matches }} of {{ $decisions }} decision dates</strong> across the two full years.</p>
+      <p class="hero-answer">Stackelberg MPC anticipated Ottawa’s response. It chose the same Lake Ontario release as forecast-based MPC on <strong>{{ $matches }} of {{ $decisions }} decision dates</strong> across 2017 and 2019.</p>
       <p class="intro">The replays pair historical Lake Ontario conditions with a synthetic Ottawa reservoir, inflow and travel time.</p>
       <div class="banner-actions">
         <a class="primary-button" href="{{ .button.link }}">{{ .button.label }}</a>
@@ -23,7 +23,10 @@
     </div>
     <figure class="map-panel">
       {{ partial "river-map.html" . }}
-      <figcaption>The St. Lawrence and Ottawa rivers meet at Lake St. Louis near Montréal.</figcaption>
+      <figcaption>The St. Lawrence and Ottawa rivers meet at Lake St. Louis near Montréal.
+        Geography from <a href="https://www.naturalearthdata.com/">Natural Earth</a>. Dam location from the <a href="https://water.usgs.gov/nwc/NWC/sw/man/S04264331.html">USGS</a>.
+        <small>Design adapted from <a href="https://github.com/caressofsteel/hugo-story">Hugo Story by CaressOfSteel</a> and <a href="https://html5up.net/story">Story by AJ at HTML5 UP</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>).</small>
+      </figcaption>
     </figure>
   </div>
 </section>

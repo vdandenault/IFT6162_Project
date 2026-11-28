@@ -1,15 +1,33 @@
 {{ $run := transform.Unmarshal (os.ReadFile "static/replay.json") }}
+{{ $audit := hugo.Data.mpc_audit }}
+{{ if or (ne $audit.revision $run.revision) (ne ($audit.trace_sha256 | jsonify) ($run.trace_sha256 | jsonify)) }}
+  {{ errorf "The MPC scoring audit and replay refer to different runs. Reproduce the audit in website/README.md." }}
+{{ end }}
 <section class="replay" id="replay" tabindex="-1" data-source="{{ "replay.json" | relURL }}" aria-labelledby="replay-title">
   <div class="container">
     <div class="spring-overview">
       <div>
         <header class="replay-heading">
-          <p class="eyebrow">Model outcomes</p>
-          <h2 id="replay-title">What changed in the flood springs?</h2>
-          <p>Choose a spring to compare all three policies at both shorelines. The detailed table below compares your selected MPC with filtered Plan 2014 for flooding, hydropower, boating and Ottawa storage.</p>
+          <hgroup>
+            <h2 id="replay-title">Model outcomes</h2>
+            <p>What changed in the flood springs?</p>
+          </hgroup>
+          <p>Choose a spring to compare the two MPCs and filtered Plan 2014 at both shorelines. Each replay uses historical Lake Ontario conditions and a synthetic Ottawa reservoir.</p>
         </header>
         <div data-replay-panel hidden>
           {{ partial "replay-controls.html" (dict "id" "results" "label" "Results" "timeline" false) }}
+        </div>
+        <div class="ranking-result">
+          <h3>Why did the MPCs agree?</h3>
+          {{ range $year, $counts := $audit.years }}
+            <p data-flood-year="{{ $year }}">In {{ $year }}, anticipating Ottawa changed the predicted Pointe-Claire level for <strong>{{ $counts.changed_stage }} of {{ $counts.schedules }} eligible schedules</strong>.
+              {{ if and (eq $counts.positive_penalty 0) (eq $counts.changed_score 0) }}
+                Every schedule stayed within its downstream target under both forecasts, so that cost term was zero. The other terms depend on Lake Ontario’s own level and releases. Both rankings therefore gave the same first release on all {{ $counts.dates }} dates.
+              {{ else }}
+                The downstream penalty was positive for {{ $counts.positive_penalty }} schedules under at least one forecast. The two scores differed for {{ $counts.changed_score }} schedules.
+              {{ end }}
+            </p>
+          {{ end }}
         </div>
       </div>
       {{ partial "spring-comparison.html" $run }}
@@ -37,7 +55,8 @@
       <summary>How we checked the numbers</summary>
       <p>We reproduced three complete runs for each year at coupled-study revision <a href="https://github.com/vdandenault/IFT6162_Project/tree/{{ $run.revision }}">{{ substr $run.revision 0 7 }}</a>. We matched the initial state, inflows and issued forecasts across controllers and checked all 48 executed quarter-months in each run. The baseline applies the simulator’s safety filter to the Plan 2014 release proposal.</p>
       <p>Spring covers quarter-months 13–24. Flood exposure sums the positive difference between each level and its study threshold over those twelve periods. We checked annual exposure, cost, hydropower value and final Ottawa storage against the saved run summaries. Building counts are peak modeled estimates across the indicator sites in each region.</p>
-      <p>For the opening finding we paired ordinary and anticipating MPC by year and quarter-month and compared the executed Lake Ontario releases in m³/s at each date. The website reads the saved results from Python. Changing the year selects a different disturbance scenario, and playback advances through the recorded closed-loop responses.</p>
+      <p>We paired forecast-based and Stackelberg MPC by year and quarter-month and compared executed releases before rounding. We also replayed each decision and inspected both scores for every eligible schedule. Each scoring rule reproduced its saved first release. Both controllers faced the same Ottawa operator and the same realized inflows when those releases were executed. <a href="https://github.com/vdandenault/IFT6162_Project/blob/{{ $run.revision }}/src/reservoir_control/experiments/coupled_planning.py">Candidate scoring</a></p>
+      <p>The simulator reports hydropower value and recreational boating impacts in US dollars. We sum its quarter-month indicators for April through June in their original currency. Annual operating cost is a separate weighted score in objective units. <a href="https://github.com/ksemmendinger/loslr_regulation_optimization/blob/{{ $run.native_revision }}/objectiveFunctions/legacyPIs/functions/hydropowerProduction.py#L444">Hydropower units</a> · <a href="https://github.com/ksemmendinger/loslr_regulation_optimization/blob/{{ $run.native_revision }}/objectiveFunctions/legacyPIs/functions/recreationalBoating.py#L154">Boating units</a></p>
       <p>These two development scenarios use synthetic Ottawa inflow and routing. The comparison here describes the flood years 2017 and 2019. The team reports a separate comparison on 18 other years in the <a href="https://github.com/vdandenault/IFT6162_Project/blob/{{ $run.revision }}/README.md">study results</a>.</p>
       <p><a href="{{ "replay.json" | relURL }}">View the plotted data and source revision</a></p>
     </details>

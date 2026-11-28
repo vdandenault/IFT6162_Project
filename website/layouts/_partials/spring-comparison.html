@@ -1,4 +1,4 @@
-{{ $policies := slice (slice "plan2014" "Filtered Plan 2014") (slice "ordinary" "Ordinary MPC") (slice "anticipating" "Anticipating MPC") }}
+{{ $policies := slice (slice "plan2014" "Filtered Plan 2014") (slice "ordinary" "Forecast-based MPC") (slice "anticipating" "Stackelberg MPC") }}
 {{ $sites := slice (slice "lake_ontario" "Lake Ontario") (slice "lake_st_louis" "Lake St. Louis") }}
 {{/* Keep every exposure bar on one scale, including when the year changes. */}}
 {{ $maxExposure := 1.0 }}
@@ -39,7 +39,7 @@
       {{ if and (eq $base.spring.lake_st_louis_periods_above 0) (eq $ordinary.spring.lake_st_louis_periods_above 0) (eq $anticipating.spring.lake_st_louis_periods_above 0) }}
         <p class="impact-title">All three policies stayed within the Pointe-Claire target throughout spring.</p>
       {{ end }}
-      {{ $arms := slice (slice "Ordinary MPC" $ordinary) (slice "Anticipating MPC" $anticipating) }}
+      {{ $arms := slice (slice "Forecast-based MPC" $ordinary) (slice "Stackelberg MPC" $anticipating) }}
       {{ if and (eq ($ordinary.spring | jsonify) ($anticipating.spring | jsonify)) (eq $ordinary.annual_ottawa_end_storage_m3 $anticipating.annual_ottawa_end_storage_m3) }}
         {{ $arms = slice (slice "Both MPCs" $ordinary) }}
       {{ end }}

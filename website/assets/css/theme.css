@@ -18,6 +18,9 @@
   --chart-grid: #dbe5eb;
   --baseline: #304757;
   --controller: var(--water);
+  --flow-lake: var(--water);
+  --flow-ottawa: var(--baseline);
+  --flow-other: var(--spring);
   --limit: #764d21;
   --limit-secondary: #856e78;
   --focus: #086288;

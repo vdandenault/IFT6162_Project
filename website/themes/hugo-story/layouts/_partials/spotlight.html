@@ -1,18 +1,20 @@
 <section class="spotlight {{ .style }}" id="{{ .id }}" tabindex="-1" aria-labelledby="title-{{ .id }}">
   <div class="content">
-    <p class="eyebrow">{{ .label }}</p>
-    <h2 id="title-{{ .id }}">{{ .title }}</h2>
+    <hgroup>
+      <h2 id="title-{{ .id }}">{{ .title }}</h2>
+      <p>{{ .subtitle }}</p>
+    </hgroup>
     <p>{{ .content }}</p>
     {{ with .note }}<p class="field-note">{{ . }}</p>{{ end }}
   </div>
   {{ with .image }}
     <figure class="site-photo">
       <img src="{{ .src | relURL }}" alt="{{ .alt }}" width="{{ .width }}" height="{{ .height }}" loading="lazy">
-      <figcaption>{{ .caption }}</figcaption>
+      <figcaption>{{ .caption }}. <a href="{{ .source }}">{{ .photographer }}</a> (cropped), <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</figcaption>
     </figure>
   {{ else }}
     {{ partial "method-diagram.html" . }}
   {{ end }}
-  {{ if .image }}{{ partial "river-dynamics.html" . }}{{ end }}
+  {{ if .image }}{{ partial "river-dynamics.html" . }}{{ else }}{{ partial "controller-math.html" . }}{{ end }}
   {{ partial "next-section.html" .next }}
 </section>

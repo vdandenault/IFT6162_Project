@@ -25,9 +25,10 @@ If your browser requests reduced motion, select **Animate section transitions** 
 | Opening finding and basin map | [banner.html](themes/hugo-story/layouts/_partials/banner.html) and [river-map.html](layouts/_partials/river-map.html) |
 | Arrow scrolling and section fades | [story-motion.js](assets/js/story-motion.js) and [site.css](assets/css/site.css) |
 | Flood context, Plan 2014, simulator links and study constraints | [overview.html](layouts/_partials/overview.html) |
-| River equations and the symbols printed below each one | [data/equations.yaml](data/equations.yaml) |
-| Operator objectives and how each equation is used | [river-dynamics.html](layouts/_partials/river-dynamics.html) |
-| May 2017 figure data and captions | [river-figure.html](layouts/_partials/river-figure.html) |
+| River and MPC equations and their symbol lists | [data/equations.yaml](data/equations.yaml) |
+| Each river’s model and operator optimization, alongside its figures | [river-dynamics.html](layouts/_partials/river-dynamics.html) |
+| Fixed Ottawa forecast and plan-dependent best response in the two scoring rules | [controller-math.html](layouts/_partials/controller-math.html) |
+| May 2017 figure data and captions | [river-figure.html](layouts/_partials/river-figure.html) and [confluence-figure.html](layouts/_partials/confluence-figure.html) |
 | River chart styles, tooltips and PNG export | [river-figures.js](assets/js/river-figures.js) |
 | All page, map and chart colors | [assets/css/theme.css](assets/css/theme.css) |
 | River chart placement and shared controls | [river-replay.html](layouts/_partials/river-replay.html) and [replay-controls.html](layouts/_partials/replay-controls.html) |
@@ -35,9 +36,9 @@ If your browser requests reduced motion, select **Animate section transitions** 
 | Full-year replay charts and interactions | [charts.js](assets/js/charts.js) and [replay.js](assets/js/replay.js) |
 | Simulation and website technologies | [technology.html](layouts/_partials/technology.html) |
 
-Hugo typesets the LaTeX at build time using its built-in KaTeX renderer. Edit an equation as you would in Overleaf, without the surrounding display delimiters. Each symbol definition is a pair of LaTeX and plain text. The two adapted Story templates are under [themes/hugo-story](themes/hugo-story/LICENSE.md). Photo credits appear in the flood photograph’s caption and in the footer.
+Hugo typesets the LaTeX at build time using its built-in KaTeX renderer. Edit an equation as you would in Overleaf, without the surrounding display delimiters. Each topic takes its heading, equation and symbol list from one entry in `equations.yaml`. The river sections define the operators’ problems. The two MPC sections show how each method uses Ottawa arrivals to score a Lake Ontario plan. The two adapted Story templates are under [themes/hugo-story](themes/hugo-story/LICENSE.md). Credits appear below the map and each photograph.
 
-Both rivers and Results share the selected year and MPC. The river plots follow one quarter-month cursor. The two May 2017 figures remain fixed worked examples.
+Both rivers and Model outcomes share the selected year and MPC. The river plots follow one quarter-month cursor. Play advances every 300 ms. The three May 2017 figures are fixed worked examples.
 
 ## Check and build
 
@@ -71,6 +72,17 @@ python website/tools/export_replay.py ../flood-year-runs website/static/replay.j
   --repository ../IFT6162_Project-vincent --revision 9cc82675ef5c95661b4973c38832d4fcbec010a0
 ```
 
-The exporter checks source hashes, matched forcing and initial state, all 48 executed steps per year, and annual metrics. It prints the exact ordinary-versus-anticipating Lake Ontario release count for each year. At this revision the counts are **48/48 in 2017 and 48/48 in 2019**. The spring comparison uses all three policies’ April–June rows (quarter-months 13–24) for flood exposure, peaks and economic impacts. The Ottawa storage comparison uses the last step of the year. Only the derived JSON goes into the website.
+The exporter checks source hashes, matched forcing and initial state, all 48 executed steps per year, and annual metrics. It checks each Ottawa arrival against the prior release (including the initial queue) and the three flow contributions against the simulator’s total. Forecast-based and Stackelberg MPC matched on **48/48 Lake Ontario releases in 2017 and 48/48 in 2019**, before rounding. Spring metrics use April through June (quarter-months 13–24). The Ottawa storage comparison uses the last step of the year. Only derived values go into the website.
 
-The two river figures update on the next Hugo build. Hugo reads the 2017 replay into a small HTML table for each chart. Chart.js plots the same cells in the browser. **View chart data** opens the values, and **Download figure (PNG)** renders a 2400 × 960 image with the year, units and policy labels. Check the May 2017 captions when replacing the runs.
+Hugo reads the 2017 replay into a small HTML table for each worked example. Chart.js plots those cells in the browser. **View chart data** opens the values, and **Download figure (PNG)** exports a 2400 × 960 image with the year, units and policy labels. Review the May captions when replacing the runs.
+
+### Reproduce the MPC scoring comparison
+
+From the pinned simulator checkout, point the command below at the website source. It replays the two events with the planner’s candidate diagnostics enabled and compares both rankings to the saved first releases.
+
+```sh
+uv run --locked --group ontario python ../IFT6162_Project/website/tools/audit_mpc.py \
+  --output ../IFT6162_Project/website/data/mpc_audit.json
+```
+
+In 2017, 122 of 176 eligible schedules changed predicted Pointe-Claire stage under Ottawa’s best response. In 2019 it was 22 of 117. Every downstream penalty was zero under both forecasts and every Lake Ontario schedule kept its score. Hugo checks that the audit and replay identify the same revision and trajectory hashes before showing these results.

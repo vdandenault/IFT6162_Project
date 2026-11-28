@@ -1,0 +1,14 @@
+{{ $forecast := eq .strategy "ordinary" }}
+{{ $run := transform.Unmarshal (os.ReadFile "static/replay.json") }}
+{{ $planner := printf "https://github.com/vdandenault/IFT6162_Project/blob/%s/src/reservoir_control/experiments/coupled_planning.py#L92-L166" $run.revision }}
+<div class="controller-math" id="{{ cond $forecast "mpc-formulation" "stackelberg-formulation" }}">
+  {{ if $forecast }}
+    {{ partial "math-topic.html" (dict "section" .id "key" "ottawa_forecast" "anchor" "ordinary-mpc-system-dynamics") }}
+    {{ partial "math-topic.html" (dict "section" .id "key" "forecast_mpc") }}
+    <p class="math-source">The operators execute the first releases from the chosen plans, observe the next state and replan. <a href="#lake-ontario-optimization">Lake Ontario objective</a> · <a href="#ottawa-river-optimization">Ottawa feasibility check</a> · <a href="{{ $planner }}">Forecast scoring</a></p>
+  {{ else }}
+    {{ partial "math-topic.html" (dict "section" .id "key" "ottawa_response" "anchor" "anticipating-mpc-ottawa-best-response") }}
+    {{ partial "math-topic.html" (dict "section" .id "key" "stackelberg_mpc") }}
+    <p class="math-source">Each candidate goes through the <a href="#ottawa-river-optimization">Ottawa optimization</a> before its arrivals enter the <a href="#lake-ontario-optimization">Lake Ontario objective</a>. <a href="{{ $planner }}">Candidate scoring</a> · <a href="#replay">Compare the flood springs</a></p>
+  {{ end }}
+</div>

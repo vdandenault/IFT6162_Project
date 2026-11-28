@@ -4,7 +4,8 @@ const replay = document.querySelector("#replay");
 const controls = [...document.querySelectorAll("[data-replay-controls]")];
 const timelines = [...document.querySelectorAll(".timeline")];
 const charts = [...document.querySelectorAll(".chart")];
-const names = { ordinary: "Ordinary MPC", anticipating: "Anticipating MPC" };
+const names = { ordinary: "Forecast-based MPC", anticipating: "Stackelberg MPC" };
+const quarterDurationMs = 300;
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const state = { year: "2017", policy: "ordinary", quarter: 13 };
 let timer;
@@ -127,8 +128,7 @@ async function startReplay() {
       slider.setAttribute("aria-valuetext", `${date}, quarter-month ${state.quarter} of 48`);
       timeline.querySelector("output").value = date;
     }
-    const shortName = name.split(" ")[0];
-    charts.forEach((figure, i) => renderChart(figure, scales[i], data, baseline, chosen, shortName, index));
+    charts.forEach((figure, i) => renderChart(figure, scales[i], data, baseline, chosen, name, index));
   }
 
   /** Carry a changed case to every section without losing the selected quarter-month. */
@@ -155,7 +155,7 @@ async function startReplay() {
       state.quarter += 1;
       updateQuarter();
       if (state.quarter === 48) pause();
-    }, 700);
+    }, quarterDurationMs);
   }
 
   for (const form of controls) {

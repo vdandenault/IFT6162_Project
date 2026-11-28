@@ -1,7 +1,7 @@
 {{ $map := hugo.Data.river_map }}
-<svg class="basin-map" viewBox="0 0 640 444" role="img" aria-labelledby="basin-map-title basin-map-description" xmlns="http://www.w3.org/2000/svg">
+<svg class="basin-map" viewBox="0 0 640 444" role="group" aria-labelledby="basin-map-title" aria-describedby="basin-map-description" xmlns="http://www.w3.org/2000/svg">
   <title id="basin-map-title">Lake Ontario, the Ottawa River and Lake St. Louis</title>
-  <desc id="basin-map-description">The St. Lawrence flows northeast from Lake Ontario. The Ottawa River approaches from the northwest. Their waters meet at Lake St. Louis near Montréal.</desc>
+  <desc id="basin-map-description">The St. Lawrence flows northeast from Lake Ontario past Moses–Saunders Dam at Cornwall and Massena. The Ottawa River joins it at Lake St. Louis near Montréal.</desc>
 
   <g aria-hidden="true">
     <path class="basin-map-grid" d="M98 0V444 M261 0V444 M424 0V444 M587 0V444 M0 65.7H640 M0 181H640 M0 296.3H640 M0 411.6H640"/>
@@ -14,7 +14,7 @@
     <text class="basin-map-lake-name" x="168" y="347" text-anchor="middle">Lake Ontario</text>
     <g class="basin-map-river-names">
       <text x="252" y="63" transform="rotate(19 252 63)" text-anchor="middle">Ottawa River</text>
-      <text x="435" y="224" transform="rotate(-34 435 224)" text-anchor="middle">St. Lawrence River</text>
+      <text x="394" y="250" transform="rotate(-34 394 250)" text-anchor="middle">St. Lawrence River</text>
     </g>
     <path class="basin-map-leader" d="M516 130L495 73H392"/>
     <circle class="basin-map-focus" cx="519" cy="135" r="5"/>
@@ -27,4 +27,10 @@
       <text x="525" y="396">100 km</text>
     </g>
   </g>
+  <a class="dam-marker" href="#plan-2014" aria-label="Moses–Saunders Dam at Cornwall and Massena. Read how Plan 2014 sets releases.">
+    <title>Moses–Saunders Dam at Cornwall, Ontario and Massena, New York. Go to Plan 2014.</title>
+    <path class="basin-map-leader" d="M446 180H506L563 267H607"/>
+    <rect class="dam-symbol" x="436" y="175" width="10" height="10"/>
+    <text class="basin-map-place" text-anchor="end" x="608" y="295">Moses–Saunders Dam</text>
+  </a>
 </svg>

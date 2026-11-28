@@ -1,12 +1,13 @@
 # Each entry pairs display LaTeX with the symbol definitions printed below it.
 lake_balance:
+  title: System dynamics
   latex: 'h_{t+1} = h_t + \frac{N_t - Q_t}{29{,}700}'
   symbols:
     - ['t', 'Quarter-month being simulated.']
     - ['h_t,\ h_{t+1}', 'Lake Ontario levels at the start and end of the step (m, IGLD 1985).']
-    - ['N_t', 'Net total water supply to Lake Ontario during the step (m³/s).']
+    - ['N_t', 'Net total supply to Lake Ontario (m³/s). The planner carries the last observed supply forward. The physical update uses realized supply.']
     - ['Q_t', 'Total release from Lake Ontario during the step (m³/s).']
-    - ['29{,}700', 'Area divided by nominal step duration (m²/s). Converts net flow to level change.']
+    - ['29{,}700', 'Effective lake area divided by nominal step duration (m²/s). Converting the native flows from tens of m³/s to m³/s changes the divisor from 2,970 to 29,700. The replay rounds each level change to six decimals.']
 
 lake_rating:
   latex: |-
@@ -17,17 +18,18 @@ lake_rating:
   symbols:
     - ['Q_t', 'Total modeled Lake Ontario outflow (m³/s).']
     - ['h_t,\ h_{t+1}', 'Start and end levels in quarter-month t. Their average is the midpoint level (m, IGLD 1985).']
-    - ['69.509', 'Reference elevation (m). The rating applies when the midpoint level is at or above it.']
-    - ['555.823', 'Rating coefficient (metres to the three-halves power per second). It scales the flow associated with the depth above the reference elevation.']
+    - ['69.509', 'Reference elevation (m). It combines the 69.474 m outlet reference and the 0.035 m adjustment for differential crustal movement from 1985 to 2010.']
+    - ['555.823,\ 3/2', 'Raising head in metres to this power and multiplying by 555.823 gives flow in m³/s. The coefficient is 55.5823 when flow is in tens of m³/s.']
     - ['u_t', 'Scalar adjustment to the reference flow. One unit adds 10 m³/s at a fixed midpoint level.']
 
 ottawa_balance:
+  title: System dynamics
   latex: 'S_{t+1} = S_t + \Delta t \left(i_t - r_t\right)'
   symbols:
     - ['S_t,\ S_{t+1}', 'Water stored at the start and end of quarter-month t (m³).']
-    - ['i_t', 'Net inflow into the modeled Ottawa reservoir (m³/s).']
-    - ['r_t', 'Ottawa release leaving the reservoir in this step (m³/s).']
-    - ['\Delta t', 'Duration of one step in the Ottawa model (657,000 s).']
+    - ['i_t', 'Net inflow into the modeled reservoir (m³/s). Ottawa plans with the available inflow forecast and updates storage with realized inflow.']
+    - ['r_t', 'Ottawa release leaving storage in this step (m³/s). It reaches Lake St. Louis one quarter-month later.']
+    - ['\Delta t', 'One nominal Ottawa quarter-month, or 365 days divided into 48 equal steps (657,000 s).']
 
 downstream_flow:
   latex: 'q_t^D = Q_t + r_{t-1} + b_t'
@@ -43,4 +45,152 @@ pointe_claire_stage:
     - ['h_t^D', 'Water level at Pointe-Claire on Lake St. Louis in quarter-month t (m, IGLD 1985).']
     - ['q_t^D', 'Combined downstream flow in the same step (m³/s).']
     - ['\rho_t', 'Pointe-Claire roughness factor used for this step. The replay carries the previous value forward.']
-    - ['16.57,\ 604,\ 0.58', 'Elevation offset (m), flow scaling constant for m³/s input, and exponent of the simulator’s empirical rating.']
+    - ['16.57,\ 604,\ 0.58', 'The simulator’s empirical rating supplies the elevation offset (m), flow divisor and exponent. Its native divisor of 60.4 becomes 604 for flows in m³/s.']
+
+lake_cost:
+  title: Cost function
+  latex: |-
+    \begin{aligned}
+    c_k^{L} ={}& [h_{k+1}-75.50]_+^2 + [h_k^D-F(h_k)]_+^2\\
+               &+0.25[74.00-h_{k+1}]_+^2\\
+               &+0.01\big((Q_k-Q_{k-1})/1000\big)^2 .
+    \end{aligned}
+  symbols:
+    - ['k,\ c_k^L', 'Step in the plan and Lake Ontario’s cost for that step (objective units).']
+    - ['[z]_+', 'Positive part, max(0, z). Only the amount beyond a threshold incurs a penalty.']
+    - ['h_k,\ h_{k+1}', 'Beginning and end Lake Ontario levels (m). The study thresholds are 75.50 m for high water and 74.00 m for low water.']
+    - ['h_k^D,\ F(h_k)', 'Predicted Pointe-Claire stage and its applicable Plan 2014 target (m), selected from the beginning lake level.']
+    - ['Q_k,\ Q_{k-1}', 'Current and previous Lake Ontario releases (m³/s). Division by 1,000 scales their difference.']
+
+ottawa_cost:
+  title: Cost function
+  latex: |-
+    \begin{aligned}
+    c_k^O &= s_{k+1}^2+v_k^2+0.2(v_k-v_{k-1})^2,\\
+    c_M^O &= 2s_M^2 .
+    \end{aligned}
+  symbols:
+    - ['c_k^O,\ c_M^O', 'Ottawa’s running cost and terminal storage penalty (objective units). The synthetic operator values storage, service and smooth changes in release.']
+    - ['s_k', 'Storage error (Sₖ − 3 billion m³) divided by 1 billion m³.']
+    - ['v_k', 'Release error (rₖ − 900 m³/s) divided by 1,000 m³/s. At the first step the previous release is already known.']
+
+ottawa_bounds:
+  title: Constraints
+  latex: |-
+    \begin{aligned}
+    S_{\min} &\le S_{k+1}\le S_{\max},\\
+    r_{\min} &\le r_k\le r_{\max},\\
+    Q_k+b_k+a_k &\le C_k(\mathbf U).
+    \end{aligned}
+  symbols:
+    - ['S_{\min},\,S_{\max}', 'Lower and upper storage bounds (m³). The physical range is 1 to 5 billion m³. The planning limit can reserve room below the upper bound.']
+    - ['r_{\min},\,r_{\max}', 'Outlet release bounds of 100 and 2,500 m³/s.']
+    - ['Q_k,\,b_k,\,a_k', 'Lake Ontario release, background inflow and arriving Ottawa water at lead k (m³/s). At the first lead the Ottawa arrival is already in transit.']
+    - ['C_k(\mathbf U)', 'Downstream capacity for the announced plan (m³/s). The study starts at 12,000 and tightens it when the native Lake Ontario flood rule requires it.']
+
+lake_controls:
+  title: Control variables
+  latex: '\mathbf U=(Q_0,\ldots,Q_{N-1})'
+  symbols:
+    - ['\mathbf U,\ Q_k', 'The Lake Ontario operator chooses a schedule of total dam releases (m³/s). Q₀ is the release for the current quarter-month.']
+    - ['k,\ N', 'Lead in the plan and number of releases being chosen. The replay chooses total flow directly. The outlet rating above uses an adjustment to a reference flow.']
+
+lake_constraints:
+  title: Constraints
+  latex: 'Q_k+b_k+a_k^{\mathrm{resp}}\le C_k(\mathbf U)'
+  symbols:
+    - ['Q_k,\ b_k', 'Lake Ontario release and background downstream inflow (m³/s). Each candidate must also satisfy the native Plan 2014 operating rules.']
+    - ['a_k^{\mathrm{resp}}', 'Ottawa flow that would arrive under its response to this announcement (m³/s). Both Lake Ontario controllers require a feasible Ottawa response.']
+    - ['C_k(\mathbf U)', 'Combined flow ceiling at Lake St. Louis (m³/s). It starts at 12,000 and can tighten under the native flood rule. The 75.50 m Lake Ontario shoreline threshold enters the running cost in these replays.']
+
+lake_horizon:
+  title: Prediction horizon
+  latex: 'N=\min(4,T-t+1)'
+  symbols:
+    - ['t,\ T', 'Current quarter-month of the model year, numbered from 1 to T = 48.']
+    - ['N', 'Lake Ontario scores up to four releases. Near year end it plans only the remaining steps. It executes the first release and replans at the next decision.']
+
+lake_optimization:
+  title: Lake Ontario optimization
+  id: lake-ontario-optimization
+  latex: |-
+    \begin{aligned}
+    \min_{\mathbf X,\,\mathbf U}\quad
+      &\underbrace{c_N^L(\mathbf x_N)+\sum_{k=0}^{N-1}c_k^L(\mathbf x_k,Q_k;a_k)}_{J_L(\mathbf U;\,\mathbf a)}\\
+    \text{subject to}\quad
+      &\mathbf x_0=\mathbf x_t^{\mathrm{obs}},\quad \mathbf U\in\mathcal A_t,\\
+      &\mathbf x_{k+1}=\mathbf f_k(\mathbf x_k,Q_k;a_k).
+    \end{aligned}
+  symbols:
+    - ['\mathbf X,\ \mathbf x_t^{\mathrm{obs}}', 'Predicted Lake Ontario states starting from the current observation. The state includes the lake level and previous release.']
+    - ['\mathbf f_k,\ a_k', 'A simulator step under the issued supply forecast. Ottawa arrivals at Lake St. Louis (m³/s) affect the predicted downstream gauge level.']
+    - ['\mathcal A_t', 'Finite set of candidate Lake Ontario schedules that pass the operating and response checks in the current search.']
+    - ['c_k^L,\ c_N^L', 'Running cost from the cost function above and terminal cost. Only a horizon reaching year end adds 0.1 times the squared deviation of the final lake level from 74.80 m.']
+    - ['J_L(\mathbf U;\mathbf a)', 'The score of a release plan given a sequence of Ottawa arrivals. Adding terminal and running costs is the Bolza form used in the course.']
+
+ottawa_controls:
+  title: Control variables
+  latex: '\mathbf r=(r_0,\ldots,r_{M-1})'
+  symbols:
+    - ['\mathbf r,\ r_k', 'Ottawa chooses its own outlet release in m³/s at each lead. It executes r₀ now and revises the later releases after the next observation.']
+    - ['M', 'Number of Ottawa releases in the plan. The Lake Ontario schedule is an input to this decision.']
+
+ottawa_horizon:
+  title: Prediction horizon
+  latex: 'M=\min(5,T-t+1)'
+  symbols:
+    - ['t,\ T', 'Current quarter-month and last quarter-month of the model year (T = 48).']
+    - ['M', 'Ottawa looks ahead up to five quarter-months. When available, a fixed fifth Lake Ontario commitment lets Ottawa check the downstream arrival of its fourth release.']
+
+ottawa_optimization:
+  title: Ottawa optimization
+  id: ottawa-river-optimization
+  latex: |-
+    \begin{aligned}
+    \min_{\mathbf S,\,\mathbf r}\quad
+      &c_M^O(S_M)\\
+      &{}+\sum_{k=0}^{M-1}c_k^O(S_{k+1},r_k,r_{k-1})\\
+    \text{subject to}\quad
+      &S_0=S_t^{\mathrm{obs}},\quad \mathbf r\in\mathcal R_t(\mathbf U),\\
+      &S_{k+1}=S_k+\Delta t(\widehat i_{k|t}-r_k).
+    \end{aligned}
+  symbols:
+    - ['\mathbf S,\ S_t^{\mathrm{obs}}', 'Predicted storage trajectory and observed starting storage (m³).']
+    - ['\widehat i_{k|t},\ \Delta t', 'Net reservoir inflow forecast for lead k issued at t (m³/s) and the step duration (s).']
+    - ['\mathbf U,\ \mathcal R_t(\mathbf U)', 'Lake Ontario announces its release schedule, extended by the fixed fifth commitment when present. Ottawa’s feasible set contains the release sequences that meet the storage, outlet and downstream limits for this announcement.']
+    - ['c_k^O,\ c_M^O', 'Ottawa’s own operating costs and final storage penalty.']
+    - ['\mathbf r^\star(\mathbf U)', 'The Ottawa release sequence that minimizes this cost for the announcement. This is Ottawa’s best response.']
+
+ottawa_forecast:
+  title: Ottawa flow forecast
+  latex: '\widehat{\mathbf a}_t=\operatorname{route}_t(r_{\mathrm{ref}}\,\mathbf 1)'
+  symbols:
+    - ['r_{\mathrm{ref}},\ \mathbf 1', 'Use the same reference Ottawa release of 900 m³/s at every lead for every Lake Ontario candidate.']
+    - ['\operatorname{route}_t,\ \widehat{\mathbf a}_t', 'Routing the reference releases gives the forecast arrivals at Lake St. Louis (m³/s). Water already in transit supplies the first arrival.']
+
+forecast_mpc:
+  title: Forecast-based MPC optimization
+  latex: |-
+    \mathbf U_F^\star\in
+    \operatorname*{arg\,min}_{\mathbf U\in\mathcal A_t}
+    J_L(\mathbf U;\widehat{\mathbf a}_t)
+  symbols:
+    - ['J_L,\ \widehat{\mathbf a}_t', 'Score each plan with the Lake Ontario objective using one fixed Ottawa arrival forecast.']
+    - ['\mathcal A_t,\ \mathbf U_F^\star', 'Choose the lowest-scoring feasible schedule. Before execution the simulator checks that Ottawa can respond to the announcement.']
+
+ottawa_response:
+  title: From Ottawa releases to arrivals
+  latex: '\mathbf a_t^\star(\mathbf U)=\operatorname{route}_t(\mathbf r^\star(\mathbf U))'
+  symbols:
+    - ['\mathbf U,\ \mathbf r^\star(\mathbf U)', 'Give this candidate Lake Ontario schedule to the Ottawa optimizer. Its best response is a sequence of reservoir releases (m³/s).']
+    - ['\operatorname{route}_t,\ \mathbf a_t^\star(\mathbf U)', 'Route those releases to Lake St. Louis, including water already in transit. The resulting arrival forecast belongs to this candidate.']
+
+stackelberg_mpc:
+  title: Stackelberg MPC optimization
+  latex: |-
+    \mathbf U_S^\star\in
+    \operatorname*{arg\,min}_{\mathbf U\in\mathcal A_t}
+    J_L\big(\mathbf U;\mathbf a_t^\star(\mathbf U)\big)
+  symbols:
+    - ['J_L,\ \mathbf a_t^\star(\mathbf U)', 'Score each plan with the same Lake Ontario objective using the routed Ottawa response to that plan.']
+    - ['\mathcal A_t,\ \mathbf U_S^\star', 'Choose the lowest-scoring eligible Lake Ontario schedule. The two operators execute the first pair of releases and solve again next quarter-month.']

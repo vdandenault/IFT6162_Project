@@ -9,9 +9,14 @@
   border-top: 1px solid var(--hairline);
 }
 
-.river-details h3, .river-replay > h3, .overview h3, .technology h3 {
+.river-details h3, .math-topic h3, .river-replay > h3, .overview h3, .technology h3 {
   font: 400 clamp(1.55rem, 2.3vw, 2.15rem)/1.14 var(--serif);
   letter-spacing: -.025em;
+}
+
+.math-topic h3 {
+  grid-column: 1 / -1;
+  margin: 0;
 }
 
 .content h3, .river-equations p + h3 {
@@ -41,6 +46,43 @@
   margin-block: .4rem;
 }
 
+.controller-math {
+  grid-column: 1 / -1;
+}
+
+.river-example {
+  margin-block: 0 clamp(2rem, 4vw, 3.5rem);
+}
+
+.math-topic {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: .85rem clamp(2rem, 6vw, 6rem);
+  padding-block: clamp(1.5rem, 3vw, 2.5rem);
+  border-top: 1px solid var(--hairline);
+}
+
+.math-topic .display-equation {
+  min-width: 0;
+  margin: 0;
+}
+
+.math-topic:last-of-type {
+  border-top: 2px solid var(--water);
+}
+
+.math-source {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--muted);
+}
+
+mi[mathvariant="bold"] {
+  font-weight: 700;
+  text-transform: none;
+}
+
 .symbols {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -58,14 +100,25 @@
   color: var(--water);
 }
 
+.math-topic .symbols {
+  margin: 0;
+}
+
 .model-facts {
-  margin-block: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem clamp(2rem, 6vw, 6rem);
+  margin: 0;
 }
 
 .model-facts dt {
-  margin-top: .85rem;
   color: var(--water);
   font-weight: 650;
+}
+
+.study-design {
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
 }
 
 .flood-photo img {
@@ -92,20 +145,6 @@
   color: var(--muted);
 }
 
-.extra-math {
-  margin-top: 1rem;
-  font-size: .96rem;
-}
-
-.extra-math summary, .figure-data summary, .figure-download {
-  color: var(--water);
-  font-weight: 600;
-}
-
-.extra-math summary {
-  padding-block: .4rem;
-}
-
 .river-graph {
   border-block: 1px solid var(--hairline);
   background: var(--panel);
@@ -123,6 +162,10 @@
   margin-block: 1.15rem;
 }
 
+.confluence-plot {
+  height: 17rem;
+}
+
 .figure-note {
   margin-top: .9rem;
   font-size: .98rem;
@@ -134,6 +177,8 @@
 }
 
 .figure-data summary, .figure-download {
+  color: var(--water);
+  font-weight: 600;
   padding-block: .4rem;
 }
 
@@ -146,7 +191,7 @@
 }
 
 @media (width <= 48rem) {
-  .river-details, .technology-columns {
+  .river-details, .math-topic, .model-facts, .technology-columns {
     grid-template-columns: minmax(0, 1fr);
   }
 

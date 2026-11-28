@@ -1,11 +1,11 @@
 import {
   Chart, BarController, BarElement, CategoryScale, LinearScale,
-  LineController, LineElement, PointElement, Title, Tooltip
+  LineController, LineElement, PointElement, Title, Tooltip, Legend
 } from "chart.js";
 import DataLabels from "chartjs-plugin-datalabels";
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale,
-  LineController, LineElement, PointElement, Title, Tooltip, DataLabels);
+  LineController, LineElement, PointElement, Title, Tooltip, Legend, DataLabels);
 
 const styles = getComputedStyle(document.documentElement);
 /** Read the same palette and typeface that style the rest of the page. */
@@ -20,6 +20,7 @@ Chart.defaults.color = theme("muted");
 Chart.defaults.borderColor = theme("chart-grid");
 Chart.defaults.animation = false;
 Chart.defaults.maintainAspectRatio = false;
+Chart.defaults.plugins.legend.display = false;
 Chart.defaults.set("plugins.title", {
   display: true, align: "start", color: theme("ink"), font: { size: 14, weight: 600 }
 });
@@ -53,6 +54,39 @@ function lakeOntarioRise(names, rows) {
   };
 }
 
+/** Stack the three terms of the flow balance for each policy on the same scale. */
+function confluenceFlow(names, rows) {
+  const colors = [theme("flow-lake"), theme("flow-ottawa"), theme("flow-other")];
+  return {
+    type: "bar",
+    data: {
+      labels: names.map(name => {
+        const [first, ...rest] = name.split(" ");
+        return [first, rest.join(" ")];
+      }),
+      datasets: rows.map((row, i) => ({
+        label: row.period, data: row.values, backgroundColor: colors[i], maxBarThickness: 70
+      }))
+    },
+    options: {
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { maxTicksLimit: 4 } }
+      },
+      plugins: {
+        legend: { display: true, position: "bottom", onClick: null, labels: { boxWidth: 11 } },
+        datalabels: {
+          align: "center", anchor: "center", offset: 0, font: { size: 11, weight: 600 },
+          backgroundColor: ctx => colors[ctx.datasetIndex],
+          color: ctx => theme(ctx.datasetIndex === 2 ? "ink" : "paper"),
+          formatter: value => Math.round(value).toLocaleString("en-CA")
+        },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString("en-CA")} m³/s` } }
+      }
+    }
+  };
+}
+
 /** Trace end-of-period storage and label each policy at its last point. */
 function ottawaStorage(names, rows) {
   return {
@@ -66,7 +100,7 @@ function ottawaStorage(names, rows) {
       }))
     },
     options: {
-      layout: { padding: { right: 122 } },
+      layout: { padding: { right: 138 } },
       interaction: { mode: "index", intersect: false },
       scales: {
         x: {
@@ -101,7 +135,8 @@ function chartConfig(figure) {
     period: row.cells[0].textContent,
     values: Array.from(row.querySelectorAll("td"), cell => Number(cell.dataset.value))
   }));
-  const config = figure.dataset.river === "lake-ontario" ? lakeOntarioRise(names, rows) : ottawaStorage(names, rows);
+  const chartTypes = { "lake-ontario": lakeOntarioRise, "ottawa-river": ottawaStorage, confluence: confluenceFlow };
+  const config = chartTypes[figure.dataset.river](names, rows);
   config.options.plugins.title = { text: table.caption.textContent };
   return config;
 }

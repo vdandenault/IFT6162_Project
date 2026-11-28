@@ -76,7 +76,7 @@ if ("IntersectionObserver" in window) {
     }
   });
   const groups = document.querySelectorAll(
-    ".spotlight > .content, .spotlight > figure, .river-details, .river-replay, " +
+    ".spotlight > .content, .spotlight > figure, .river-details, .math-topic, .river-replay, " +
     ".spring-overview, .results, .verification, .technology"
   );
   for (const group of groups) observer.observe(group);

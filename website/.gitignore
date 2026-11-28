@@ -9,3 +9,4 @@ data/*
 !data/story.yaml
 !data/equations.yaml
 !data/river_map.json
+!data/mpc_audit.json
